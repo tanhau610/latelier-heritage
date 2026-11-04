@@ -22,3 +22,12 @@
 .shipping-button:disabled{opacity:.5;cursor:wait}
 .shipping-footer{border-top:1px solid #eee6dd;padding-top:23px;margin-top:32px}
 @media(max-width:550px){.shipping-header span{display:none}.shipping-grid{grid-template-columns:1fr}.shipping-main{padding-top:25px}.shipping-card{padding:25px 20px}.shipping-card h1{font-size:44px}}
+.shipping-page [hidden]{display:none!important}
+.shipping-success{border:1px solid #e6dbd0;background:#fbf8f3;padding:clamp(25px,5vw,45px);margin:30px 0;text-align:center}
+.shipping-success-icon{display:flex;align-items:center;justify-content:center;width:68px;height:68px;border-radius:50%;background:#e8eee7;color:#416a51;font:36px Georgia,serif;margin:0 auto 25px}
+.shipping-success h2{font:500 clamp(30px,4.5vw,42px)/1.17 Georgia,serif;letter-spacing:-.02em;color:#332b25;margin:17px auto 20px;max-width:490px}
+.shipping-success p{font:14px/1.85 Arial,sans-serif;color:#75675e;margin:0 auto 15px;max-width:490px}
+.shipping-success strong{color:#3b2b26}
+.shipping-edit-button{margin-top:16px;background:#683b40;color:white;border:0;padding:16px 25px;letter-spacing:.09em;text-transform:uppercase;font:600 11px Arial,sans-serif;cursor:pointer}
+.shipping-edit-button:hover,.shipping-button:hover{background:#4c2d32}
+.shipping-success:focus{outline:none}
