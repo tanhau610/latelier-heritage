@@ -54,7 +54,7 @@
       const button=make("button","studio-order"+(state.selected===o.id?" selected":""),undefined);
       button.type="button";button.addEventListener("click",()=>select(o.id));
       const top=make("div","studio-order-top");top.append(make("strong","",o.petName||"Pet portrait"),make("span","studio-status status-"+o.status.toLowerCase(),labels[o.status]||o.status));
-      button.append(top,make("div","studio-order-name",o.name||"Unnamed customer"),make("div","studio-order-meta",o.id+" · "+formatDate(o.receivedAt)),make("div","studio-order-price",money(o.payment?o.payment.totalCents/100:o.estimatedPriceAUD)),make("div","studio-order-meta",o.payment?.balance?"Paid in full · manually verified":o.payment?.deposit?"Deposit recorded · balance due":o.payment?"Awaiting 50% deposit":"No agreed quote"));
+      button.append(top,make("div","studio-order-name",o.name||"Unnamed customer"),make("div","studio-order-meta",o.id+" · "+formatDate(o.receivedAt)),make("div","studio-order-price",money(o.payment?o.payment.totalCents/100:o.estimatedPriceAUD)),make("div","studio-order-meta",o.payment?.balance?"Both payments recorded":o.payment?.deposit?"Deposit recorded · balance due":o.payment?"Awaiting 50% deposit":"No agreed quote"));
       list.append(button);
     }
     $("load-more").hidden=!state.cursor;
@@ -88,8 +88,8 @@
     }else{
       const summary=make("div","studio-payment-summary");
       summary.append(make("p","","Agreed total: "+amountText(payment.totalCents)),
-        make("p","", "50% deposit: "+amountText(payment.depositCents)+" · "+(payment.deposit?"Verified manually":"Awaiting payment")),
-        make("p","", "50% balance: "+amountText(payment.balanceCents)+" · "+(payment.balance?"Verified manually":"Awaiting payment")));
+        make("p","", "50% deposit: "+amountText(payment.depositCents)+" · "+(payment.deposit?(payment.deposit.sandbox?"Sandbox verified":"Verified manually"):"Awaiting payment")),
+        make("p","", "50% balance: "+amountText(payment.balanceCents)+" · "+(payment.balance?(payment.balance.sandbox?"Sandbox verified":"Verified manually"):"Awaiting payment")));
       paymentBox.append(summary);
     }
     if(!payment?.deposit&&!payment?.balance&&!["Cancelled","Shipped","Completed"].includes(order.status)){
@@ -112,6 +112,21 @@
       if(stage){
         const due=stage==="deposit"?payment.depositCents:payment.balanceCents;
         paymentBox.append(make("p","studio-payment-due","Next: "+(stage==="deposit"?"50% deposit":"50% final balance")+" · "+amountText(due)));
+        const sandboxNotice=make("p","studio-footnote","SANDBOX ONLY — this payment link uses test funds. Never send it to a real customer.");
+        const sandboxButton=make("button","btn outline","Create Sandbox payment link");sandboxButton.type="button";
+        const sandboxResult=make("div","studio-shipping-link");
+        sandboxButton.addEventListener("click",async()=>{
+          sandboxButton.disabled=true;sandboxResult.replaceChildren();
+          try{
+            const result=await api("payment-link",{method:"POST",body:{id:order.id,stage}});
+            const field=make("textarea","studio-link-field");field.readOnly=true;field.rows=3;field.value=result.url;
+            const copy=make("button","btn outline","Copy test link");copy.type="button";
+            copy.addEventListener("click",async()=>{try{await navigator.clipboard.writeText(result.url);copy.textContent="Copied!";}catch{field.select();showMessage("Copy the selected test link manually.");}});
+            sandboxResult.append(make("p","studio-footnote","Sandbox test link. Creating another link invalidates this one. Expires "+formatDate(result.expiresAt)+"."),copy,field);
+          }catch(e){showMessage(e.message);}
+          finally{sandboxButton.disabled=false;}
+        });
+        paymentBox.append(sandboxNotice,sandboxButton,sandboxResult);
         const paymentForm=make("form","studio-payment-form");
         const refLabel=make("label","","PayPal transaction ID (from PayPal activity)");
         const refInput=make("input");refInput.type="text";refInput.minLength=6;refInput.maxLength=100;refInput.pattern="[A-Za-z0-9_-]{6,100}";refInput.required=true;refInput.placeholder="Transaction ID";refLabel.append(refInput);
