@@ -5,6 +5,7 @@ const validId=id=>/^LH-\d{8}-[A-F0-9]{8}$/.test(id||"");
 const key=id=>`enquiries/${id}/payment.json`;
 const accessKey=id=>`enquiries/${id}/payment-access.json`;
 const orderKey=id=>`enquiries/${id}/paypal-sandbox-order.json`;
+const sandboxKey=id=>`enquiries/${id}/paypal-sandbox-payments.json`;
 async function read(bucket,path){const obj=await bucket.get(path);if(!obj)return null;try{return await obj.json();}catch{return null;}}
 async function digest(value){const bytes=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(value));return Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,"0")).join("");}
 function equal(a,b){if(typeof a!=="string"||typeof b!=="string"||a.length!==64||b.length!==64)return false;let diff=0;for(let i=0;i<64;i++)diff|=a.charCodeAt(i)^b.charCodeAt(i);return diff===0;}
@@ -33,7 +34,7 @@ export async function onRequestPost({request,env}){
   if(!/^[a-f0-9]{64}$/.test(token))return json({ok:false,message:"Invalid payment link."},403);
   try{
     const bucket=env.PORTRAIT_UPLOADS;
-    const [access,payment,order]=await Promise.all([read(bucket,accessKey(id)),read(bucket,key(id)),read(bucket,`enquiries/${id}/details.json`)]);
+    const [access,payment,order,sandbox]=await Promise.all([read(bucket,accessKey(id)),read(bucket,key(id)),read(bucket,`enquiries/${id}/details.json`),read(bucket,sandboxKey(id))]);
     if(!access||access.id!==id||Date.parse(access.expiresAt)<=Date.now()||!equal(await digest(token),access.tokenHash))
       return json({ok:false,message:"This payment link has expired or was replaced. Please contact the studio."},403);
     if(!payment||!order||order.id!==id||order.type!=="commission"||["Cancelled","Shipped","Completed"].includes(order.status))
@@ -41,12 +42,12 @@ export async function onRequestPost({request,env}){
     const stage=access.stage;
     if(!["deposit","balance"].includes(stage)||access.quotedAt!==payment.quotedAt)
       return json({ok:false,message:"The price has changed. Please request a new payment link."},409);
-    if(stage==="balance"&&!payment.deposit)return json({ok:false,message:"Deposit has not been recorded yet."},409);
+    if(stage==="balance"&&!(sandbox?.quotedAt===payment.quotedAt&&sandbox.deposit))return json({ok:false,message:"Sandbox deposit has not been recorded yet."},409);
     const cents=stage==="deposit"?payment.depositCents:payment.balanceCents;
     if(!Number.isInteger(cents)||cents<100||cents>10000000)return json({ok:false,message:"Invalid payment amount."},409);
     const amount=(cents/100).toFixed(2);
-    if(action==="view")return json({ok:true,id,petName:order.petName||"Pet portrait",stage,amount,currency:"AUD",paid:!!payment[stage],clientId:env.PAYPAL_CLIENT_ID,sandbox:true});
-    if(payment[stage])return json({ok:false,message:"This instalment has already been recorded as paid."},409);
+    if(action==="view")return json({ok:true,id,petName:order.petName||"Pet portrait",stage,amount,currency:"AUD",paid:!!(sandbox?.quotedAt===payment.quotedAt&&sandbox[stage]),clientId:env.PAYPAL_CLIENT_ID,sandbox:true});
+    if(sandbox?.quotedAt===payment.quotedAt&&sandbox[stage])return json({ok:false,message:"This Sandbox instalment has already been recorded as paid."},409);
     if(action==="create"){
       const previous=await read(bucket,orderKey(id));
       if(previous?.stage===stage&&previous?.quotedAt===payment.quotedAt&&previous?.tokenHash===access.tokenHash&&previous?.paypalOrderId&&Date.parse(previous.createdAt)>Date.now()-60*60*1000)
@@ -70,9 +71,11 @@ export async function onRequestPost({request,env}){
     if(result.status!=="COMPLETED"||!matched||reference!==id+"-"+stage)throw Error("PayPal capture could not be verified.");
     const latest=await read(bucket,key(id));
     if(!latest||latest.quotedAt!==payment.quotedAt)return json({ok:false,message:"Order changed during checkout. Contact the studio."},409);
-    if(!latest[stage]){
-      latest[stage]={reference:matched.id,paypalOrderId:result.id,amountCents:cents,verifiedAt:new Date().toISOString(),verification:"paypal-sandbox-capture",sandbox:true};
-      await bucket.put(key(id),JSON.stringify(latest),{httpMetadata:{contentType:"application/json"}});
+    const sandboxLatest=await read(bucket,sandboxKey(id));
+    const ledger=sandboxLatest?.quotedAt===payment.quotedAt?sandboxLatest:{id,quotedAt:payment.quotedAt};
+    if(!ledger[stage]){
+      ledger[stage]={reference:matched.id,paypalOrderId:result.id,amountCents:cents,verifiedAt:new Date().toISOString(),verification:"paypal-sandbox-capture",sandbox:true};
+      await bucket.put(sandboxKey(id),JSON.stringify(ledger),{httpMetadata:{contentType:"application/json"}});
     }
     return json({ok:true,paid:true,sandbox:true,stage,amount});
   }catch(e){console.error("Sandbox checkout failed",e.message);return json({ok:false,message:"Sandbox payment could not be completed. Please retry or contact the studio."},502);}
