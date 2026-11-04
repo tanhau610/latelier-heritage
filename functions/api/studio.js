@@ -5,6 +5,11 @@ const headers = {"Content-Type":"application/json; charset=utf-8","Cache-Control
 const respond = (body,status=200)=>new Response(JSON.stringify(body),{status,headers});
 const validId = id => /^LH-\d{8}-[A-F0-9]{8}$/.test(id||"");
 const detailKey = id => `enquiries/${id}/details.json`;
+const shippingKey = id => `enquiries/${id}/shipping.json`;
+const accessKey = id => `enquiries/${id}/shipping-access.json`;
+async function readJson(bucket,key){const obj=await bucket.get(key);if(!obj)return null;try{return await obj.json();}catch{return null;}}
+async function sha256(value){const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(value));return Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,"0")).join("");}
+
 async function sameSecret(a,b){
   if(typeof a!=="string"||typeof b!=="string"||a.length<32||b.length<32||a.length>256)return false;
   const encoder=new TextEncoder();
@@ -42,7 +47,8 @@ export async function onRequestGet(context){
         if(!validId(id))return null;
         const data=await getDetails(bucket,id);
         if(!data)return null;
-        return {id:data.id,receivedAt:data.receivedAt,name:data.name,email:data.email,petName:data.petName||"",size:data.size,pets:data.pets,country:data.country,card:!!data.card,story:data.story||"",estimatedPriceAUD:data.estimatedPriceAUD,status:statuses.has(data.status)?data.status:"New",internalNote:data.internalNote||"",updatedAt:data.updatedAt||null,photos:(data.photos||[]).map((p,i)=>({index:i,name:p.originalName||`Photo ${i+1}`}))};
+        const shipping=await readJson(bucket,shippingKey(id));
+        return {shipping:shipping?.details||null,shippingUpdatedAt:shipping?.updatedAt||null,id:data.id,receivedAt:data.receivedAt,name:data.name,email:data.email,petName:data.petName||"",size:data.size,pets:data.pets,country:data.country,card:!!data.card,story:data.story||"",estimatedPriceAUD:data.estimatedPriceAUD,status:statuses.has(data.status)?data.status:"New",internalNote:data.internalNote||"",updatedAt:data.updatedAt||null,photos:(data.photos||[]).map((p,i)=>({index:i,name:p.originalName||`Photo ${i+1}`}))};
       }))).filter(Boolean);
       orders.sort((a,b)=>String(b.receivedAt).localeCompare(String(a.receivedAt)));
       return respond({ok:true,orders,nextCursor:page.truncated?page.cursor||null:null});
@@ -65,10 +71,25 @@ export async function onRequestGet(context){
 export async function onRequestPost(context){
   const denied=await guard(context);if(denied)return denied;
   const {request,env}=context;
-  if(new URL(request.url).searchParams.get("action")!=="status")return respond({ok:false,message:"Unknown action."},404);
+  const action=new URL(request.url).searchParams.get("action");
+  if(!["status","shipping-link"].includes(action))return respond({ok:false,message:"Unknown action."},404);
   if(Number(request.headers.get("content-length")||0)>4096)return respond({ok:false,message:"Request too large."},413);
   let payload;try{payload=await request.json();}catch{return respond({ok:false,message:"Invalid request."},400);}
   const {id,status}=payload||{};
+  if(action==="shipping-link"){
+    if(!validId(id))return respond({ok:false,message:"Invalid order."},400);
+    try{
+      const order=await getDetails(env.PORTRAIT_UPLOADS,id);
+      if(!order)return respond({ok:false,message:"Order not found."},404);
+      if(["Shipped","Completed","Cancelled"].includes(order.status))return respond({ok:false,message:"This order cannot request new shipping details."},409);
+      const token=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,"0")).join("");
+      const expiresAt=new Date(Date.now()+14*24*60*60*1000).toISOString();
+      await env.PORTRAIT_UPLOADS.put(accessKey(id),JSON.stringify({id,tokenHash:await sha256(token),expiresAt,createdAt:new Date().toISOString()}),{httpMetadata:{contentType:"application/json"}});
+      const link=new URL("/shipping.html",request.url);
+      link.hash=new URLSearchParams({id,token}).toString();
+      return respond({ok:true,url:link.toString(),expiresAt});
+    }catch(e){console.error("Shipping link failed",e);return respond({ok:false,message:"Could not create shipping link."},500);}
+  }
   if(!validId(id)||!statuses.has(status))return respond({ok:false,message:"Invalid order or status."},400);
   if(typeof payload.internalNote!=="string"||payload.internalNote.length>1000)return respond({ok:false,message:"Note must be 1000 characters or fewer."},400);
   try{
