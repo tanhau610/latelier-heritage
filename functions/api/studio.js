@@ -1,0 +1,81 @@
+// Private studio dashboard API. The admin key must be a 32+ character Cloudflare secret.
+// Never embed STUDIO_ADMIN_KEY in frontend code or expose the private R2 bucket.
+const statuses = new Set(["New","Confirmed","Painting","Shipped","Completed","Cancelled"]);
+const headers = {"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store","X-Content-Type-Options":"nosniff","Referrer-Policy":"no-referrer"};
+const respond = (body,status=200)=>new Response(JSON.stringify(body),{status,headers});
+const validId = id => /^LH-\d{8}-[A-F0-9]{8}$/.test(id||"");
+const detailKey = id => `enquiries/${id}/details.json`;
+async function sameSecret(a,b){
+  if(typeof a!=="string"||typeof b!=="string"||a.length<32||b.length<32||a.length>256)return false;
+  const encoder=new TextEncoder();
+  const [x,y]=await Promise.all([crypto.subtle.digest("SHA-256",encoder.encode(a)),crypto.subtle.digest("SHA-256",encoder.encode(b))]);
+  const left=new Uint8Array(x),right=new Uint8Array(y);
+  let diff=0;for(let i=0;i<left.length;i++)diff|=left[i]^right[i];
+  return diff===0;
+}
+async function guard({request,env}){
+  if(!env.PORTRAIT_UPLOADS||!env.STUDIO_ADMIN_KEY||env.STUDIO_ADMIN_KEY.length<32)
+    return respond({ok:false,message:"Studio access is not configured. Set STUDIO_ADMIN_KEY (32+ characters) in Cloudflare."},503);
+  const origin=request.headers.get("Origin");
+  if(origin&&origin!==new URL(request.url).origin)return respond({ok:false,message:"Origin not allowed."},403);
+  const authorization=request.headers.get("Authorization")||"";
+  const key=authorization.startsWith("Bearer ")?authorization.slice(7):"";
+  if(!(await sameSecret(key,env.STUDIO_ADMIN_KEY)))return respond({ok:false,message:"Incorrect access key."},401);
+  return null;
+}
+async function getDetails(bucket,id){
+  const obj=await bucket.get(detailKey(id));
+  if(!obj)return null;
+  try{const data=await obj.json();return data&&data.type==="commission"&&data.id===id?data:null;}catch{return null;}
+}
+export async function onRequestGet(context){
+  const denied=await guard(context);if(denied)return denied;
+  const {request,env}=context, url=new URL(request.url), action=url.searchParams.get("action")||"list", bucket=env.PORTRAIT_UPLOADS;
+  try{
+    if(action==="list"){
+      const cursor=url.searchParams.get("cursor")||undefined;
+      if(cursor&&cursor.length>1024)return respond({ok:false,message:"Invalid cursor."},400);
+      const page=await bucket.list({prefix:"enquiries/",delimiter:"/",limit:100,...(cursor?{cursor}:{})});
+      const prefixes=(page.delimitedPrefixes||[]).slice(0,100);
+      const orders=(await Promise.all(prefixes.map(async prefix=>{
+        const id=prefix.replace(/^enquiries\//,"").replace(/\/$/,"");
+        if(!validId(id))return null;
+        const data=await getDetails(bucket,id);
+        if(!data)return null;
+        return {id:data.id,receivedAt:data.receivedAt,name:data.name,email:data.email,petName:data.petName||"",size:data.size,pets:data.pets,country:data.country,card:!!data.card,story:data.story||"",estimatedPriceAUD:data.estimatedPriceAUD,status:statuses.has(data.status)?data.status:"New",internalNote:data.internalNote||"",updatedAt:data.updatedAt||null,photos:(data.photos||[]).map((p,i)=>({index:i,name:p.originalName||`Photo ${i+1}`}))};
+      }))).filter(Boolean);
+      orders.sort((a,b)=>String(b.receivedAt).localeCompare(String(a.receivedAt)));
+      return respond({ok:true,orders,nextCursor:page.truncated?page.cursor||null:null});
+    }
+    if(action==="photo"){
+      const id=url.searchParams.get("id"), index=Number(url.searchParams.get("index"));
+      if(!validId(id)||!Number.isInteger(index)||index<0||index>4)return respond({ok:false,message:"Invalid image request."},400);
+      const data=await getDetails(bucket,id);
+      const key=data?.photos?.[index]?.key;
+      if(typeof key!=="string"||!key.startsWith(`enquiries/${id}/photos/`)||!/^enquiries\/LH-\d{8}-[A-F0-9]{8}\/photos\/\d{2}\.(jpg|png|webp)$/.test(key))return respond({ok:false,message:"Image not found."},404);
+      const object=await bucket.get(key);
+      if(!object)return respond({ok:false,message:"Image not found."},404);
+      const type=object.httpMetadata?.contentType;
+      const safeType=["image/jpeg","image/png","image/webp"].includes(type)?type:"application/octet-stream";
+      return new Response(object.body,{headers:{"Content-Type":safeType,"Content-Disposition":"inline","Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff","Referrer-Policy":"no-referrer"}});
+    }
+    return respond({ok:false,message:"Unknown action."},404);
+  }catch(e){console.error("Studio read failed",e);return respond({ok:false,message:"Unable to load studio records."},500);}
+}
+export async function onRequestPost(context){
+  const denied=await guard(context);if(denied)return denied;
+  const {request,env}=context;
+  if(new URL(request.url).searchParams.get("action")!=="status")return respond({ok:false,message:"Unknown action."},404);
+  if(Number(request.headers.get("content-length")||0)>4096)return respond({ok:false,message:"Request too large."},413);
+  let payload;try{payload=await request.json();}catch{return respond({ok:false,message:"Invalid request."},400);}
+  const {id,status}=payload||{};
+  if(!validId(id)||!statuses.has(status))return respond({ok:false,message:"Invalid order or status."},400);
+  if(typeof payload.internalNote!=="string"||payload.internalNote.length>1000)return respond({ok:false,message:"Note must be 1000 characters or fewer."},400);
+  try{
+    const data=await getDetails(env.PORTRAIT_UPLOADS,id);
+    if(!data)return respond({ok:false,message:"Order not found."},404);
+    data.status=status;data.internalNote=payload.internalNote.trim();data.updatedAt=new Date().toISOString();
+    await env.PORTRAIT_UPLOADS.put(detailKey(id),JSON.stringify(data,null,2),{httpMetadata:{contentType:"application/json"}});
+    return respond({ok:true,id,status,updatedAt:data.updatedAt});
+  }catch(e){console.error("Studio update failed",e);return respond({ok:false,message:"Could not update order."},500);}
+}
