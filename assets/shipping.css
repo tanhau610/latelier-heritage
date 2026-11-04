@@ -1,0 +1,24 @@
+.shipping-page{background:#f7f4ef;color:#352b27;min-height:100vh}
+.shipping-header{background:#f1ebe3;border-bottom:1px solid #e4d9cc;padding:25px max(20px,6vw);display:flex;justify-content:space-between;align-items:center;gap:20px}
+.shipping-brand{font:500 29px Georgia,serif;color:#3a2924;text-decoration:none}
+.shipping-header span{font:600 10px Arial,sans-serif;letter-spacing:.17em;color:#855d57}
+.shipping-main{max-width:790px;margin:0 auto;padding:65px 20px 100px}
+.shipping-card{background:white;border:1px solid #e8ded3;padding:clamp(24px,5vw,60px);box-shadow:0 20px 50px #473a2d09}
+.shipping-eyebrow{font:600 10px Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#98645a}
+.shipping-card h1{font:500 clamp(43px,6vw,66px)/1.06 Georgia,serif;letter-spacing:-.03em;margin:17px 0 20px}
+.shipping-intro{font-size:14px;color:#77695f;line-height:1.85;max-width:550px}
+.shipping-message{font-size:13px;color:#79474a;background:#faf6f0;padding:14px 16px;margin:26px 0;line-height:1.6}
+#shipping-form{display:grid;gap:19px}
+#shipping-form[hidden]{display:none}
+.shipping-order{border-bottom:1px solid #e8e1d9;padding:0 0 20px;font-size:13px;color:#73655b}
+#shipping-form label{display:grid;gap:8px;font:600 12px Arial,sans-serif;color:#51423b}
+#shipping-form label span{color:#99514e}
+#shipping-form input{border:1px solid #d9cfc4;background:#fff;padding:14px 13px;border-radius:0;width:100%;min-height:46px;color:#312722;font:14px Arial,sans-serif}
+#shipping-form input:focus{outline:2px solid #8e6660;outline-offset:2px}
+#shipping-form input[readonly]{background:#f6f2ec;color:#756b61}
+.shipping-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.shipping-note,.shipping-footer{font-size:12px;color:#7e7066;line-height:1.8}
+.shipping-button{background:#683b40;border:0;color:white;padding:17px 24px;text-transform:uppercase;letter-spacing:.1em;font:600 11px Arial,sans-serif;cursor:pointer;justify-self:start}
+.shipping-button:disabled{opacity:.5;cursor:wait}
+.shipping-footer{border-top:1px solid #eee6dd;padding-top:23px;margin-top:32px}
+@media(max-width:550px){.shipping-header span{display:none}.shipping-grid{grid-template-columns:1fr}.shipping-main{padding-top:25px}.shipping-card{padding:25px 20px}.shipping-card h1{font-size:44px}}
