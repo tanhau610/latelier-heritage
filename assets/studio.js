@@ -39,6 +39,7 @@
       state.cursor=result.nextCursor||null;
       renderList();
       if(!state.selected&&state.orders.length)select(state.orders[0].id);
+      else if(state.selected&&state.orders.some(o=>o.id===state.selected))select(state.selected);
       if(state.selected&&!state.orders.some(o=>o.id===state.selected)){state.selected=null;panel.replaceChildren(make("div","studio-empty","Select an enquiry to view its details."));}
       showMessage(state.orders.length?"Records are private. Reference photos load only after authentication.":"No portrait enquiries found yet.");
     }catch(e){showMessage(e.message);}
@@ -53,7 +54,7 @@
       const button=make("button","studio-order"+(state.selected===o.id?" selected":""),undefined);
       button.type="button";button.addEventListener("click",()=>select(o.id));
       const top=make("div","studio-order-top");top.append(make("strong","",o.petName||"Pet portrait"),make("span","studio-status status-"+o.status.toLowerCase(),labels[o.status]||o.status));
-      button.append(top,make("div","studio-order-name",o.name||"Unnamed customer"),make("div","studio-order-meta",o.id+" · "+formatDate(o.receivedAt)),make("div","studio-order-price",money(o.payment?.totalCents/100??o.estimatedPriceAUD)),make("div","studio-order-meta",o.payment?.balance?"Paid in full · manually verified":o.payment?.deposit?"Deposit recorded · balance due":o.payment?"Awaiting 50% deposit":"No agreed quote"));
+      button.append(top,make("div","studio-order-name",o.name||"Unnamed customer"),make("div","studio-order-meta",o.id+" · "+formatDate(o.receivedAt)),make("div","studio-order-price",money(o.payment?o.payment.totalCents/100:o.estimatedPriceAUD)),make("div","studio-order-meta",o.payment?.balance?"Paid in full · manually verified":o.payment?.deposit?"Deposit recorded · balance due":o.payment?"Awaiting 50% deposit":"No agreed quote"));
       list.append(button);
     }
     $("load-more").hidden=!state.cursor;
