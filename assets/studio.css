@@ -1,0 +1,48 @@
+.studio-page{background:#f7f4ee;min-height:100vh}
+.studio-header{height:94px;padding:0 max(30px,5vw);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #ded6cb;background:#f2ede5}
+.studio-brand .wordmark{display:block;font-size:29px}.studio-brand .descriptor{color:#7b625c}.studio-back{font-size:12px;color:#705153;text-transform:uppercase;letter-spacing:.08em}
+.studio-main{max-width:1500px;margin:0 auto;padding:70px 5vw 110px}
+.studio-login{max-width:640px;margin:8vh auto 0;background:white;padding:65px;border:1px solid #e1d7cc;box-shadow:0 22px 65px #4032220b}
+.studio-login h1{font-size:clamp(56px,6vw,83px);margin:15px 0 25px}
+.studio-login p{color:#6f645b;font-size:14px}.studio-login form{display:flex;flex-direction:column;gap:12px;margin-top:35px}
+.studio-login label,.studio-toolbar label span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.13em}
+.studio-login input,.studio-toolbar input,.studio-toolbar select,.studio-update select,.studio-update textarea{width:100%;min-height:48px;padding:12px 14px;background:#fff;border:1px solid #d8cdc1;color:#30291d;outline-offset:3px;border-radius:0}
+.studio-login .btn{align-self:flex-start;margin-top:8px}
+.studio-footnote{font-size:11px!important;color:#82766b!important;margin-top:22px}
+.studio-message{font-size:13px;color:#7d4748;min-height:20px;margin:15px 0}
+.studio-heading{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:30px}
+.studio-heading h1{font-size:clamp(60px,7vw,90px);margin:12px 0 13px}.studio-heading p{font-size:13px;color:#76695e}
+.studio-text-button{background:none;border:0;color:#713f43;font-size:12px;text-transform:uppercase;letter-spacing:.1em;cursor:pointer;padding:14px 0;white-space:nowrap}
+.studio-toolbar{display:flex;gap:14px;align-items:flex-end;margin:35px 0 12px}
+.studio-toolbar label{display:flex;flex-direction:column;gap:10px;flex:1}
+.studio-toolbar .studio-filter{max-width:240px}.studio-toolbar .btn{height:48px;min-height:48px}
+.studio-layout{display:grid;grid-template-columns:minmax(280px,38%) minmax(0,62%);gap:20px;align-items:start}
+.studio-list-panel,.studio-detail-panel{background:#fff;border:1px solid #e0d8cd;min-height:420px}
+.studio-panel-title{padding:21px 23px;border-bottom:1px solid #e6dfd5;display:flex;justify-content:space-between;font-size:11px;letter-spacing:.15em;text-transform:uppercase;font-weight:700}
+.studio-order-list{max-height:75vh;overflow:auto}
+.studio-order{width:100%;border:0;border-bottom:1px solid #eae4dc;text-align:left;background:#fff;padding:22px 23px;cursor:pointer;transition:background .2s}
+.studio-order:hover{background:#faf7f2}.studio-order.selected{background:#f4ece6;border-left:3px solid #713f43;padding-left:20px}
+.studio-order-top{display:flex;align-items:center;justify-content:space-between;gap:12px}.studio-order-top strong{font:500 27px/1.1 'Cormorant Garamond',Georgia,serif}
+.studio-order-name{font-size:13px;margin:12px 0 5px}.studio-order-meta{font-size:11px;color:#8a7d70;overflow-wrap:anywhere}
+.studio-order-price{font-size:13px;font-weight:700;margin-top:10px;color:#713f43}
+.studio-status{font-size:10px;letter-spacing:.02em;white-space:nowrap;background:#eee9e1;padding:7px 9px;color:#665d52;border-radius:2px}
+.status-new{background:#f4e6d4;color:#7e5d2d}.status-confirmed{background:#e4eae0;color:#426049}.status-painting{background:#e5e3ef;color:#555176}.status-shipped{background:#e1ebef;color:#3c6274}.status-completed{background:#dcebdd;color:#2f6240}.status-cancelled{background:#f2e4e4;color:#894b4b}
+.studio-more{display:block;width:100%;padding:17px;border:0;background:#f5f1ea;color:#713f43;cursor:pointer;font-size:12px}
+.studio-list-empty{padding:24px;color:#7d7368;font-size:13px}
+.studio-detail-panel{padding:34px;overflow:hidden}.studio-empty{padding:80px 20px;text-align:center;color:#8d8174;font-size:14px}
+.studio-detail-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:1px solid #e5ded4;padding-bottom:22px}
+.studio-detail-head h2{font-size:clamp(39px,4vw,58px);margin:10px 0}.studio-reference{font-size:12px;color:#8a796e;overflow-wrap:anywhere}
+.studio-details{display:grid;grid-template-columns:1fr 1fr;gap:14px 25px;margin:25px 0}
+.studio-detail-row{border-bottom:1px solid #f0ebe5;padding-bottom:11px;min-width:0}
+.studio-detail-row dt{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#827568;margin-bottom:7px}
+.studio-detail-row dd{margin:0;font-size:13px;overflow-wrap:anywhere;line-height:1.5}
+.studio-email{display:inline-block;color:#713f43;font-size:12px;border-bottom:1px solid #713f43;padding-bottom:5px;margin-bottom:18px}
+.studio-subheading{font-size:32px;margin:28px 0 13px}.studio-story{white-space:pre-wrap;overflow-wrap:anywhere;color:#695e55;font-size:13px}
+.studio-photo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.studio-photo{margin:0;min-width:0}.studio-photo-holder{background:#f4f0e9;min-height:120px;display:flex;align-items:center;justify-content:center;color:#897c6e;font-size:11px;text-align:center}
+.studio-photo-link{width:100%;display:block}.studio-photo img{width:100%;height:190px;object-fit:cover}.studio-photo figcaption{font-size:11px;color:#7a6f64;margin-top:7px;overflow-wrap:anywhere}
+.studio-update{background:#f8f5f0;border:1px solid #e7dfd4;padding:22px;display:grid;gap:15px}
+.studio-update label{display:grid;gap:8px;font-size:12px;font-weight:600}.studio-update textarea{resize:vertical;min-height:100px}
+.studio-update .btn{justify-self:start}.studio-update .btn:disabled,.studio-toolbar button:disabled{opacity:.6;cursor:wait}
+@media(max-width:950px){.studio-layout{grid-template-columns:1fr}.studio-order-list{max-height:370px}.studio-photo-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.studio-header{height:75px;padding:0 20px}.studio-brand .wordmark{font-size:23px}.studio-back{font-size:10px}.studio-main{padding:35px 17px 80px}.studio-login{padding:30px 23px;margin-top:25px}.studio-heading{align-items:flex-start}.studio-heading h1{font-size:59px}.studio-toolbar{flex-wrap:wrap}.studio-toolbar .studio-search{flex-basis:100%}.studio-toolbar .studio-filter{max-width:none;flex:1}.studio-detail-panel{padding:22px}.studio-photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.studio-photo img{height:155px}.studio-detail-head{flex-direction:column}}
