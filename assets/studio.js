@@ -76,6 +76,35 @@
     const emailLink=make("a","studio-email","Reply to customer");emailLink.href="mailto:"+encodeURIComponent(order.email||"");panel.append(emailLink);
     panel.append(sectionHeading("Customer’s story"));
     panel.append(make("p","studio-story",order.story||"No special requests."));
+    panel.append(sectionHeading("Delivery address"));
+    const shippingBox=make("div","studio-shipping");
+    if(order.shipping){
+      const sh=order.shipping;
+      const address=[sh.fullName,sh.phone,sh.address1,sh.address2,sh.city,sh.region,sh.postalCode,sh.country].filter(Boolean).join("\n");
+      shippingBox.append(make("p","studio-shipping-address",address));
+      if(order.shippingUpdatedAt)shippingBox.append(make("p","studio-footnote","Customer updated "+formatDate(order.shippingUpdatedAt)));
+    }else shippingBox.append(make("p","studio-story","No delivery address submitted yet."));
+    const linkHelp=make("p","studio-footnote","Create a private link to request the customer’s delivery address. It expires in 14 days. Creating a new link cancels the previous one.");
+    const linkButton=make("button","btn","Create shipping link");linkButton.type="button";
+    const linkResult=make("div","studio-shipping-link");
+    linkButton.addEventListener("click",async()=>{
+      linkButton.disabled=true;linkButton.textContent="Creating…";linkResult.replaceChildren();
+      try{
+        const result=await api("shipping-link",{method:"POST",body:{id:order.id}});
+        const label=make("p","studio-footnote","Private link created. Copy and email it to the customer. Expires "+formatDate(result.expiresAt)+".");
+        const copy=make("button","btn outline","Copy private link");copy.type="button";
+        copy.addEventListener("click",async()=>{
+          try{await navigator.clipboard.writeText(result.url);copy.textContent="Copied!";}catch{showMessage("Clipboard unavailable. Select and copy the link from the box.");}
+        });
+        const field=make("textarea","studio-link-field");field.readOnly=true;field.rows=3;field.value=result.url;
+        const mail=make("a","studio-email","Prepare email to customer");
+        mail.href="mailto:"+encodeURIComponent(order.email||"")+"?subject="+encodeURIComponent("Delivery details for your L’Atelier Heritage portrait "+order.id)+"&body="+encodeURIComponent("Hello "+order.name+",\n\nPlease use this secure link to confirm the delivery address for your portrait:\n"+result.url+"\n\nThis link expires in 14 days.\n\nKind regards,\nL’Atelier Heritage");
+        linkResult.append(label,copy,field,mail);
+      }catch(e){showMessage(e.message);}
+      finally{linkButton.disabled=false;linkButton.textContent="Create shipping link";}
+    });
+    shippingBox.append(linkHelp,linkButton,linkResult);
+    panel.append(shippingBox);
     panel.append(sectionHeading("Reference photographs"));
     const gallery=make("div","studio-photo-grid");panel.append(gallery);
     if(!order.photos?.length)gallery.append(make("p","studio-story","No reference photographs."));
