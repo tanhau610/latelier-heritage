@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Cache-Control" content="no-store">
+  <title>Secure Shipping Details | L’Atelier Heritage</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="assets/shipping.css">
+</head>
+<body class="shipping-page">
+  <header class="shipping-header">
+    <a href="index.html" class="shipping-brand">L’Atelier Heritage</a>
+    <span>PRIVATE DELIVERY DETAILS</span>
+  </header>
+  <main class="shipping-main">
+    <section class="shipping-card">
+      <span class="shipping-eyebrow">A personal touch, delivered with care</span>
+      <h1>Your portrait’s journey.</h1>
+      <p class="shipping-intro">Please confirm where your hand-painted portrait should be delivered. Your address is stored privately and is only used to arrange shipping.</p>
+      <p id="shipping-message" class="shipping-message" role="status">Checking your secure link…</p>
+      <form id="shipping-form" hidden>
+        <p class="shipping-order">Order <strong id="order-reference"></strong> · <span id="order-pet"></span></p>
+        <label>Recipient’s full name <span>*</span><input name="fullName" autocomplete="name" maxlength="120" required></label>
+        <label>Phone number (including country code) <span>*</span><input name="phone" type="tel" autocomplete="tel" maxlength="40" placeholder="+61 ..." required></label>
+        <label>Street address <span>*</span><input name="address1" autocomplete="address-line1" maxlength="180" required></label>
+        <label>Apartment, unit, building (optional)<input name="address2" autocomplete="address-line2" maxlength="180"></label>
+        <div class="shipping-grid">
+          <label>City / Suburb <span>*</span><input name="city" autocomplete="address-level2" maxlength="100" required></label>
+          <label>State / Province<input name="region" autocomplete="address-level1" maxlength="100"></label>
+          <label>Postal / ZIP code <span>*</span><input name="postalCode" autocomplete="postal-code" maxlength="32" required></label>
+          <label>Country<input id="shipping-country" readonly></label>
+        </div>
+        <p class="shipping-note">Please double-check your address. We will contact you if additional information is needed for international delivery.</p>
+        <button id="save-shipping" class="shipping-button" type="submit">Save delivery details</button>
+      </form>
+      <p class="shipping-footer">Need help? Reply to your email conversation with L’Atelier Heritage. Never share your private link publicly.</p>
+    </section>
+  </main>
+  <script defer src="assets/shipping.js"></script>
+</body>
+</html>
