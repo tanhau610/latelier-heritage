@@ -7,6 +7,11 @@ const validId = id => /^LH-\d{8}-[A-F0-9]{8}$/.test(id||"");
 const detailKey = id => `enquiries/${id}/details.json`;
 const shippingKey = id => `enquiries/${id}/shipping.json`;
 const accessKey = id => `enquiries/${id}/shipping-access.json`;
+const paymentKey = id => `enquiries/${id}/payment.json`;
+const paymentAccessKey = id => `enquiries/${id}/payment-access.json`;
+const sandboxPaymentKey = id => `enquiries/${id}/paypal-sandbox-payments.json`;
+const moneyCents = aud => Math.round(aud * 100);
+const validAmount = value => Number.isInteger(value) && value >= 50 && value <= 100000;
 async function readJson(bucket,key){const obj=await bucket.get(key);if(!obj)return null;try{return await obj.json();}catch{return null;}}
 async function sha256(value){const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(value));return Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,"0")).join("");}
 
@@ -48,7 +53,9 @@ export async function onRequestGet(context){
         const data=await getDetails(bucket,id);
         if(!data)return null;
         const shipping=await readJson(bucket,shippingKey(id));
-        return {shipping:shipping?.details||null,shippingUpdatedAt:shipping?.updatedAt||null,id:data.id,receivedAt:data.receivedAt,name:data.name,email:data.email,petName:data.petName||"",size:data.size,pets:data.pets,country:data.country,card:!!data.card,story:data.story||"",estimatedPriceAUD:data.estimatedPriceAUD,status:statuses.has(data.status)?data.status:"New",internalNote:data.internalNote||"",updatedAt:data.updatedAt||null,photos:(data.photos||[]).map((p,i)=>({index:i,name:p.originalName||`Photo ${i+1}`}))};
+        const payment=await readJson(bucket,paymentKey(id));
+        const sandboxPayment=await readJson(bucket,sandboxPaymentKey(id));
+        return {sandboxPayment:sandboxPayment?.quotedAt===payment?.quotedAt?sandboxPayment:null,payment:payment||null,shipping:shipping?.details||null,shippingUpdatedAt:shipping?.updatedAt||null,id:data.id,receivedAt:data.receivedAt,name:data.name,email:data.email,petName:data.petName||"",size:data.size,pets:data.pets,country:data.country,card:!!data.card,story:data.story||"",estimatedPriceAUD:data.estimatedPriceAUD,status:statuses.has(data.status)?data.status:"New",internalNote:data.internalNote||"",updatedAt:data.updatedAt||null,photos:(data.photos||[]).map((p,i)=>({index:i,name:p.originalName||`Photo ${i+1}`}))};
       }))).filter(Boolean);
       orders.sort((a,b)=>String(b.receivedAt).localeCompare(String(a.receivedAt)));
       return respond({ok:true,orders,nextCursor:page.truncated?page.cursor||null:null});
@@ -72,7 +79,7 @@ export async function onRequestPost(context){
   const denied=await guard(context);if(denied)return denied;
   const {request,env}=context;
   const action=new URL(request.url).searchParams.get("action");
-  if(!["status","shipping-link"].includes(action))return respond({ok:false,message:"Unknown action."},404);
+  if(!["status","shipping-link","payment-quote","payment-record","payment-link"].includes(action))return respond({ok:false,message:"Unknown action."},404);
   if(Number(request.headers.get("content-length")||0)>4096)return respond({ok:false,message:"Request too large."},413);
   let payload;try{payload=await request.json();}catch{return respond({ok:false,message:"Invalid request."},400);}
   const {id,status}=payload||{};
@@ -90,11 +97,62 @@ export async function onRequestPost(context){
       return respond({ok:true,url:link.toString(),expiresAt});
     }catch(e){console.error("Shipping link failed",e);return respond({ok:false,message:"Could not create shipping link."},500);}
   }
+  if(action==="payment-link"){
+    if(!env.PAYPAL_CLIENT_ID||!env.PAYPAL_CLIENT_SECRET)return respond({ok:false,message:"Sandbox PayPal credentials are not configured in this environment."},503);
+    if(!validId(id)||!["deposit","balance"].includes(payload.stage))return respond({ok:false,message:"Invalid order or instalment."},400);
+    try{
+      const bucket=env.PORTRAIT_UPLOADS;
+      const [order,payment,sandbox]=await Promise.all([getDetails(bucket,id),readJson(bucket,paymentKey(id)),readJson(bucket,sandboxPaymentKey(id))]);
+      if(!order||!payment||["Cancelled","Shipped","Completed"].includes(order.status))return respond({ok:false,message:"Order cannot request payment."},409);
+      if(sandbox?.quotedAt===payment.quotedAt&&sandbox[payload.stage])return respond({ok:false,message:"This Sandbox instalment has already been recorded."},409);
+      if(payload.stage==="balance"&&!(sandbox?.quotedAt===payment.quotedAt&&sandbox.deposit))return respond({ok:false,message:"Complete the Sandbox deposit test first."},409);
+      const token=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,"0")).join("");
+      const expiresAt=new Date(Date.now()+14*24*60*60*1000).toISOString();
+      await bucket.put(paymentAccessKey(id),JSON.stringify({id,stage:payload.stage,quotedAt:payment.quotedAt,tokenHash:await sha256(token),expiresAt,createdAt:new Date().toISOString()}),{httpMetadata:{contentType:"application/json"}});
+      const link=new URL("/payment.html",request.url);
+      link.hash=new URLSearchParams({id,token}).toString();
+      return respond({ok:true,url:link.toString(),expiresAt,stage:payload.stage});
+    }catch(e){console.error("Payment link creation failed",e);return respond({ok:false,message:"Could not create payment link."},500);}
+  }
+  if(action==="payment-quote"||action==="payment-record"){
+    if(!validId(id))return respond({ok:false,message:"Invalid order."},400);
+    try{
+      const bucket=env.PORTRAIT_UPLOADS;
+      const order=await getDetails(bucket,id);
+      if(!order)return respond({ok:false,message:"Order not found."},404);
+      if(["Cancelled","Shipped","Completed"].includes(order.status))return respond({ok:false,message:"This order cannot be updated for payment."},409);
+      const key=paymentKey(id);
+      const current=await readJson(bucket,key);
+      const now=new Date().toISOString();
+      if(action==="payment-quote"){
+        const totalAUD=payload.totalAUD;
+        if(!validAmount(totalAUD))return respond({ok:false,message:"Enter a confirmed whole-AUD price between A$50 and A$100,000."},400);
+        if(current?.deposit||current?.balance)return respond({ok:false,message:"A payment is already recorded. The agreed price cannot be changed here."},409);
+        const totalCents=moneyCents(totalAUD);
+        const record={id,currency:"AUD",totalCents,depositCents:Math.floor(totalCents/2),balanceCents:totalCents-Math.floor(totalCents/2),quotedAt:now};
+        await bucket.put(key,JSON.stringify(record),{httpMetadata:{contentType:"application/json"}});
+        return respond({ok:true,payment:record});
+      }
+      if(!current||!Number.isInteger(current.totalCents))return respond({ok:false,message:"Confirm the final price before recording a payment."},409);
+      const stage=payload.stage,reference=String(payload.reference||"").trim();
+      if(!["deposit","balance"].includes(stage)||!payload.verified||!/^[A-Za-z0-9_-]{6,100}$/.test(reference))
+        return respond({ok:false,message:"Verify the transaction in PayPal and enter its transaction ID (6–100 letters/numbers)."},400);
+      if(current[stage])return respond({ok:false,message:"This payment stage has already been recorded."},409);
+      if(stage==="balance"&&!current.deposit)return respond({ok:false,message:"Record the verified deposit first."},409);
+      if(stage==="balance"&&current.deposit?.reference===reference)return respond({ok:false,message:"Use the unique transaction ID for the second payment."},409);
+      current[stage]={reference,amountCents:stage==="deposit"?current.depositCents:current.balanceCents,verifiedAt:now,verification:"manually-confirmed-by-studio"};
+      await bucket.put(key,JSON.stringify(current),{httpMetadata:{contentType:"application/json"}});
+      return respond({ok:true,payment:current});
+    }catch(e){console.error("Payment tracking failed",e);return respond({ok:false,message:"Could not save payment tracking."},500);}
+  }
   if(!validId(id)||!statuses.has(status))return respond({ok:false,message:"Invalid order or status."},400);
   if(typeof payload.internalNote!=="string"||payload.internalNote.length>1000)return respond({ok:false,message:"Note must be 1000 characters or fewer."},400);
   try{
     const data=await getDetails(env.PORTRAIT_UPLOADS,id);
     if(!data)return respond({ok:false,message:"Order not found."},404);
+    const payment=await readJson(env.PORTRAIT_UPLOADS,paymentKey(id));
+    if(status!==data.status&&status==="Painting"&&!payment?.deposit)return respond({ok:false,message:"Verify and record the 50% deposit before starting painting."},409);
+    if(status!==data.status&&["Shipped","Completed"].includes(status)&&(!payment?.deposit||!payment?.balance))return respond({ok:false,message:"Verify and record both payments before shipping or completing the order."},409);
     data.status=status;data.internalNote=payload.internalNote.trim();data.updatedAt=new Date().toISOString();
     await env.PORTRAIT_UPLOADS.put(detailKey(id),JSON.stringify(data,null,2),{httpMetadata:{contentType:"application/json"}});
     return respond({ok:true,id,status,updatedAt:data.updatedAt});
