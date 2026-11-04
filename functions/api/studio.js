@@ -130,6 +130,9 @@ export async function onRequestPost(context){
   try{
     const data=await getDetails(env.PORTRAIT_UPLOADS,id);
     if(!data)return respond({ok:false,message:"Order not found."},404);
+    const payment=await readJson(env.PORTRAIT_UPLOADS,paymentKey(id));
+    if(status==="Painting"&&!payment?.deposit)return respond({ok:false,message:"Verify and record the 50% deposit before starting painting."},409);
+    if(["Shipped","Completed"].includes(status)&&(!payment?.deposit||!payment?.balance))return respond({ok:false,message:"Verify and record both payments before shipping or completing the order."},409);
     data.status=status;data.internalNote=payload.internalNote.trim();data.updatedAt=new Date().toISOString();
     await env.PORTRAIT_UPLOADS.put(detailKey(id),JSON.stringify(data,null,2),{httpMetadata:{contentType:"application/json"}});
     return respond({ok:true,id,status,updatedAt:data.updatedAt});
