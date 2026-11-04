@@ -76,6 +76,59 @@
     const emailLink=make("a","studio-email","Reply to customer");emailLink.href="mailto:"+encodeURIComponent(order.email||"");panel.append(emailLink);
     panel.append(sectionHeading("Customer’s story"));
     panel.append(make("p","studio-story",order.story||"No special requests."));
+    panel.append(sectionHeading("Payment plan · 50 / 50"));
+    const paymentBox=make("div","studio-payment");
+    const payment=order.payment;
+    const paymentNote=make("p","studio-footnote","Manual tracking only. This dashboard does NOT charge the customer or verify PayPal transactions automatically. Check the transaction in your own PayPal account before recording it.");
+    paymentBox.append(paymentNote);
+    const amountText=cents=>"A$"+(cents/100).toLocaleString("en-AU",{minimumFractionDigits:2,maximumFractionDigits:2});
+    if(!payment){
+      paymentBox.append(make("p","studio-story","No agreed quote yet. Confirm the final price with the customer before requesting a deposit."));
+    }else{
+      const summary=make("div","studio-payment-summary");
+      summary.append(make("p","","Agreed total: "+amountText(payment.totalCents)),
+        make("p","", "50% deposit: "+amountText(payment.depositCents)+" · "+(payment.deposit?"Verified manually":"Awaiting payment")),
+        make("p","", "50% balance: "+amountText(payment.balanceCents)+" · "+(payment.balance?"Verified manually":"Awaiting payment")));
+      paymentBox.append(summary);
+    }
+    if(!payment?.deposit&&!payment?.balance&&!["Cancelled","Shipped","Completed"].includes(order.status)){
+      const quoteForm=make("form","studio-payment-form");
+      const quoteLabel=make("label","","Agreed total price (AUD)");
+      const quoteInput=make("input");quoteInput.type="number";quoteInput.min="50";quoteInput.max="100000";quoteInput.step="1";quoteInput.required=true;quoteInput.value=String(payment?payment.totalCents/100:order.estimatedPriceAUD||"");
+      quoteLabel.append(quoteInput);
+      const quoteButton=make("button","btn outline",payment?"Update agreed price":"Confirm agreed price");quoteButton.type="submit";
+      quoteForm.append(quoteLabel,quoteButton);paymentBox.append(quoteForm);
+      quoteForm.addEventListener("submit",async e=>{
+        e.preventDefault();quoteButton.disabled=true;
+        try{
+          const result=await api("payment-quote",{method:"POST",body:{id:order.id,totalAUD:Number(quoteInput.value)}});
+          order.payment=result.payment;showMessage("Agreed price saved. No money has been charged.");select(order.id);
+        }catch(error){showMessage(error.message);quoteButton.disabled=false;}
+      });
+    }
+    if(payment&&!["Cancelled","Shipped","Completed"].includes(order.status)){
+      const stage=!payment.deposit?"deposit":!payment.balance?"balance":null;
+      if(stage){
+        const due=stage==="deposit"?payment.depositCents:payment.balanceCents;
+        paymentBox.append(make("p","studio-payment-due","Next: "+(stage==="deposit"?"50% deposit":"50% final balance")+" · "+amountText(due)));
+        const paymentForm=make("form","studio-payment-form");
+        const refLabel=make("label","","PayPal transaction ID (from PayPal activity)");
+        const refInput=make("input");refInput.type="text";refInput.minLength=6;refInput.maxLength=100;refInput.pattern="[A-Za-z0-9_-]{6,100}";refInput.required=true;refInput.placeholder="Transaction ID";refLabel.append(refInput);
+        const verifyLabel=make("label","studio-payment-verify");
+        const verifyCheck=make("input");verifyCheck.type="checkbox";verifyCheck.required=true;
+        verifyLabel.append(verifyCheck,make("span","","I checked my PayPal account and verified this exact payment was received."));
+        const saveButton=make("button","btn","Record verified "+(stage==="deposit"?"deposit":"balance"));saveButton.type="submit";
+        paymentForm.append(refLabel,verifyLabel,saveButton);paymentBox.append(paymentForm);
+        paymentForm.addEventListener("submit",async e=>{
+          e.preventDefault();if(!verifyCheck.checked)return;saveButton.disabled=true;
+          try{
+            const result=await api("payment-record",{method:"POST",body:{id:order.id,stage,reference:refInput.value.trim(),verified:true}});
+            order.payment=result.payment;showMessage("Manually verified "+stage+" recorded. This did not charge the customer.");select(order.id);
+          }catch(error){showMessage(error.message);saveButton.disabled=false;}
+        });
+      }else paymentBox.append(make("p","studio-payment-paid","Both instalments recorded as manually verified. Confirm fulfilment and shipping separately."));
+    }
+    panel.append(paymentBox);
     panel.append(sectionHeading("Delivery address"));
     const shippingBox=make("div","studio-shipping");
     if(order.shipping){
