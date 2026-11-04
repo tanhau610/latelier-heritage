@@ -8,6 +8,7 @@ const detailKey = id => `enquiries/${id}/details.json`;
 const shippingKey = id => `enquiries/${id}/shipping.json`;
 const accessKey = id => `enquiries/${id}/shipping-access.json`;
 const paymentKey = id => `enquiries/${id}/payment.json`;
+const paymentAccessKey = id => `enquiries/${id}/payment-access.json`;
 const moneyCents = aud => Math.round(aud * 100);
 const validAmount = value => Number.isInteger(value) && value >= 50 && value <= 100000;
 async function readJson(bucket,key){const obj=await bucket.get(key);if(!obj)return null;try{return await obj.json();}catch{return null;}}
@@ -76,7 +77,7 @@ export async function onRequestPost(context){
   const denied=await guard(context);if(denied)return denied;
   const {request,env}=context;
   const action=new URL(request.url).searchParams.get("action");
-  if(!["status","shipping-link","payment-quote","payment-record"].includes(action))return respond({ok:false,message:"Unknown action."},404);
+  if(!["status","shipping-link","payment-quote","payment-record","payment-link"].includes(action))return respond({ok:false,message:"Unknown action."},404);
   if(Number(request.headers.get("content-length")||0)>4096)return respond({ok:false,message:"Request too large."},413);
   let payload;try{payload=await request.json();}catch{return respond({ok:false,message:"Invalid request."},400);}
   const {id,status}=payload||{};
@@ -93,6 +94,22 @@ export async function onRequestPost(context){
       link.hash=new URLSearchParams({id,token}).toString();
       return respond({ok:true,url:link.toString(),expiresAt});
     }catch(e){console.error("Shipping link failed",e);return respond({ok:false,message:"Could not create shipping link."},500);}
+  }
+  if(action==="payment-link"){
+    if(!validId(id)||!["deposit","balance"].includes(payload.stage))return respond({ok:false,message:"Invalid order or instalment."},400);
+    try{
+      const bucket=env.PORTRAIT_UPLOADS;
+      const [order,payment]=await Promise.all([getDetails(bucket,id),readJson(bucket,paymentKey(id))]);
+      if(!order||!payment||["Cancelled","Shipped","Completed"].includes(order.status))return respond({ok:false,message:"Order cannot request payment."},409);
+      if(payment[payload.stage])return respond({ok:false,message:"This instalment has already been recorded."},409);
+      if(payload.stage==="balance"&&!payment.deposit)return respond({ok:false,message:"The deposit must be received first."},409);
+      const token=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,"0")).join("");
+      const expiresAt=new Date(Date.now()+14*24*60*60*1000).toISOString();
+      await bucket.put(paymentAccessKey(id),JSON.stringify({id,stage:payload.stage,quotedAt:payment.quotedAt,tokenHash:await sha256(token),expiresAt,createdAt:new Date().toISOString()}),{httpMetadata:{contentType:"application/json"}});
+      const link=new URL("/payment.html",request.url);
+      link.hash=new URLSearchParams({id,token}).toString();
+      return respond({ok:true,url:link.toString(),expiresAt,stage:payload.stage});
+    }catch(e){console.error("Payment link creation failed",e);return respond({ok:false,message:"Could not create payment link."},500);}
   }
   if(action==="payment-quote"||action==="payment-record"){
     if(!validId(id))return respond({ok:false,message:"Invalid order."},400);
