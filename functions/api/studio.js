@@ -9,6 +9,7 @@ const shippingKey = id => `enquiries/${id}/shipping.json`;
 const accessKey = id => `enquiries/${id}/shipping-access.json`;
 const paymentKey = id => `enquiries/${id}/payment.json`;
 const paymentAccessKey = id => `enquiries/${id}/payment-access.json`;
+const sandboxPaymentKey = id => `enquiries/${id}/paypal-sandbox-payments.json`;
 const moneyCents = aud => Math.round(aud * 100);
 const validAmount = value => Number.isInteger(value) && value >= 50 && value <= 100000;
 async function readJson(bucket,key){const obj=await bucket.get(key);if(!obj)return null;try{return await obj.json();}catch{return null;}}
@@ -53,7 +54,8 @@ export async function onRequestGet(context){
         if(!data)return null;
         const shipping=await readJson(bucket,shippingKey(id));
         const payment=await readJson(bucket,paymentKey(id));
-        return {payment:payment||null,shipping:shipping?.details||null,shippingUpdatedAt:shipping?.updatedAt||null,id:data.id,receivedAt:data.receivedAt,name:data.name,email:data.email,petName:data.petName||"",size:data.size,pets:data.pets,country:data.country,card:!!data.card,story:data.story||"",estimatedPriceAUD:data.estimatedPriceAUD,status:statuses.has(data.status)?data.status:"New",internalNote:data.internalNote||"",updatedAt:data.updatedAt||null,photos:(data.photos||[]).map((p,i)=>({index:i,name:p.originalName||`Photo ${i+1}`}))};
+        const sandboxPayment=await readJson(bucket,sandboxPaymentKey(id));
+        return {sandboxPayment:sandboxPayment?.quotedAt===payment?.quotedAt?sandboxPayment:null,payment:payment||null,shipping:shipping?.details||null,shippingUpdatedAt:shipping?.updatedAt||null,id:data.id,receivedAt:data.receivedAt,name:data.name,email:data.email,petName:data.petName||"",size:data.size,pets:data.pets,country:data.country,card:!!data.card,story:data.story||"",estimatedPriceAUD:data.estimatedPriceAUD,status:statuses.has(data.status)?data.status:"New",internalNote:data.internalNote||"",updatedAt:data.updatedAt||null,photos:(data.photos||[]).map((p,i)=>({index:i,name:p.originalName||`Photo ${i+1}`}))};
       }))).filter(Boolean);
       orders.sort((a,b)=>String(b.receivedAt).localeCompare(String(a.receivedAt)));
       return respond({ok:true,orders,nextCursor:page.truncated?page.cursor||null:null});
@@ -96,13 +98,14 @@ export async function onRequestPost(context){
     }catch(e){console.error("Shipping link failed",e);return respond({ok:false,message:"Could not create shipping link."},500);}
   }
   if(action==="payment-link"){
+    if(!env.PAYPAL_CLIENT_ID||!env.PAYPAL_CLIENT_SECRET)return respond({ok:false,message:"Sandbox PayPal credentials are not configured in this environment."},503);
     if(!validId(id)||!["deposit","balance"].includes(payload.stage))return respond({ok:false,message:"Invalid order or instalment."},400);
     try{
       const bucket=env.PORTRAIT_UPLOADS;
-      const [order,payment]=await Promise.all([getDetails(bucket,id),readJson(bucket,paymentKey(id))]);
+      const [order,payment,sandbox]=await Promise.all([getDetails(bucket,id),readJson(bucket,paymentKey(id)),readJson(bucket,sandboxPaymentKey(id))]);
       if(!order||!payment||["Cancelled","Shipped","Completed"].includes(order.status))return respond({ok:false,message:"Order cannot request payment."},409);
-      if(payment[payload.stage])return respond({ok:false,message:"This instalment has already been recorded."},409);
-      if(payload.stage==="balance"&&!payment.deposit)return respond({ok:false,message:"The deposit must be received first."},409);
+      if(sandbox?.quotedAt===payment.quotedAt&&sandbox[payload.stage])return respond({ok:false,message:"This Sandbox instalment has already been recorded."},409);
+      if(payload.stage==="balance"&&!(sandbox?.quotedAt===payment.quotedAt&&sandbox.deposit))return respond({ok:false,message:"Complete the Sandbox deposit test first."},409);
       const token=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,"0")).join("");
       const expiresAt=new Date(Date.now()+14*24*60*60*1000).toISOString();
       await bucket.put(paymentAccessKey(id),JSON.stringify({id,stage:payload.stage,quotedAt:payment.quotedAt,tokenHash:await sha256(token),expiresAt,createdAt:new Date().toISOString()}),{httpMetadata:{contentType:"application/json"}});
