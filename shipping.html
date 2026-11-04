@@ -21,6 +21,14 @@
       <h1>Your portrait’s journey.</h1>
       <p class="shipping-intro">Please confirm where your hand-painted portrait should be delivered. Your address is stored privately and is only used to arrange shipping.</p>
       <p id="shipping-message" class="shipping-message" role="status">Checking your secure link…</p>
+      <section id="shipping-success" class="shipping-success" role="status" aria-live="polite" tabindex="-1" hidden>
+        <div class="shipping-success-icon" aria-hidden="true">✓</div>
+        <span class="shipping-eyebrow">Delivery details confirmed</span>
+        <h2>Thank you. Your details are saved.</h2>
+        <p>Your delivery information has been received securely for order <strong id="saved-order-reference"></strong>.</p>
+        <p>Our studio will confirm the shipping arrangements with you before dispatching your portrait.</p>
+        <button id="edit-shipping" class="shipping-edit-button" type="button">Edit delivery details</button>
+      </section>
       <form id="shipping-form" hidden>
         <p class="shipping-order">Order <strong id="order-reference"></strong> · <span id="order-pet"></span></p>
         <label>Recipient’s full name <span>*</span><input name="fullName" autocomplete="name" maxlength="120" required></label>
