@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="referrer" content="no-referrer">
+  <title>Private Studio | L’Atelier Heritage</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="assets/studio.css">
+</head>
+<body class="studio-page">
+  <header class="studio-header">
+    <a href="index.html" class="studio-brand"><span class="wordmark">L’Atelier Heritage</span><span class="descriptor">PRIVATE STUDIO</span></a>
+    <a href="index.html" class="studio-back">← Return to website</a>
+  </header>
+  <main class="studio-main">
+    <section class="studio-login" id="studio-login">
+      <span class="eyebrow">Private workspace</span>
+      <h1>Welcome to the studio.</h1>
+      <p>View portrait requests, reference photographs and production progress. Access is restricted to the studio owner.</p>
+      <form id="login-form">
+        <label for="access-key">Private access key</label>
+        <input id="access-key" type="password" autocomplete="off" minlength="32" required placeholder="Enter your private studio key">
+        <button class="btn" type="submit">Open studio</button>
+      </form>
+      <p id="login-message" class="studio-message" role="status"></p>
+      <p class="studio-footnote">Your key is kept only in this browser tab’s memory and is never saved to the website.</p>
+    </section>
+    <section id="studio-dashboard" hidden>
+      <div class="studio-heading">
+        <div><span class="eyebrow">L’Atelier Heritage / Operations</span><h1>Portrait enquiries.</h1><p>Private order management · prices in AUD · no payment is collected here.</p></div>
+        <button class="studio-text-button" id="logout" type="button">Lock studio <span aria-hidden="true">↗</span></button>
+      </div>
+      <div class="studio-toolbar">
+        <label class="studio-search"><span>Search enquiries</span><input id="search" type="search" placeholder="Name, pet, email or reference"></label>
+        <label class="studio-filter"><span>Order status</span><select id="status-filter"><option value="">All statuses</option><option>New</option><option>Confirmed</option><option>Painting</option><option>Shipped</option><option>Completed</option><option>Cancelled</option></select></label>
+        <button class="btn outline" type="button" id="refresh">Refresh</button>
+      </div>
+      <p id="studio-message" class="studio-message" role="status"></p>
+      <div class="studio-layout">
+        <section class="studio-list-panel" aria-label="Order list">
+          <div class="studio-panel-title"><span>Orders</span><span id="order-count">0</span></div>
+          <div id="order-list" class="studio-order-list"></div>
+          <button id="load-more" class="studio-more" type="button" hidden>Load more enquiries</button>
+        </section>
+        <section class="studio-detail-panel" id="detail-panel" aria-label="Selected order details">
+          <div class="studio-empty">Select an enquiry to see its details and photographs.</div>
+        </section>
+      </div>
+    </section>
+  </main>
+  <script defer src="assets/studio.js"></script>
+</body>
+</html>
