@@ -54,3 +54,17 @@
 .studio-shipping-link:empty{display:none}
 .studio-link-field{width:100%;padding:12px;border:1px solid #d7cbc0;font:12px/1.5 monospace;overflow-wrap:anywhere;resize:vertical}
 .studio-shipping .studio-email{justify-self:start}
+
+.studio-payment{padding:22px;border:1px solid #e7dfd4;background:#faf8f4;display:grid;gap:14px}
+.studio-payment .studio-footnote{margin:0;line-height:1.6}
+.studio-payment-summary{padding:14px 18px;background:#fff;border:1px solid #e8dfd5}
+.studio-payment-summary p{margin:7px 0;font-size:13px;color:#574840}
+.studio-payment-summary p:first-child{font-weight:700;font-size:16px;color:#553438}
+.studio-payment-form{display:grid;gap:12px;border-top:1px solid #e7dfd4;padding-top:16px}
+.studio-payment-form label{display:grid;gap:7px;font-size:12px;font-weight:600;color:#51433b}
+.studio-payment-form input[type=number],.studio-payment-form input[type=text]{min-height:46px;padding:10px 12px;background:#fff;border:1px solid #d8cdc1;color:#30291d;max-width:360px;width:100%}
+.studio-payment-form .btn{justify-self:start}
+.studio-payment-form .studio-payment-verify{display:flex;align-items:flex-start;gap:10px;font-weight:400;line-height:1.5;max-width:480px}
+.studio-payment-verify input{margin-top:3px;flex-shrink:0}
+.studio-payment-due{font-weight:700;color:#6e3e45;margin:0}
+.studio-payment-paid{color:#2f6240;font-weight:600;font-size:13px}
