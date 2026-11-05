@@ -88,6 +88,7 @@ export async function onRequestPost(context){
     try{
       const order=await getDetails(env.PORTRAIT_UPLOADS,id);
       if(!order)return respond({ok:false,message:"Order not found."},404);
+      if(order.checkoutMode==="sandbox-inline")return respond({ok:false,message:"Delivery address was collected at checkout; no shipping link is required."},409);
       if(["Shipped","Completed","Cancelled"].includes(order.status))return respond({ok:false,message:"This order cannot request new shipping details."},409);
       const token=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,"0")).join("");
       const expiresAt=new Date(Date.now()+14*24*60*60*1000).toISOString();
