@@ -147,6 +147,7 @@ async function showPayment(){
     const data=await api("view");
     restoreDelivery(data);
     $("payment-edit-delivery").hidden=!data.canEditDelivery;
+    $("payment-footer-note").textContent=data.stage==="waiting"?"Deposit received. The remaining balance will be payable when the artwork is ready.":data.stage==="complete"?"Sandbox payment verified. No further payment is due.":"Choose PayPal or card above to complete payment.";
     $("summary-details").textContent="Saved order "+data.id+" · "+data.petName;
     $("summary-total").textContent=money(data.total);
     $("summary-due").textContent=money(data.amount);
