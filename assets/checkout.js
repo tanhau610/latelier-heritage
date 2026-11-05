@@ -91,6 +91,7 @@ async function loadSDK(clientId){
   return sdk;
 }
 async function showPayment(){
+  document.body.classList.add("is-paying");
   form.hidden=false;stages.forEach(el=>{el.hidden=true;});panel.hidden=false;
   document.querySelectorAll("[data-progress]").forEach(el=>{
     const number=Number(el.dataset.progress);
@@ -102,6 +103,9 @@ async function showPayment(){
   msg.textContent="Loading your secure Sandbox checkout…";
   try{
     const data=await api("view");
+    $("summary-details").textContent="Saved order "+data.id+" · "+data.petName;
+    $("summary-total").textContent=money(data.total);
+    $("summary-due").textContent=money(data.amount);
     $("payment-reference").textContent="Order "+data.id+" · "+data.petName;
     $("payment-amount").textContent=money(data.amount);
     const stages={deposit:"50% deposit",full:"Full payment (100%)",balance:"Remaining 50% balance",waiting:"Deposit received",complete:"Sandbox payment complete"};
