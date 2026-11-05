@@ -31,3 +31,5 @@
 .checkout-back{font-size:12px;white-space:nowrap}
 .checkout-pay-panel h2{font-size:30px}
 }
+
+.checkout-body.is-paying .checkout-summary .checkout-line:not(.checkout-total):not(.checkout-due){display:none}
