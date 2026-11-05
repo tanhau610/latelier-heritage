@@ -78,7 +78,7 @@ export async function onRequestGet(context){
             if(!data||!Number.isFinite(Date.parse(data.receivedAt)))return null;
             const day=new Date(data.receivedAt).toISOString().slice(0,10);
             const payment=await readJson(bucket,paymentKey(id));
-            const sandbox=data.checkoutMode==="sandbox-inline"?await readJson(bucket,sandboxPaymentKey(id)):null;
+            const sandbox=await readJson(bucket,sandboxPaymentKey(id));
             return {data,day,payment,sandbox};
           }));
           for(const row of chunk){
@@ -92,21 +92,20 @@ export async function onRequestGet(context){
             if(inPeriod&&data.checkoutMode!=="sandbox-inline"&&Number.isFinite(totalCents)&&totalCents>0&&status!=="Cancelled")totals.orderValueCents+=totalCents;
             if(inPeriod&&["Painting","Confirmed"].includes(status))totals.inProduction++;
             if(inPeriod&&status==="Ready for balance")totals.readyForBalance++;
-            if(data.checkoutMode==="sandbox-inline"){
-              if(inPeriod)totals.sandboxOrders++;
-              if(sandbox?.quotedAt===payment?.quotedAt){
-                // Sandbox transactions are visualised separately, by their capture date.
-                const testPayments=sandbox.full?[sandbox.full]:[sandbox.deposit,sandbox.balance];
-                for(const instalment of testPayments){
-                  const verifiedAt=instalment?.verifiedAt;
-                  const amount=Number(instalment?.amountCents);
-                  if(typeof verifiedAt!=="string"||!Number.isFinite(Date.parse(verifiedAt))||!Number.isInteger(amount)||amount<=0)continue;
-                  const paymentDay=new Date(verifiedAt).toISOString().slice(0,10);
-                  const testPoint=daily.get(paymentDay);
-                  if(testPoint){testPoint.sandboxCents+=amount;totals.sandboxTestCents+=amount;}
-                }
+            // Count all Sandbox captures separately, including legacy test-payment links.
+            if(sandbox?.quotedAt===payment?.quotedAt){
+              const testPayments=sandbox.full?[sandbox.full]:[sandbox.deposit,sandbox.balance];
+              for(const instalment of testPayments){
+                const verifiedAt=instalment?.verifiedAt;
+                const amount=Number(instalment?.amountCents);
+                if(typeof verifiedAt!=="string"||!Number.isFinite(Date.parse(verifiedAt))||!Number.isInteger(amount)||amount<=0)continue;
+                const paymentDay=new Date(verifiedAt).toISOString().slice(0,10);
+                const testPoint=daily.get(paymentDay);
+                if(testPoint){testPoint.sandboxCents+=amount;totals.sandboxTestCents+=amount;}
               }
-            }else{
+            }
+            if(inPeriod&&(data.checkoutMode==="sandbox-inline"||sandbox?.deposit||sandbox?.balance||sandbox?.full))totals.sandboxOrders++;
+            if(data.checkoutMode!=="sandbox-inline"){
               // Recognise revenue on the verified payment date, not on the order creation date.
               // This also includes payments made this period for older orders.
               for(const instalment of [payment?.deposit,payment?.balance]){
