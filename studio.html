@@ -27,23 +27,60 @@
       <p id="login-message" class="studio-message" role="status"></p>
       <p class="studio-footnote">Your key is kept only in this browser tab’s memory and is never saved to the website.</p>
     </section>
-    <section id="studio-dashboard" hidden>
-      <div class="studio-heading">
-        <div><span class="eyebrow">L’Atelier Heritage / Operations</span><h1>Portrait enquiries.</h1><p>Private order management · prices in AUD · Sandbox checkout test records and manual payment tracking.</p></div>
-        <button class="studio-text-button" id="logout" type="button">Lock studio <span aria-hidden="true">↗</span></button>
-      </div>
-      <div class="studio-toolbar">
+    <section id="studio-dashboard" class="studio-dashboard" hidden>
+      <div class="studio-shell">
+        <aside class="studio-sidebar" aria-label="Studio navigation">
+          <div class="studio-sidebar-brand"><span class="studio-monogram">LH</span><div><strong>L’Atelier</strong><small>HERITAGE · STUDIO</small></div></div>
+          <div class="studio-nav-label">WORKSPACE</div>
+          <nav class="studio-navigation">
+            <button type="button" class="studio-nav-item active" data-studio-view="overview" aria-current="page"><span class="studio-nav-icon">◫</span> Overview</button>
+            <button type="button" class="studio-nav-item" data-studio-view="orders"><span class="studio-nav-icon">▤</span> Orders <span id="sidebar-order-count" class="studio-nav-count">0</span></button>
+            <button type="button" class="studio-nav-item" data-studio-view="traffic"><span class="studio-nav-icon">◷</span> Website analytics</button>
+          </nav>
+          <div class="studio-sidebar-bottom"><div class="studio-sidebar-note"><span class="studio-online-dot"></span> Private workspace<br><small>Secure order management</small></div><a href="index.html" class="studio-sidebar-site">View storefront ↗</a></div>
+        </aside>
+        <div class="studio-workspace">
+          <div class="studio-topbar"><div class="studio-breadcrumb">L’Atelier Heritage <span>/</span> <b id="studio-current-view">Overview</b></div><div class="studio-topbar-right"><span class="studio-environment">SANDBOX AWARE</span><button class="studio-lock" id="logout" type="button">Lock studio <span aria-hidden="true">↗</span></button></div></div>
+          <div class="studio-content">
+            <section id="studio-overview-view" class="studio-view" aria-label="Business overview">
+              <div class="studio-page-heading"><div><span class="studio-kicker">STUDIO INTELLIGENCE</span><h1>Good to see you.</h1><p>Everything happening at your portrait studio, at a glance.</p></div><div class="studio-heading-actions"><label class="studio-period-label" for="analytics-range">Reporting period</label><select id="analytics-range"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option></select><button type="button" class="studio-refresh-analytics" id="refresh-analytics" title="Refresh overview" aria-label="Refresh overview">↻</button></div></div>
+              <p id="analytics-notice" class="studio-analytics-notice" role="status">Loading business analytics…</p>
+              <div class="studio-kpi-grid">
+                <article class="studio-kpi"><div class="studio-kpi-label">Portrait requests <span>↗</span></div><strong id="metric-orders">—</strong><p>Enquiries received in this period</p></article>
+                <article class="studio-kpi"><div class="studio-kpi-label">Verified revenue <span>↗</span></div><strong id="metric-revenue">—</strong><p>Recorded real payments · AUD</p></article>
+                <article class="studio-kpi"><div class="studio-kpi-label">Order value <span>↗</span></div><strong id="metric-value">—</strong><p>Estimated / agreed order value</p></article>
+                <article class="studio-kpi"><div class="studio-kpi-label">In production <span>↗</span></div><strong id="metric-production">—</strong><p>Confirmed and being painted</p></article>
+              </div>
+              <div class="studio-analytics-grid">
+                <section class="studio-insight-card studio-chart-card"><div class="studio-card-heading"><div><span class="studio-card-eyebrow">PERFORMANCE</span><h2>Enquiry activity</h2></div><span class="studio-card-tag">Orders / day</span></div><div id="studio-chart" class="studio-chart" aria-label="Daily portrait enquiries chart"><div class="studio-chart-empty">Loading chart…</div></div><div class="studio-chart-footer"><span><i class="studio-legend-dot"></i> Portrait enquiries</span><span id="chart-period-caption">Last 30 days</span></div></section>
+                <section class="studio-insight-card studio-pipeline-card"><div class="studio-card-heading"><div><span class="studio-card-eyebrow">PRODUCTION</span><h2>Order pipeline</h2></div><button type="button" class="studio-card-link" data-studio-view="orders">View orders ↗</button></div><div id="studio-pipeline" class="studio-pipeline"><p class="studio-chart-empty">Loading production status…</p></div><p class="studio-pipeline-note">Based on order statuses during the selected period.</p></section>
+              </div>
+              <div class="studio-bottom-grid">
+                <section class="studio-insight-card studio-recent-card"><div class="studio-card-heading"><div><span class="studio-card-eyebrow">LATEST ACTIVITY</span><h2>Recent requests</h2></div><button type="button" class="studio-card-link" data-studio-view="orders">All orders ↗</button></div><div id="studio-recent-orders" class="studio-recent-orders"><p class="studio-chart-empty">Loading recent orders…</p></div></section>
+                <section id="studio-traffic-card" class="studio-insight-card studio-traffic-card"><div class="studio-card-heading"><div><span class="studio-card-eyebrow">WEBSITE PERFORMANCE</span><h2>Audience & engagement</h2></div><span class="studio-connection-status">Not connected</span></div><div class="studio-traffic-metrics"><div><span>Unique visitors</span><strong>—</strong></div><div><span>Page views</span><strong>—</strong></div><div><span>Engagement / conversion</span><strong>—</strong></div></div><p>Visitor analytics is not connected to this private dashboard yet. Enable Cloudflare Web Analytics to measure real website traffic. These numbers are intentionally not estimated.</p><a class="studio-connect-link" href="https://dash.cloudflare.com/" target="_blank" rel="noopener noreferrer">Open Cloudflare Analytics ↗</a></section>
+              </div>
+              <div class="studio-sandbox-banner"><span>◎</span><p><strong>Financial reporting is separated from test payments.</strong> Sandbox PayPal payments never count as revenue. <span id="studio-sandbox-caption">Test transactions are reported separately.</span></p></div>
+            </section>
+            <section id="studio-orders-view" class="studio-view" aria-label="Order management" hidden>
+              <div class="studio-page-heading studio-orders-heading"><div><span class="studio-kicker">ORDER MANAGEMENT</span><h1>Portrait enquiries.</h1><p>Manage customer requests, payments, photographs and artwork progress.</p></div></div>
+                    <div class="studio-toolbar">
         <label class="studio-search"><span>Search enquiries</span><input id="search" type="search" placeholder="Name, pet, email or reference"></label>
         <label class="studio-filter"><span>Order status</span><select id="status-filter"><option value="">All statuses</option><option>New</option><option>Confirmed</option><option>Painting</option><option>Ready for balance</option><option>Shipped</option><option>Completed</option><option>Cancelled</option></select></label>
         <button class="btn outline" type="button" id="refresh">Refresh</button>
       </div>
-      <p id="studio-message" class="studio-message" role="status"></p>
-      <div class="studio-layout">
+
+              <p id="studio-message" class="studio-message" role="status"></p>
+                    <div class="studio-layout">
         <section class="studio-list-panel" aria-label="Order list">
           <div class="studio-panel-title"><span>Orders</span><span id="order-count">0</span></div>
           <div id="order-list" class="studio-order-list"></div>
           <button id="load-more" class="studio-more" type="button" hidden>Load more enquiries</button>
-        </section>
+    
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
         <section class="studio-detail-panel" id="detail-panel" aria-label="Selected order details">
           <div class="studio-empty">Select an enquiry to see its details and photographs.</div>
         </section>
