@@ -160,7 +160,7 @@ async function action(request,env){
   const stage=state.stage,amount=(state.amountCents/100).toFixed(2),reference=id+"-"+stage;
   if(action==="create"){
     const pending=await read(bucket,path(id,"checkout-paypal-order.json"));
-    if(pending?.stage===stage&&pending?.quotedAt===payment.quotedAt&&pending?.tokenHash===access.tokenHash&&pending?.paypalOrderId&&Date.parse(pending.createdAt)>Date.now()-3600000)return json({ok:true,orderID:pending.paypalOrderId,sandbox:true});
+    if(pending?.stage===stage&&pending?.quotedAt===payment.quotedAt&&pending?.tokenHash===activeAccess.tokenHash&&pending?.paypalOrderId&&Date.parse(pending.createdAt)>Date.now()-3600000)return json({ok:true,orderID:pending.paypalOrderId,sandbox:true});
     const orderResult=await paypal(env,"/v2/checkout/orders","POST",{
       intent:"CAPTURE",
       purchase_units:[{reference_id:reference,custom_id:reference,description:"Custom hand-painted pet portrait - "+stage,amount:{currency_code:"AUD",value:amount}}],
