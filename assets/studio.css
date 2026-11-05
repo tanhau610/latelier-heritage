@@ -320,3 +320,13 @@
   .studio-page .studio-traffic-metrics{grid-template-columns:1fr}
   .studio-page .studio-traffic-metrics span{min-height:0}
 }
+
+/* Confirmation stays beside the save button, even when the page is scrolled. */
+.studio-save-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:8px}
+.studio-save-feedback{margin:0;min-height:20px;font-size:13px;line-height:1.5;color:#75685f}
+.studio-save-feedback.is-success{color:#276044;font-weight:600}
+.studio-save-feedback.is-error{color:#a33e3e;font-weight:600}
+.studio-save-feedback.is-pending{color:#796453}
+.studio-update optgroup{font-weight:700;color:#55463e}
+.studio-update option{font-weight:400;color:#30291d}
+@media(max-width:520px){.studio-save-actions{align-items:stretch;flex-direction:column}.studio-save-actions .btn{align-self:flex-start}}
