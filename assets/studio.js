@@ -223,21 +223,50 @@
     panel.append(sectionHeading("Tiến độ thực hiện"));
     const form=make("form","studio-update");
     const statusLabel=make("label","", "Trạng thái");const selectEl=make("select");selectEl.required=true;
-    for(const value of Object.keys(labels)){const option=make("option","",labels[value]);option.value=value;option.selected=order.status===value;selectEl.append(option);}
+    // Keep the complete order history available, but separate exceptional cases.
+    const mainStatuses=make("optgroup");mainStatuses.label="QUY TRÌNH ĐƠN HÀNG";
+    const exceptionalStatuses=make("optgroup");exceptionalStatuses.label="TRƯỜNG HỢP KHÁC";
+    for(const value of Object.keys(labels)){
+      const option=make("option","",labels[value]);option.value=value;option.selected=order.status===value;
+      (value==="Cancelled"?exceptionalStatuses:mainStatuses).append(option);
+    }
+    selectEl.append(mainStatuses,exceptionalStatuses);
     statusLabel.append(selectEl);
     const noteLabel=make("label","", "Ghi chú nội bộ");const note=make("textarea");note.maxLength=1000;note.rows=3;note.placeholder="Chất liệu, yêu cầu khách hàng, lưu ý giao hàng…";note.value=order.internalNote||"";noteLabel.append(note);
     const button=make("button","btn","Lưu tiến độ");button.type="submit";
-    form.append(statusLabel,noteLabel,button);panel.append(form);
-    if(order.updatedAt)panel.append(make("p","studio-footnote","Cập nhật gần nhất: "+formatDate(order.updatedAt)));
+    const saveFeedback=make("p","studio-save-feedback");saveFeedback.setAttribute("role","status");saveFeedback.setAttribute("aria-live","polite");
+    const saveActions=make("div","studio-save-actions");saveActions.append(button,saveFeedback);
+    const updatedNote=make("p","studio-footnote",order.updatedAt?"Cập nhật gần nhất: "+formatDate(order.updatedAt):"Chưa có lần cập nhật nào.");
+    form.append(statusLabel,noteLabel,saveActions);panel.append(form,updatedNote);
+    const markEdited=()=>{
+      button.textContent="Lưu tiến độ";
+      saveFeedback.textContent="Có thay đổi chưa lưu.";
+      saveFeedback.className="studio-save-feedback is-pending";
+    };
+    selectEl.addEventListener("change",markEdited);
+    note.addEventListener("input",markEdited);
     form.addEventListener("submit",async event=>{
-      event.preventDefault();button.disabled=true;button.textContent="Đang lưu…";
+      event.preventDefault();
+      const newStatus=selectEl.value,newNote=note.value;
+      button.disabled=true;selectEl.disabled=true;note.disabled=true;button.textContent="Đang lưu…";
+      saveFeedback.textContent="Đang cập nhật đơn hàng…";saveFeedback.className="studio-save-feedback is-pending";
       try{
-        const result=await api("status",{method:"POST",body:{id:order.id,status:selectEl.value,internalNote:note.value}});
-        order.status=selectEl.value;order.internalNote=note.value;order.updatedAt=result.updatedAt;
+        const result=await api("status",{method:"POST",body:{id:order.id,status:newStatus,internalNote:newNote}});
+        order.status=result.status||newStatus;order.internalNote=newNote.trim();order.updatedAt=result.updatedAt;
         showMessage("Đã lưu tiến độ cho đơn "+order.id+".");renderList();void loadAnalytics();
-        const badge=head.querySelector(".studio-status");badge.className="studio-status status-"+order.status.toLowerCase();badge.textContent=labels[order.status];
-      }catch(e){showMessage(e.message);}
-      finally{button.disabled=false;button.textContent="Lưu tiến độ";}
+        const badge=head.querySelector(".studio-status");badge.className="studio-status status-"+order.status.toLowerCase();badge.textContent=labels[order.status]||order.status;
+        updatedNote.textContent="Cập nhật gần nhất: "+formatDate(result.updatedAt);
+        button.textContent="✓ Đã lưu";
+        saveFeedback.textContent="Đã lưu thành công · Trạng thái: "+(labels[order.status]||order.status)+".";
+        saveFeedback.className="studio-save-feedback is-success";
+      }catch(e){
+        showMessage(e.message);
+        button.textContent="Thử lưu lại";
+        saveFeedback.textContent="Không lưu được: "+e.message;
+        saveFeedback.className="studio-save-feedback is-error";
+      }finally{
+        button.disabled=false;selectEl.disabled=false;note.disabled=false;
+      }
     });
   }
 
