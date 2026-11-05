@@ -6,6 +6,9 @@
   const state = { key:"",orders:[],cursor:null,selected:null,images:[],loading:false };
   let selectionVersion=0;
   const labels = {New:"Yêu cầu mới",Confirmed:"Đã xác nhận",Painting:"Đang vẽ","Ready for balance":"Chờ thanh toán còn lại",Shipped:"Đã gửi hàng",Completed:"Hoàn thành",Cancelled:"Đã hủy"};
+  // Payment confirmation and production progress are separate. Do not mark an order shipped automatically.
+  const paidInFull = o => o.checkoutMode==="sandbox-inline" ? Boolean(o.sandboxPayment?.full||(o.sandboxPayment?.deposit&&o.sandboxPayment?.balance)) : Boolean(o.payment?.deposit&&o.payment?.balance);
+  const statusLabel = o => o.status==="Ready for balance"&&paidInFull(o)?"Đã thanh toán đủ · chờ gửi":labels[o.status]||o.status;
   const make = (tag,className,text) => {const n=document.createElement(tag);if(className)n.className=className;if(text!==undefined)n.textContent=String(text);return n;};
   const formatDate = iso => {const d=new Date(iso);return Number.isNaN(d.getTime())?"Không rõ ngày":d.toLocaleString("vi-VN",{dateStyle:"medium",timeStyle:"short",timeZone:"Asia/Ho_Chi_Minh"});};
   const money = amount => amount!==null&&amount!==undefined&&amount!==""&&Number.isFinite(Number(amount))?"A$"+Number(amount).toLocaleString("vi-VN",{minimumFractionDigits:2,maximumFractionDigits:2}):"Chưa có dữ liệu";
@@ -61,7 +64,7 @@
     for(const o of visible){
       const button=make("button","studio-order"+(state.selected===o.id?" selected":""),undefined);
       button.type="button";button.addEventListener("click",()=>select(o.id));
-      const top=make("div","studio-order-top");top.append(make("strong","",o.petName||"Tranh chân dung thú cưng"),make("span","studio-status status-"+o.status.toLowerCase(),labels[o.status]||o.status));
+      const top=make("div","studio-order-top");top.append(make("strong","",o.petName||"Tranh chân dung thú cưng"),make("span","studio-status status-"+o.status.toLowerCase(),statusLabel(o)));
       button.append(top,make("div","studio-order-name",o.name||"Khách chưa có tên"),make("div","studio-order-meta",o.id+" · "+formatDate(o.receivedAt)),make("div","studio-order-price",money(o.payment?o.payment.totalCents/100:o.estimatedPriceAUD)),make("div","studio-order-meta",o.checkoutMode==="sandbox-inline"?(o.sandboxPayment?.full?"Sandbox: đã thanh toán 100%":o.sandboxPayment?.balance?"Sandbox: đã thanh toán đủ":o.sandboxPayment?.deposit?"Sandbox: đã thanh toán cọc": "Sandbox: chờ thanh toán"):(o.payment?.balance?"Đã ghi nhận đủ hai lần thanh toán":o.payment?.deposit?"Đã ghi nhận tiền cọc · còn số dư":o.payment?"Chờ thanh toán cọc 50%":"Chưa chốt báo giá")));
       list.append(button);
     }
@@ -77,7 +80,7 @@
     state.selected=id;revokeImages();renderList();panel.replaceChildren();
     const head=make("div","studio-detail-head");
     const heading=make("div");heading.append(make("span","eyebrow","Yêu cầu đặt tranh"),make("h2","",order.petName||"Tranh chân dung thú cưng"),make("p","studio-reference",order.id));
-    head.append(heading,make("span","studio-status status-"+order.status.toLowerCase(),labels[order.status]||order.status));panel.append(head);
+    head.append(heading,make("span","studio-status status-"+order.status.toLowerCase(),statusLabel(order)));panel.append(head);
     const info=make("dl","studio-details");
     detailRow(info,"Khách hàng",order.name);detailRow(info,"Email",order.email);detailRow(info,"Ngày nhận",formatDate(order.receivedAt));
     detailRow(info,"Kích thước tranh",order.size?order.size+" cm":"—");detailRow(info,"Số thú cưng",order.pets);detailRow(info,"Quốc gia giao hàng",order.country);
@@ -227,7 +230,7 @@
     const mainStatuses=make("optgroup");mainStatuses.label="QUY TRÌNH ĐƠN HÀNG";
     const exceptionalStatuses=make("optgroup");exceptionalStatuses.label="TRƯỜNG HỢP KHÁC";
     for(const value of Object.keys(labels)){
-      const option=make("option","",labels[value]);option.value=value;option.selected=order.status===value;
+      const option=make("option","",value==="Ready for balance"&&paidInFull(order)?"Đã thanh toán đủ · chờ gửi":labels[value]);option.value=value;option.selected=order.status===value;
       (value==="Cancelled"?exceptionalStatuses:mainStatuses).append(option);
     }
     selectEl.append(mainStatuses,exceptionalStatuses);
@@ -254,11 +257,11 @@
         const result=await api("status",{method:"POST",body:{id:order.id,status:newStatus,internalNote:newNote}});
         order.status=result.status||newStatus;order.internalNote=newNote.trim();order.updatedAt=result.updatedAt;
         showMessage("Đã lưu tiến độ cho đơn "+order.id+".");renderList();void loadAnalytics();
-        const badge=head.querySelector(".studio-status");badge.className="studio-status status-"+order.status.toLowerCase();badge.textContent=labels[order.status]||order.status;
+        const badge=head.querySelector(".studio-status");badge.className="studio-status status-"+order.status.toLowerCase();badge.textContent=statusLabel(order);
         updatedNote.textContent="Cập nhật gần nhất: "+formatDate(result.updatedAt);
         button.textContent="✓ Đã lưu";
         const emailLabels={sent:"Email mẫu đã gửi đến hộp thư thử nghiệm.",failed:"Không gửi được email mẫu; tiến độ vẫn đã lưu.",skipped:"Chưa cấu hình gửi email mẫu.",unchanged:"Không gửi email vì trạng thái không thay đổi.","already-sent":"Email mẫu đã gửi trước đó."};
-         saveFeedback.textContent="Đã lưu thành công · Trạng thái: "+(labels[order.status]||order.status)+". "+(emailLabels[result.emailTest]||"");
+         saveFeedback.textContent="Đã lưu thành công · Trạng thái: "+statusLabel(order)+". "+(emailLabels[result.emailTest]||"");
          void refreshEmailHistory();
         saveFeedback.className="studio-save-feedback is-success";
       }catch(e){
@@ -369,7 +372,7 @@
   }
   function renderPipeline(counts){
     const target=$("studio-pipeline");target.replaceChildren();
-    const rows=[["Yêu cầu mới",counts.New||0],["Đã xác nhận",counts.Confirmed||0],["Đang vẽ",counts.Painting||0],["Chờ thanh toán còn lại",counts["Ready for balance"]||0],["Đã gửi / hoàn thành",(counts.Shipped||0)+(counts.Completed||0)]];
+    const rows=[["Yêu cầu mới",counts.New||0],["Đã xác nhận",counts.Confirmed||0],["Đang vẽ",counts.Painting||0],["Chờ thanh toán còn lại",counts["Ready for balance"]||0],["Đã thanh toán đủ · chờ gửi",counts["Paid awaiting dispatch"]||0],["Đã gửi / hoàn thành",(counts.Shipped||0)+(counts.Completed||0)]];
     const max=Math.max(1,...rows.map(r=>r[1]));
     for(const [name,value] of rows){
       const row=make("div","studio-pipeline-row"),top=make("div","studio-pipeline-top");
