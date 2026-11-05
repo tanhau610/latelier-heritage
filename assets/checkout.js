@@ -90,8 +90,46 @@ async function loadSDK(clientId){
   });
   return sdk;
 }
+const deliveryFields=["customerName","customerEmail","fullName","phone","address1","address2","city","region","postalCode","country"];
+function restoreDelivery(data){
+  if(!data?.shipping)return;
+  for(const field of deliveryFields){
+    const value=field==="customerName"?data.customerName:field==="customerEmail"?data.customerEmail:data.shipping[field];
+    if(typeof value==="string"&&form.elements[field])form.elements[field].value=value;
+  }
+}
+function editingDelivery(active){
+  document.body.classList.toggle("is-editing-delivery",active);
+  $("save-delivery-edit").hidden=!active;
+  $("cancel-delivery-edit").hidden=!active;
+  $("delivery-edit-message").textContent="";
+}
+$("payment-edit-delivery").addEventListener("click",()=>{
+  editingDelivery(true);
+  panel.hidden=true;
+  goTo(2);
+});
+$("cancel-delivery-edit").addEventListener("click",async()=>{
+  editingDelivery(false);
+  await showPayment();
+});
+$("save-delivery-edit").addEventListener("click",async()=>{
+  if(!validateStep(2))return;
+  const save=$("save-delivery-edit");
+  save.disabled=true;
+  $("delivery-edit-message").textContent="Saving your updated delivery details…";
+  try{
+    const delivery=Object.fromEntries(deliveryFields.map(field=>[field,form.elements[field].value]));
+    await api("updateDelivery",{delivery});
+    editingDelivery(false);
+    await showPayment();
+  }catch(e){$("delivery-edit-message").textContent=e.message;}
+  finally{save.disabled=false;}
+});
 async function showPayment(){
+  editingDelivery(false);
   document.body.classList.add("is-paying");
+  $("payment-edit-delivery").hidden=true;
   form.hidden=false;stages.forEach(el=>{el.hidden=true;});panel.hidden=false;
   document.querySelectorAll("[data-progress]").forEach(el=>{
     const number=Number(el.dataset.progress);
@@ -103,6 +141,8 @@ async function showPayment(){
   msg.textContent="Loading your secure Sandbox checkout…";
   try{
     const data=await api("view");
+    restoreDelivery(data);
+    $("payment-edit-delivery").hidden=!data.canEditDelivery;
     $("summary-details").textContent="Saved order "+data.id+" · "+data.petName;
     $("summary-total").textContent=money(data.total);
     $("summary-due").textContent=money(data.amount);
