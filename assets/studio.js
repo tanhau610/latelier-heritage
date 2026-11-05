@@ -4,13 +4,14 @@
   const loginMessage = $("login-message"), message = $("studio-message");
   const list = $("order-list"), panel = $("detail-panel");
   const state = { key:"",orders:[],cursor:null,selected:null,images:[],loading:false };
+  let selectionVersion=0;
   const labels = {New:"New request",Confirmed:"Confirmed",Painting:"In progress","Ready for balance":"Ready for balance",Shipped:"Shipped",Completed:"Completed",Cancelled:"Cancelled"};
   const make = (tag,className,text) => {const n=document.createElement(tag);if(className)n.className=className;if(text!==undefined)n.textContent=String(text);return n;};
   const formatDate = iso => {const d=new Date(iso);return Number.isNaN(d.getTime())?"Unknown date":d.toLocaleString("en-AU",{dateStyle:"medium",timeStyle:"short"});};
   const money = amount => Number.isFinite(Number(amount))?"A$"+Number(amount).toLocaleString("en-AU"):"Not available";
   function revokeImages(){state.images.forEach(URL.revokeObjectURL);state.images=[];}
   function lock(){
-    revokeImages();state.key="";state.orders=[];state.cursor=null;state.selected=null;
+    selectionVersion++;revokeImages();state.key="";state.orders=[];state.cursor=null;state.selected=null;
     dashboard.hidden=true;login.hidden=false;$("access-key").value="";$("access-key").focus();
   }
   async function api(action,{method="GET",body,cursor,id,index}={}){
@@ -65,6 +66,7 @@
   function sectionHeading(text){return make("h3","studio-subheading",text);}
   async function select(id){
     const order=state.orders.find(o=>o.id===id);if(!order)return;
+    const currentVersion=++selectionVersion;
     state.selected=id;revokeImages();renderList();panel.replaceChildren();
     const head=make("div","studio-detail-head");
     const heading=make("div");heading.append(make("span","eyebrow","Portrait enquiry"),make("h2","",order.petName||"Pet portrait"),make("p","studio-reference",order.id));
@@ -203,13 +205,14 @@
       const caption=make("figcaption","",photo.name||"Reference photo");figure.append(holder,caption);gallery.append(figure);
       try{
         const blob=await api("photo",{id:order.id,index:photo.index});
+        if(state.selected!==id||currentVersion!==selectionVersion)return;
         const url=URL.createObjectURL(blob);state.images.push(url);
-        if(state.selected!==id){URL.revokeObjectURL(url);state.images=state.images.filter(x=>x!==url);return;}
+        if(state.selected!==id||currentVersion!==selectionVersion){URL.revokeObjectURL(url);state.images=state.images.filter(x=>x!==url);return;}
         const a=make("a","studio-photo-link");a.href=url;a.target="_blank";a.rel="noopener noreferrer";a.title="Open private reference photograph";
         const img=make("img");img.src=url;img.alt="Reference photo: "+(photo.name||"Pet");img.loading="lazy";a.append(img);holder.replaceChildren(a);
-      }catch(e){holder.textContent="Photo unavailable";if(!state.key)return;}
+      }catch(e){if(state.selected!==id||currentVersion!==selectionVersion)return;holder.textContent="Photo unavailable";if(!state.key)return;}
     }
-    if(state.selected!==id)return;
+    if(state.selected!==id||currentVersion!==selectionVersion)return;
     panel.append(sectionHeading("Production status"));
     const form=make("form","studio-update");
     const statusLabel=make("label","", "Status");const selectEl=make("select");selectEl.required=true;
