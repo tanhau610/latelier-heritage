@@ -60,7 +60,13 @@
             <label>Country <select name="country" id="country" autocomplete="shipping country-name"><option>Australia</option><option>United States</option><option>United Kingdom</option><option>Canada</option></select></label>
           </div>
           <p class="checkout-hint">Your address is stored privately for delivery. We may contact you to confirm international shipping details.</p>
-          <div class="checkout-stage-actions"><button type="button" class="checkout-back" data-back="1"><span aria-hidden="true">←</span> Back</button><button type="button" class="btn checkout-next" data-next="3">Continue to payment <span aria-hidden="true">→</span></button></div>
+          <p id="delivery-edit-message" class="checkout-stage-error" role="status" aria-live="polite"></p>
+          <div class="checkout-stage-actions">
+            <button type="button" class="checkout-back" data-back="1">← Back</button>
+            <button type="button" class="btn checkout-next" data-next="3">Continue to payment →</button>
+            <button type="button" class="checkout-back checkout-edit-only" id="cancel-delivery-edit" hidden>← Cancel</button>
+            <button type="button" class="btn checkout-edit-only" id="save-delivery-edit" hidden>Save address & return to payment →</button>
+          </div>
         </section>
         <section class="checkout-card checkout-stage" data-checkout-step="3" hidden>
           <div class="checkout-step">STEP 03 / 03 · REVIEW & PAYMENT</div><h2>Review & pay.</h2>
@@ -78,6 +84,7 @@
           <p id="payment-reference"></p><p id="payment-stage"></p>
           <div class="checkout-pay-amount" id="payment-amount"></div>
           <p id="payment-message" role="status" aria-live="polite"></p>
+          <button type="button" class="checkout-back checkout-edit-link" id="payment-edit-delivery" hidden>← Back to delivery details</button>
           <div id="paypal-buttons"></div>
           <p class="checkout-hint">Keep this page's private address to return to your order. Do not share it publicly.</p>
         </section>
