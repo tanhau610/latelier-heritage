@@ -5,10 +5,10 @@
   const list = $("order-list"), panel = $("detail-panel");
   const state = { key:"",orders:[],cursor:null,selected:null,images:[],loading:false };
   let selectionVersion=0;
-  const labels = {New:"Yêu cầu mới",Confirmed:"Đã xác nhận",Painting:"Đang vẽ","Chờ thanh toán còn lại":"Chờ thanh toán còn lại",Shipped:"Đã gửi hàng",Completed:"Hoàn thành",Cancelled:"Đã hủy"};
+  const labels = {New:"Yêu cầu mới",Confirmed:"Đã xác nhận",Painting:"Đang vẽ","Ready for balance":"Chờ thanh toán còn lại",Shipped:"Đã gửi hàng",Completed:"Hoàn thành",Cancelled:"Đã hủy"};
   const make = (tag,className,text) => {const n=document.createElement(tag);if(className)n.className=className;if(text!==undefined)n.textContent=String(text);return n;};
-  const formatDate = iso => {const d=new Date(iso);return Number.isNaN(d.getTime())?"Không rõ ngày":d.toLocaleString("en-AU",{dateStyle:"medium",timeStyle:"short"});};
-  const money = amount => Number.isFinite(Number(amount))?"A$"+Number(amount).toLocaleString("en-AU"):"Chưa có dữ liệu";
+  const formatDate = iso => {const d=new Date(iso);return Number.isNaN(d.getTime())?"Không rõ ngày":d.toLocaleString("vi-VN",{dateStyle:"medium",timeStyle:"short",timeZone:"Asia/Ho_Chi_Minh"});};
+  const money = amount => Number.isFinite(Number(amount))?"A$"+Number(amount).toLocaleString("vi-VN"):"Chưa có dữ liệu";
   function revokeImages(){state.images.forEach(URL.revokeObjectURL);state.images=[];}
   function lock(){
     document.body.classList.remove("studio-unlocked");
@@ -89,22 +89,22 @@
     const payment=order.payment;
     const paymentNote=make("p","studio-footnote","Chỉ ghi nhận thủ công. Dashboard KHÔNG tự thu tiền hoặc xác minh giao dịch PayPal. Hãy kiểm tra tiền đã nhận trong tài khoản PayPal trước khi xác nhận.");
     if(order.checkoutMode!=="sandbox-inline")paymentBox.append(paymentNote);
-    const amountText=cents=>"A$"+(cents/100).toLocaleString("en-AU",{minimumFractionDigits:2,maximumFractionDigits:2});
+    const amountText=cents=>"A$"+(cents/100).toLocaleString("vi-VN",{minimumFractionDigits:2,maximumFractionDigits:2});
     if(order.checkoutMode==="sandbox-inline"){
       const sandbox=order.sandboxPayment;
       paymentBox.append(make("p","studio-footnote","CHỈ THỬ NGHIỆM SANDBOX — không có tiền thật được chuyển. Khách thanh toán trên trang đặt hàng."));
       if(payment)paymentBox.append(make("p","studio-payment-due","Tổng giá trị đơn: "+amountText(payment.totalCents)));
       paymentBox.append(make("p","studio-payment-due",sandbox?.full?"✓ Đã xác nhận thanh toán thử 100%":sandbox?.balance?"✓ Đã xác nhận đủ hai đợt thanh toán thử":sandbox?.deposit?"✓ Đã xác nhận cọc thử 50% · chờ phần còn lại": "Chờ thanh toán thử Sandbox"));
-      if(sandbox?.deposit&&!sandbox?.balance&&order.status!=="Chờ thanh toán còn lại")paymentBox.append(make("p","studio-story","When the portrait is finished, change the order status to Chờ thanh toán còn lại. The customer can then pay the remaining 50% using their saved private checkout page."));
+      if(sandbox?.deposit&&!sandbox?.balance&&order.status!=="Ready for balance")paymentBox.append(make("p","studio-story","Khi tranh hoàn thiện, chuyển trạng thái sang “Chờ thanh toán còn lại”. Khách sẽ thanh toán 50% còn lại qua liên kết đặt hàng riêng."));
       if(order.checkoutPlan==="full")paymentBox.append(make("p","studio-footnote","Khách đã chọn thanh toán toàn bộ khi đặt hàng."));
     }else{
     if(!payment){
-      paymentBox.append(make("p","studio-story","Chưa chốt báo giá yet. Confirm the final price with the customer before requesting a deposit."));
+      paymentBox.append(make("p","studio-story","Chưa chốt báo giá. Hãy xác nhận giá cuối cùng với khách trước khi yêu cầu đặt cọc."));
     }else{
       const summary=make("div","studio-payment-summary");
       summary.append(make("p","","Tổng giá đã chốt: "+amountText(payment.totalCents)),
         make("p","", "Tiền cọc 50%: "+amountText(payment.depositCents)+" · "+(payment.deposit?(payment.deposit.sandbox?"Đã xác nhận thử Sandbox":"Đã xác nhận thủ công"):"Chờ thanh toán")),
-        make("p","", "Thanh toán còn lại 50%: "+amountText(payment.balanceCents)+" · "+(payment.balance?(payment.balance.sandbox?"Sandbox verified":"Verified manually"):"Awaiting payment")));
+        make("p","", "Thanh toán còn lại 50%: "+amountText(payment.balanceCents)+" · "+(payment.balance?(payment.balance.sandbox?"Đã xác nhận thử Sandbox":"Đã xác nhận thủ công"):"Chờ thanh toán")));
       paymentBox.append(summary);
     }
     if(!payment?.deposit&&!payment?.balance&&!["Cancelled","Shipped","Completed"].includes(order.status)){
@@ -126,20 +126,20 @@
       const stage=!payment.deposit?"deposit":!payment.balance?"balance":null;
       if(stage){
         const due=stage==="deposit"?payment.depositCents:payment.balanceCents;
-        paymentBox.append(make("p","studio-payment-due","Thanh toán tiếp theo: "+(stage==="deposit"?"50% deposit":"số tiền còn lại 50%")+" · "+amountText(due)));
+        paymentBox.append(make("p","studio-payment-due","Thanh toán tiếp theo: "+(stage==="deposit"?"tiền cọc 50%":"số tiền còn lại 50%")+" · "+amountText(due)));
         const paymentForm=make("form","studio-payment-form");
         const refLabel=make("label","","Mã giao dịch PayPal (trong lịch sử PayPal)");
         const refInput=make("input");refInput.type="text";refInput.minLength=6;refInput.maxLength=100;refInput.pattern="[A-Za-z0-9_-]{6,100}";refInput.required=true;refInput.placeholder="Mã giao dịch";refLabel.append(refInput);
         const verifyLabel=make("label","studio-payment-verify");
         const verifyCheck=make("input");verifyCheck.type="checkbox";verifyCheck.required=true;
         verifyLabel.append(verifyCheck,make("span","","Tôi đã kiểm tra tài khoản PayPal và xác nhận nhận đúng khoản thanh toán này."));
-        const saveButton=make("button","btn","Ghi nhận đã xác minh: "+(stage==="deposit"?"deposit":"balance"));saveButton.type="submit";
+        const saveButton=make("button","btn","Ghi nhận đã xác minh: "+(stage==="deposit"?"tiền cọc":"số tiền còn lại"));saveButton.type="submit";
         paymentForm.append(refLabel,verifyLabel,saveButton);paymentBox.append(paymentForm);
         paymentForm.addEventListener("submit",async e=>{
           e.preventDefault();if(!verifyCheck.checked)return;saveButton.disabled=true;
           try{
             const result=await api("payment-record",{method:"POST",body:{id:order.id,stage,reference:refInput.value.trim(),verified:true}});
-            order.payment=result.payment;showMessage("Đã ghi nhận xác minh thủ công: "+stage+"; không phát sinh khoản thu mới từ khách.");select(order.id);
+            order.payment=result.payment;showMessage("Đã ghi nhận xác minh thủ công: "+(stage==="deposit"?"tiền cọc":"số tiền còn lại")+"; không phát sinh khoản thu mới từ khách.");select(order.id);
           }catch(error){showMessage(error.message);saveButton.disabled=false;}
         });
       }else paymentBox.append(make("p","studio-payment-paid","Đã xác minh thủ công đủ hai đợt thanh toán. Hãy kiểm tra riêng tình trạng hoàn thiện và giao hàng."));
@@ -151,7 +151,7 @@
       paymentBox.append(sandboxNotice);
       paymentBox.append(make("p","studio-payment-due","Trạng thái Sandbox: "+(sandbox?.deposit?"đã thử thanh toán cọc":"chưa thử thanh toán cọc")+" · "+(sandbox?.balance?"đã thử thanh toán còn lại":"chưa thử thanh toán còn lại")));
       if(sandboxStage){
-        const sandboxButton=make("button","btn outline","Tạo liên kết Sandbox: "+sandboxStage+" payment link");sandboxButton.type="button";
+        const sandboxButton=make("button","btn outline","Tạo liên kết Sandbox: "+(sandboxStage==="deposit"?"tiền cọc":"số tiền còn lại"));sandboxButton.type="button";
         const sandboxResult=make("div","studio-shipping-link");
         sandboxButton.addEventListener("click",async()=>{
           sandboxButton.disabled=true;sandboxResult.replaceChildren();
@@ -220,7 +220,7 @@
     if(state.selected!==id||currentVersion!==selectionVersion)return;
     panel.append(sectionHeading("Tiến độ thực hiện"));
     const form=make("form","studio-update");
-    const statusLabel=make("label","", "Status");const selectEl=make("select");selectEl.required=true;
+    const statusLabel=make("label","", "Trạng thái");const selectEl=make("select");selectEl.required=true;
     for(const value of Object.keys(labels)){const option=make("option","",labels[value]);option.value=value;option.selected=order.status===value;selectEl.append(option);}
     statusLabel.append(selectEl);
     const noteLabel=make("label","", "Ghi chú nội bộ");const note=make("textarea");note.maxLength=1000;note.rows=3;note.placeholder="Chất liệu, yêu cầu khách hàng, lưu ý giao hàng…";note.value=order.internalNote||"";noteLabel.append(note);
@@ -239,7 +239,7 @@
     });
   }
 
-  const fmtAUD=cents=>"A$"+(Number(cents||0)/100).toLocaleString("en-AU",{minimumFractionDigits:0,maximumFractionDigits:2});
+  const fmtAUD=cents=>"A$"+(Number(cents||0)/100).toLocaleString("vi-VN",{minimumFractionDigits:0,maximumFractionDigits:2});
   let analyticsVersion=0;
   function showView(view){
     const overview=view!=="orders";
@@ -310,11 +310,11 @@
       const result=await api("summary",{days});
       if(version!==analyticsVersion||!state.key)return;
       const t=result.totals||{};
-      $("metric-orders").textContent=(t.orders||0).toLocaleString("en-AU");
+      $("metric-orders").textContent=(t.orders||0).toLocaleString("vi-VN");
       $("metric-revenue").textContent=fmtAUD(t.revenueCents);
       $("metric-value").textContent=fmtAUD(t.orderValueCents);
-      $("metric-production").textContent=(t.inProduction||0).toLocaleString("en-AU");
-      $("studio-sandbox-caption").textContent=(t.sandboxOrders||0)+" đơn hàng thử Sandbox trong kỳ; A$"+(Number(t.sandboxTestCents||0)/100).toLocaleString("en-AU")+" là thanh toán mô phỏng.";
+      $("metric-production").textContent=(t.inProduction||0).toLocaleString("vi-VN");
+      $("studio-sandbox-caption").textContent=(t.sandboxOrders||0)+" đơn hàng thử Sandbox trong kỳ; A$"+(Number(t.sandboxTestCents||0)/100).toLocaleString("vi-VN")+" là thanh toán mô phỏng.";
       $("chart-period-caption").textContent=days+" ngày gần đây";
       renderTrend(result.daily);renderPipeline(result.statusCounts||{});
       $("analytics-notice").textContent=(result.partial?"Báo cáo chưa đầy đủ vì đã đạt giới hạn quét dữ liệu. ":"")+"Cập nhật: "+formatDate(result.asOf)+". Chỉ tính tiền đã xác minh; không tính Sandbox.";
