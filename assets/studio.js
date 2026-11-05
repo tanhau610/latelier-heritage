@@ -423,11 +423,13 @@
     if(mode==="key")$("access-key").focus();
   }
   async function otpFetch(action,fields={},sessionToken=""){
-    const response=await fetch("/api/studio-auth",{
+    const response=await fetch("/api/studio?action=otp-"+action,{
       method:"POST",headers:{"Content-Type":"application/json",...(sessionToken?{"Authorization":"Bearer "+sessionToken}:{})},
       body:JSON.stringify({action,...fields}),cache:"no-store",credentials:"omit"
     });
-    let data;try{data=await response.json();}catch{throw Error("Không kết nối được dịch vụ xác thực email.");}
+    let data;try{data=await response.json();}catch{
+      throw Error("API đăng nhập không trả về JSON (HTTP "+response.status+"). Hãy chụp thông báo này để kiểm tra Cloudflare.");
+    }
     if(!response.ok||!data.ok)throw Error(data.message||"Không thể xác thực. Vui lòng thử lại.");
     return data;
   }
