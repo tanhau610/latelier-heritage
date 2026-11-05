@@ -5,7 +5,47 @@ const form=$("checkout-form"),message=$("checkout-message"),button=$("submit-ord
 const prices={"20x25":[229,299],"30x40":[379,469],"40x50":[499,599],"50x70":[699,829]};
 const money=n=>"A$"+Number(n).toLocaleString("en-AU",{minimumFractionDigits:2,maximumFractionDigits:2});
 const params=new URLSearchParams(location.hash.slice(1));
-let id=params.get("id"),token=params.get("token"),sdk=null;
+let id=params.get("id"),token=params.get("token"),sdk=null,turnstileStarted=false;
+const stages=[...document.querySelectorAll("[data-checkout-step]")];
+function goTo(step,{scroll=true}={}){
+  stages.forEach(el=>{el.hidden=Number(el.dataset.checkoutStep)!==step;});
+  document.querySelectorAll("[data-progress]").forEach(el=>{
+    const number=Number(el.dataset.progress);
+    el.classList.toggle("is-active",number===step);
+    el.classList.toggle("is-complete",number<step);
+    if(number===step)el.setAttribute("aria-current","step");
+    else el.removeAttribute("aria-current");
+  });
+  if(step===3&&!turnstileStarted&&!id){turnstileStarted=true;setupTurnstile();}
+  if(scroll)document.querySelector(".checkout-progress").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function validateStep(step){
+  const stage=stages.find(el=>Number(el.dataset.checkoutStep)===step);
+  if(!stage)return false;
+  const fields=[...stage.querySelectorAll("input,select,textarea")].filter(el=>!el.disabled&&el.type!=="hidden");
+  const invalid=fields.find(el=>!el.checkValidity());
+  if(invalid){
+    goTo(step,{scroll:false});
+    invalid.reportValidity();
+    invalid.focus();
+    return false;
+  }
+  if(step===1){
+    const files=[...$("photos").files];
+    const bad=files.length<1||files.length>5||files.some(f=>f.size>8*1024*1024||!["image/jpeg","image/png","image/webp"].includes(f.type))||files.reduce((s,f)=>s+f.size,0)>20*1024*1024;
+    if(bad){
+      $("photo-feedback").textContent="Please choose 1–5 JPG, PNG or WEBP photos (8 MB each, 20 MB total).";
+      goTo(1,{scroll:false});$("photos").focus();return false;
+    }
+    $("photo-feedback").textContent="";
+  }
+  return true;
+}
+document.querySelectorAll("[data-next]").forEach(btn=>btn.addEventListener("click",()=>{
+  const step=Number(btn.closest("[data-checkout-step]").dataset.checkoutStep);
+  if(validateStep(step))goTo(Number(btn.dataset.next));
+}));
+document.querySelectorAll("[data-back]").forEach(btn=>btn.addEventListener("click",()=>goTo(Number(btn.dataset.back))));
 function price(){
   const size=form.elements.size.value,pets=Number(form.elements.pets.value),card=form.elements.card.checked;
   const artwork=prices[size][pets===1?0:1]+Math.max(0,pets-2)*(size==="50x70"?100:80);
@@ -23,10 +63,10 @@ $("photos").addEventListener("change",()=>{
   const preview=$("photo-preview");preview.replaceChildren();
   const files=Array.from($("photos").files);
   if(files.length>5||files.some(f=>f.size>8*1024*1024||!["image/jpeg","image/png","image/webp"].includes(f.type))||files.reduce((s,f)=>s+f.size,0)>20*1024*1024){
-    message.textContent="Choose 1–5 JPG, PNG or WEBP photos, under 8 MB each and 20 MB total.";
+    $("photo-feedback").textContent="Choose 1–5 JPG, PNG or WEBP photos, under 8 MB each and 20 MB total.";
     $("photos").value="";return;
   }
-  message.textContent=files.length?files.length+" photo(s) ready for upload.":"Please add reference photos.";
+  $("photo-feedback").textContent=files.length?files.length+" photo(s) ready for upload.":"Please add reference photos.";
   files.forEach(f=>{
     const img=document.createElement("img"),url=URL.createObjectURL(f);
     img.src=url;img.alt="Selected reference photo";img.onload=()=>URL.revokeObjectURL(url);preview.append(img);
@@ -51,7 +91,12 @@ async function loadSDK(clientId){
   return sdk;
 }
 async function showPayment(){
-  form.hidden=true;panel.hidden=false;
+  form.hidden=false;stages.forEach(el=>{el.hidden=true;});panel.hidden=false;
+  document.querySelectorAll("[data-progress]").forEach(el=>{
+    const number=Number(el.dataset.progress);
+    el.classList.toggle("is-active",number===3);el.classList.toggle("is-complete",number<3);
+    if(number===3)el.setAttribute("aria-current","step");else el.removeAttribute("aria-current");
+  });
   panel.scrollIntoView({behavior:"smooth",block:"start"});
   const msg=$("payment-message"),buttons=$("paypal-buttons");buttons.replaceChildren();
   msg.textContent="Loading your secure Sandbox checkout…";
@@ -112,8 +157,7 @@ async function setupTurnstile(){
 }
 form.addEventListener("submit",async e=>{
   e.preventDefault();
-  if(!form.reportValidity())return;
-  if(!$("photos").files.length){message.textContent="Please add at least one reference photograph.";return;}
+  for(const step of [1,2,3])if(!validateStep(step))return;
   button.disabled=true;button.textContent="Saving your order…";
   message.textContent="Uploading your photos and saving your delivery details securely…";
   try{
@@ -132,5 +176,5 @@ form.addEventListener("submit",async e=>{
   }finally{button.disabled=false;button.textContent="Continue to secure Sandbox payment";}
 });
 if(/^LH-\d{8}-[A-F0-9]{8}$/.test(id||"")&&/^[a-f0-9]{64}$/.test(token||""))showPayment();
-else setupTurnstile();
+else goTo(1,{scroll:false});
 })();
