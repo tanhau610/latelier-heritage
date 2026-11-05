@@ -478,7 +478,8 @@
         "Email login is not configured. Use your private access key.":"Thiếu cấu hình Resend hoặc email quản trị trong Cloudflare Preview.",
         "Cannot send the login code. Use your private access key or check Resend configuration.":"Resend chưa chấp nhận yêu cầu gửi mã. Kiểm tra cấu hình Resend trên Cloudflare Preview.",
         "Please wait 60 seconds before requesting another code.":"Bạn vui lòng đợi 60 giây trước khi yêu cầu mã mới.",
-        "Too many codes requested. Please try again in an hour.":"Đã đạt giới hạn yêu cầu mã. Vui lòng thử lại sau một giờ."
+        "Too many codes requested. Please try again in an hour.":"Đã đạt giới hạn yêu cầu mã. Vui lòng thử lại sau một giờ.",
+        "Please retry your request in a moment.":"Có yêu cầu gửi mã khác vừa được xử lý. Vui lòng thử lại sau ít phút."
       };
       loginMessage.textContent="Không gửi được mã: "+(errors[error.message]||error.message);
     }
@@ -495,7 +496,12 @@
       $("otp-code").value="";
       await unlockStudio();
       scheduleSessionExpiry();
-    }catch(error){state.key="";loginMessage.textContent=error.message;}
+    }catch(error){
+      state.key="";
+      loginMessage.textContent=error.message==="The code was already used or changed. Please try again."
+        ?"Mã đã được sử dụng hoặc đã thay đổi. Vui lòng yêu cầu mã mới."
+        :error.message;
+    }
     finally{button.disabled=false;}
   });
   $("login-form").addEventListener("submit",async e=>{
@@ -505,7 +511,7 @@
       await unlockStudio();
     }catch(error){state.key="";loginMessage.textContent=error.message;}
   });
-  $("logout").addEventListener("click",()=>{const token=state.key;lock();loginMode("key");loginMessage.textContent="Đã khóa trang quản trị.";if(token.startsWith("st_"))void otpFetch("logout",{},token).catch(()=>{});});
+  $("logout").addEventListener("click",()=>{const token=state.key;lock();loginMode("key");loginMessage.textContent="Đã đăng xuất khỏi thiết bị này.";if(token.startsWith("st_"))void otpFetch("logout",{},token).catch(()=>{loginMessage.textContent="Đã đăng xuất trên thiết bị này, nhưng chưa xác nhận thu hồi phiên trên máy chủ. Phiên sẽ tự hết hạn sau tối đa 8 giờ.";});});
   $("refresh").addEventListener("click",()=>load(true));
   $("load-more").addEventListener("click",()=>load(false));
   $("search").addEventListener("input",renderList);
