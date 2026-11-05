@@ -170,6 +170,9 @@
       shippingBox.append(make("p","studio-shipping-address",address));
       if(order.shippingUpdatedAt)shippingBox.append(make("p","studio-footnote","Customer updated "+formatDate(order.shippingUpdatedAt)));
     }else shippingBox.append(make("p","studio-story","No delivery address submitted yet."));
+    if(order.checkoutMode==="sandbox-inline"){
+      shippingBox.append(make("p","studio-footnote","Delivery details were collected at checkout. No separate shipping link is needed."));
+    }else{
     const linkHelp=make("p","studio-footnote","Create a private link to request the customer’s delivery address. It expires in 14 days. Creating a new link cancels the previous one.");
     const linkButton=make("button","btn","Create shipping link");linkButton.type="button";
     const linkResult=make("div","studio-shipping-link");
@@ -190,6 +193,7 @@
       finally{linkButton.disabled=false;linkButton.textContent="Create shipping link";}
     });
     shippingBox.append(linkHelp,linkButton,linkResult);
+    }
     panel.append(shippingBox);
     panel.append(sectionHeading("Reference photographs"));
     const gallery=make("div","studio-photo-grid");panel.append(gallery);
