@@ -330,3 +330,12 @@
 .studio-update optgroup{font-weight:700;color:#55463e}
 .studio-update option{font-weight:400;color:#30291d}
 @media(max-width:520px){.studio-save-actions{align-items:stretch;flex-direction:column}.studio-save-actions .btn{align-self:flex-start}}
+
+/* Preview email sign-in: preserve native hidden semantics despite form flex rules. */
+.studio-login [hidden]{display:none!important}
+.studio-login-switch{display:inline-flex;align-items:center;justify-content:flex-start;margin-top:17px;padding:7px 0;border:0;border-bottom:1px solid #88565a;background:transparent;color:#713f43;font-size:13px;font-weight:600;line-height:1.6;text-align:left;cursor:pointer}
+.studio-login-switch:hover{color:#9a5d62}
+.studio-login #otp-request-form,.studio-login #otp-verify-form{margin-top:24px;padding-top:20px;border-top:1px solid #e9e1d9}
+.studio-login #otp-code{font-size:23px;letter-spacing:.24em;font-variant-numeric:tabular-nums}
+.studio-login #otp-request-again{justify-self:start;margin-top:0}
+@media(max-width:600px){.studio-login-switch{font-size:12px}.studio-login #otp-code{font-size:20px}}
