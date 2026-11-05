@@ -44,3 +44,33 @@
 @media(max-width:540px){.checkout-body.is-editing-delivery #save-delivery-edit{min-width:0;font-size:10px}}
 
 .checkout-edit-link[hidden],.checkout-edit-only[hidden]{display:none!important}
+
+/* Consistent checkout viewport: every step, including PayPal, uses the same
+   outer dimensions. Long forms scroll inside the card rather than growing
+   the entire page. Keep a scrollbar gutter to prevent horizontal jumps. */
+.checkout-main{min-width:0;min-height:0}
+.checkout-main>.checkout-stage,
+.checkout-main>.checkout-pay-panel{
+  box-sizing:border-box;
+  width:100%;
+  height:clamp(460px,68dvh,610px);
+  min-height:0;
+  max-height:none;
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior-y:contain;
+  scrollbar-gutter:stable;
+  scrollbar-width:thin;
+  scrollbar-color:#b9a69a #f7f2ed;
+  -webkit-overflow-scrolling:touch;
+}
+.checkout-main>.checkout-stage::-webkit-scrollbar,
+.checkout-main>.checkout-pay-panel::-webkit-scrollbar{width:8px}
+.checkout-main>.checkout-stage::-webkit-scrollbar-track,
+.checkout-main>.checkout-pay-panel::-webkit-scrollbar-track{background:#f7f2ed}
+.checkout-main>.checkout-stage::-webkit-scrollbar-thumb,
+.checkout-main>.checkout-pay-panel::-webkit-scrollbar-thumb{background:#b9a69a;border-radius:8px}
+@media(max-width:540px){
+  .checkout-main>.checkout-stage,
+  .checkout-main>.checkout-pay-panel{height:clamp(440px,65dvh,580px)}
+}
