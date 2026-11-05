@@ -10,7 +10,7 @@ const labels = {
   Completed: ["Thank you for your order", "Your portrait order is complete. Thank you for trusting L'Atelier Heritage."],
   Cancelled: ["Update on your portrait order", "Your portrait order has been marked cancelled. Please contact us if this is unexpected."]
 };
-function copyFor(event, order, payment, link) {
+function copyFor(event, order, payment, link, paidInFull) {
   const pet = order.petName || "your pet";
   const total = aud(payment?.totalCents);
   if (event === "payment-deposit") return {
@@ -30,14 +30,14 @@ function copyFor(event, order, payment, link) {
   if (event.startsWith("status-")) {
     const status=event.slice(7);
     const [subject, body] = labels[status] || ["Portrait order update", "There's an update to your portrait order."];
-    const needsBalance = status === "Ready for balance" && order.checkoutPlan !== "full";
+    const needsBalance = status === "Ready for balance" && order.checkoutPlan !== "full" && !paidInFull;
     const details=["Order: " + order.id, "Portrait: " + pet, "Order total: " + total];
     if(needsBalance) details.push("Remaining balance: " + aud(payment?.balanceCents));
-    return {subject,heading:subject + ".",body,details,link:needsBalance?link:null};
+    return {subject,heading:subject + ".",body:status==="Ready for balance"&&paidInFull?"Your portrait is ready, and your payment is complete. We will prepare your artwork for dispatch.":body,details,link:needsBalance?link:null};
   }
   throw Error("Unsupported customer email event");
 }
-export async function sendSandboxCustomerEmail({env,bucket,order,payment,event,eventKey,checkoutLink=null}) {
+export async function sendSandboxCustomerEmail({env,bucket,order,payment,event,eventKey,checkoutLink=null,paidInFull=false}) {
   const key="enquiries/" + order.id + "/email-events/" + eventKey + ".json";
   const existing=await bucket.get(key);
   if(existing) {
@@ -52,7 +52,7 @@ export async function sendSandboxCustomerEmail({env,bucket,order,payment,event,e
     return {state:"skipped"};
   }
   try {
-    const copy=copyFor(event,order,payment,checkoutLink);
+    const copy=copyFor(event,order,payment,checkoutLink,paidInFull);
     const intro="SANDBOX EMAIL PREVIEW — NO REAL PAYMENT. This email is sent only to the studio test inbox, not the customer.";
     const detailHtml=copy.details.map(line=>"<li style=\"padding:4px 0\">"+escapeHtml(line)+"</li>").join("");
     const actionHtml=copy.link?"<p style=\"margin:28px 0\"><a href=\""+escapeHtml(copy.link)+"\" style=\"background:#743f48;color:#fff;text-decoration:none;padding:14px 22px;border-radius:5px\">Pay remaining balance (Sandbox)</a></p>":"";
