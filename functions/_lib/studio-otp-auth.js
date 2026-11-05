@@ -5,7 +5,7 @@ export const otpHeaders={'Content-Type':'application/json; charset=utf-8','Cache
 export const otpJson=(value,status=200)=>new Response(JSON.stringify(value),{status,headers:otpHeaders});
 export const tokenHex=()=>Array.from(crypto.getRandomValues(new Uint8Array(32)),b=>b.toString(16).padStart(2,'0')).join('');
 export async function hash(value){const d=await crypto.subtle.digest('SHA-256',enc.encode(value));return Array.from(new Uint8Array(d),b=>b.toString(16).padStart(2,'0')).join('');}
-export async function mac(secret,value){const key=await crypto.subtle.importKey('raw',enc.encode(secret),'HMAC',false,['sign']);const d=await crypto.subtle.sign('HMAC',key,enc.encode(value));return Array.from(new Uint8Array(d),b=>b.toString(16).padStart(2,'0')).join('');}
+export async function mac(secret,value){const key=await crypto.subtle.importKey('raw',enc.encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign']);const d=await crypto.subtle.sign('HMAC',key,enc.encode(value));return Array.from(new Uint8Array(d),b=>b.toString(16).padStart(2,'0')).join('');}
 export function constantEqual(a,b){if(typeof a!=='string'||typeof b!=='string'||a.length!==b.length)return false;let n=0;for(let i=0;i<a.length;i++)n|=a.charCodeAt(i)^b.charCodeAt(i);return n===0;}
 export const read=async(bucket,key)=>{const obj=await bucket.get(prefix+key);if(!obj)return null;try{return await obj.json();}catch{return null;}};
 export const write=(bucket,key,data)=>bucket.put(prefix+key,JSON.stringify(data),{httpMetadata:{contentType:'application/json'}});
