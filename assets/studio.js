@@ -277,15 +277,16 @@
   function renderTrend(data){
     const target=$("studio-chart");target.replaceChildren();
     const values=Array.isArray(data)?data:[];
-    $("chart-legend-label").textContent=chartMode==="revenue"?"Doanh thu đã xác minh (AUD)":"Số đơn đặt tranh";
+    $("chart-legend-label").textContent=chartMode==="revenue"?"Doanh thu thực (AUD)":chartMode==="sandbox"?"Thanh toán thử Sandbox (AUD)":"Số đơn đặt tranh";
+    $("chart-data-note").textContent=chartMode==="revenue"?"Chỉ tính khoản thanh toán đã xác minh thủ công, theo ngày xác nhận. Không bao gồm PayPal Sandbox.":chartMode==="sandbox"?"Chỉ hiển thị tiền thanh toán thử qua PayPal Sandbox; không phải doanh thu thực.":"Số yêu cầu đặt tranh được tạo theo từng ngày.";
     if(!values.length){target.append(make("p","studio-chart-empty","Chưa có dữ liệu thống kê."));return;}
     const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg");
     svg.setAttribute("viewBox","0 0 800 240");svg.setAttribute("role","img");
-    svg.setAttribute("aria-label",chartMode==="revenue"?"Doanh thu thực theo ngày, không tính Sandbox":"Số yêu cầu đặt tranh theo ngày");
+    svg.setAttribute("aria-label",chartMode==="revenue"?"Doanh thu thực theo ngày, không tính Sandbox":chartMode==="sandbox"?"Thanh toán PayPal Sandbox theo ngày":"Số yêu cầu đặt tranh theo ngày");
     const pad={l:73,r:14,t:13,b:32},w=800-pad.l-pad.r,h=240-pad.t-pad.b;
-    const val=v=>chartMode==="revenue"?(Number(v.revenueCents)||0)/100:Number(v.orders)||0;
+    const val=v=>chartMode==="revenue"?(Number(v.revenueCents)||0)/100:chartMode==="sandbox"?(Number(v.sandboxCents)||0)/100:Number(v.orders)||0;
     const max=Math.max(1,...values.map(val));
-    const fmtTick=n=>chartMode==="revenue"?"A$"+n.toLocaleString("vi-VN",{maximumFractionDigits:0}):Math.round(n).toLocaleString("vi-VN");
+    const fmtTick=n=>chartMode!=="orders"?"A$"+n.toLocaleString("vi-VN",{maximumFractionDigits:0}):Math.round(n).toLocaleString("vi-VN");
     const line=(x1,y1,x2,y2,color,width=1,dash="")=>{
       const n=document.createElementNS(ns,"line");Object.entries({x1,y1,x2,y2,stroke:color,"stroke-width":width,...(dash?{"stroke-dasharray":dash}:{})}).forEach(([k,v])=>n.setAttribute(k,String(v)));svg.append(n);
     };
@@ -348,7 +349,7 @@
   }
   document.querySelectorAll("[data-studio-view]").forEach(el=>el.addEventListener("click",()=>showView(el.dataset.studioView)));
   document.querySelectorAll("[data-chart-mode]").forEach(button=>button.addEventListener("click",()=>{
-    chartMode=button.dataset.chartMode==="revenue"?"revenue":"orders";
+    chartMode=["orders","revenue","sandbox"].includes(button.dataset.chartMode)?button.dataset.chartMode:"orders";
     document.querySelectorAll("[data-chart-mode]").forEach(item=>{
       const active=item.dataset.chartMode===chartMode;item.classList.toggle("active",active);item.setAttribute("aria-pressed",String(active));
     });
