@@ -23,7 +23,7 @@
   <form id="checkout-form" novalidate>
     <div class="checkout-grid">
       <div class="checkout-main">
-        <section class="checkout-card checkout-stage" data-checkout-step="1">
+        <section class="checkout-card checkout-stage" data-checkout-step="1"><div class="checkout-stage-content">
           <div class="checkout-step">STEP 01 / 03 · YOUR ARTWORK</div><h2>Make it personal.</h2>
           <div class="checkout-fields">
             <label>Canvas size <select name="size" id="size"><option value="20x25">20 × 25 cm</option><option value="30x40" selected>30 × 40 cm</option><option value="40x50">40 × 50 cm</option><option value="50x70">50 × 70 cm</option></select></label>
@@ -37,9 +37,9 @@
           <div class="checkout-preview" id="photo-preview"></div>
           <label class="checkout-check"><input type="checkbox" name="photoPermission" value="yes" required> I have permission to use these photographs for this custom portrait.</label>
           <label class="checkout-check"><input type="checkbox" name="card" value="yes" id="card"> Add a handwritten message card (+A$15)</label>
-          <div class="checkout-stage-actions"><button type="button" class="btn checkout-next" data-next="2">Continue to delivery <span aria-hidden="true">→</span></button></div>
+          </div><div class="checkout-stage-footer"><div class="checkout-stage-track" aria-hidden="true"><span></span><span></span><span></span></div><div class="checkout-stage-actions"><a class="checkout-back" href="commission.html">Back</a><button type="button" class="btn checkout-next" data-next="2">Continue</button></div></div>
         </section>
-        <section class="checkout-card checkout-stage" data-checkout-step="2" hidden>
+        <section class="checkout-card checkout-stage" data-checkout-step="2" hidden><div class="checkout-stage-content">
           <div class="checkout-step">STEP 02 / 03 · CONTACT & DELIVERY</div><h2>Where shall we send it?</h2>
           <div class="checkout-fields">
             <label>Your name <input name="customerName" autocomplete="name" maxlength="120" required></label>
@@ -61,14 +61,14 @@
           </div>
           <p class="checkout-hint">Your address is stored privately for delivery. We may contact you to confirm international shipping details.</p>
           <p id="delivery-edit-message" class="checkout-stage-error" role="status" aria-live="polite"></p>
-          <div class="checkout-stage-actions">
-            <button type="button" class="checkout-back" data-back="1">← Back</button>
-            <button type="button" class="btn checkout-next" data-next="3">Continue to payment →</button>
+          </div><div class="checkout-stage-footer"><div class="checkout-stage-track" aria-hidden="true"><span></span><span></span><span></span></div><div class="checkout-stage-actions">
+            <button type="button" class="checkout-back" data-back="1">Back</button>
+            <button type="button" class="btn checkout-next" data-next="3">Continue</button>
             <button type="button" class="checkout-back checkout-edit-only" id="cancel-delivery-edit" hidden>← Cancel</button>
             <button type="button" class="btn checkout-edit-only" id="save-delivery-edit" hidden>Save address & return to payment →</button>
-          </div>
+          </div></div>
         </section>
-        <section class="checkout-card checkout-stage" data-checkout-step="3" hidden>
+        <section class="checkout-card checkout-stage" data-checkout-step="3" hidden><div class="checkout-stage-content">
           <div class="checkout-step">STEP 03 / 03 · REVIEW & PAYMENT</div><h2>Review & pay.</h2>
           <p class="checkout-hint">Choose 50% deposit or full payment. Then complete your secure PayPal Sandbox payment with PayPal or an eligible debit/credit card.</p>
           <label class="checkout-choice"><input type="radio" name="paymentPlan" value="deposit" checked><span><strong>Pay 50% deposit today</strong><small>Pay the remaining 50% when your finished portrait is ready, before dispatch.</small></span><b id="deposit-choice">A$189.50</b></label>
@@ -76,21 +76,21 @@
           <label class="checkout-check"><input type="checkbox" name="terms" value="yes" required> I understand this is a custom-made artwork. I have read the <a href="policies.html" target="_blank" rel="noopener noreferrer">policies</a> and <a href="process.html" target="_blank" rel="noopener noreferrer">artwork process</a>. Prices shown are for standard options; unusual requests may need a separate quote.</label>
           <div class="turnstile-mount"></div>
           <div class="checkout-hidden" aria-hidden="true"><label>Leave blank <input name="website" tabindex="-1" autocomplete="off"></label></div>
-          <div class="checkout-stage-actions"><button type="button" class="checkout-back" data-back="2"><span aria-hidden="true">←</span> Back</button><button class="btn checkout-submit" id="submit-order" type="submit">Continue to secure Sandbox payment <span aria-hidden="true">→</span></button></div>
-          <p id="checkout-message" class="checkout-message" role="status" aria-live="polite">Your details are saved only when you continue. No money will be charged in this preview.</p>
+          <p id="checkout-message" class="checkout-message" role="status" aria-live="polite">Your details are saved only when you continue. No money will be charged in this preview.</p></div><div class="checkout-stage-footer"><div class="checkout-stage-track" aria-hidden="true"><span></span><span></span><span></span></div><div class="checkout-stage-actions"><button type="button" class="checkout-back" data-back="2">Back</button><button class="btn checkout-submit" id="submit-order" type="submit">Continue</button></div></div>
+          
         </section>
-        <section class="checkout-card checkout-pay-panel" id="payment-panel" hidden>
+        <section class="checkout-card checkout-pay-panel" id="payment-panel" hidden><div class="checkout-pay-content">
           <div class="checkout-step">STEP 03 / 03 · SECURE SANDBOX PAYMENT</div><h2>Complete your test payment.</h2>
           <p id="payment-reference"></p><p id="payment-stage"></p>
           <div class="checkout-pay-amount" id="payment-amount"></div>
           <p id="payment-message" role="status" aria-live="polite"></p>
-          <button type="button" class="checkout-back checkout-edit-link" id="payment-edit-delivery" hidden>← Back to delivery details</button>
+          
           <div id="paypal-buttons"></div>
-          <p class="checkout-hint">Keep this page's private address to return to your order. Do not share it publicly.</p>
+          <p class="checkout-hint">Keep this page's private address to return to your order. Do not share it publicly.</p></div><div class="checkout-stage-footer checkout-pay-footer"><div class="checkout-stage-track" aria-hidden="true"><span></span><span></span><span></span></div><div class="checkout-stage-actions"><button type="button" class="checkout-back checkout-edit-link" id="payment-edit-delivery" hidden>Back</button><span class="checkout-pay-footer-note">Complete your payment securely with PayPal above.</span></div></div>
         </section>
       </div>
       <aside class="checkout-summary">
-        <img src="assets/06-border-collie.jpg" alt="Example hand-painted pet portrait">
+        <img src="assets/10-dog-in-garden.jpg" alt="Hand-painted portrait of a golden dog resting in a garden">
         <div class="checkout-summary-inner">
           <span class="checkout-step">ORDER SUMMARY</span><h3>Original hand-painted portrait</h3>
           <p id="summary-details">30 × 40 cm · 1 pet</p>
