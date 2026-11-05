@@ -62,6 +62,19 @@ function price(){
   $("deposit-choice").textContent=money(deposit);
   $("full-choice").textContent=money(total);
 }
+// Preselect public, non-sensitive artwork choices passed from the Commission calculator.
+// Existing order sessions in the URL fragment always take precedence over query values.
+const commissionChoices=new URLSearchParams(location.search);
+if(!id&&!token){
+  const sizes=["20x25","30x40","40x50","50x70"];
+  const pets=["1","2","3","4"];
+  const countries=["Australia","United States","United Kingdom","Canada"];
+  const size=commissionChoices.get("size"),petCount=commissionChoices.get("pets"),country=commissionChoices.get("country"),card=commissionChoices.get("card");
+  if(sizes.includes(size))form.elements.size.value=size;
+  if(pets.includes(petCount))form.elements.pets.value=petCount;
+  if(countries.includes(country))form.elements.country.value=country;
+  if(card==="yes")form.elements.card.checked=true;
+}
 form.addEventListener("change",price);price();
 $("photos").addEventListener("change",()=>{
   const preview=$("photo-preview");preview.replaceChildren();
