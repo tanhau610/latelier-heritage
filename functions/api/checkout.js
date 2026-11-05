@@ -82,7 +82,7 @@ async function start(request,env){
     await put(env.PORTRAIT_UPLOADS,path(id,"details.json"),details);
     await put(env.PORTRAIT_UPLOADS,path(id,"shipping.json"),{id,details:shipping,updatedAt:quotedAt});
     await put(env.PORTRAIT_UPLOADS,path(id,"payment.json"),{id,quotedAt,totalCents,depositCents,balanceCents,checkoutPlan:plan,sandbox:true});
-    await put(env.PORTRAIT_UPLOADS,path(id,"checkout-access.json"),{id,tokenHash:await digest(token),expiresAt:new Date(Date.now()+30*86400000).toISOString(),createdAt:quotedAt});
+    await put(env.PORTRAIT_UPLOADS,path(id,"checkout-access.json"),{id,tokenHash:await digest(token),expiresAt:new Date(Date.now()+90*86400000).toISOString(),createdAt:quotedAt});
   }catch(e){console.error("Sandbox order storage failed",id,e);return fail("Could not save your order securely. Please contact the studio.",503);}
   // Notification is best-effort; a stored order is not lost when email delivery fails.
   if(env.RESEND_API_KEY&&env.NOTIFICATION_EMAIL){
@@ -115,6 +115,12 @@ async function action(request,env){
   if(!access||access.id!==id||Date.parse(access.expiresAt)<=Date.now()||!same(await digest(token),access.tokenHash))return fail("Checkout access expired or invalid.",403);
   if(!order||order.id!==id||order.checkoutMode!=="sandbox-inline"||!payment||payment.id!==id||payment.checkoutPlan!==order.checkoutPlan)return fail("Order not found.",404);
   const state=due(order,payment,ledger);
+  // A capture may have succeeded even if the customer's network lost the response.
+  // Return the existing verified result for the exact same PayPal order, without charging again.
+  if(action==="capture"&&typeof input.orderID==="string"&&ledger?.quotedAt===payment.quotedAt){
+    const recordedStage=["deposit","balance","full"].find(s=>ledger[s]?.paypalOrderId===input.orderID);
+    if(recordedStage)return json({ok:true,paid:true,stage:recordedStage,alreadyRecorded:true,sandbox:true});
+  }
   if(action==="view"){
     const savedShipping=await read(bucket,path(id,"shipping.json"));
     return json({ok:true,id,petName:order.petName||"Pet portrait",plan:order.checkoutPlan,stage:state.stage,amount:(state.amountCents/100).toFixed(2),total:(payment.totalCents/100).toFixed(2),remaining:(payment.balanceCents/100).toFixed(2),status:order.status||"New",clientId:env.PAYPAL_CLIENT_ID,sandbox:true,customerName:order.name,customerEmail:order.email,shipping:savedShipping?.details||null,canEditDelivery:["deposit","full"].includes(state.stage)&&order.status==="New"});
@@ -156,7 +162,7 @@ async function action(request,env){
       intent:"CAPTURE",
       purchase_units:[{reference_id:reference,custom_id:reference,description:"Custom hand-painted pet portrait - "+stage,amount:{currency_code:"AUD",value:amount}}],
       application_context:{shipping_preference:"NO_SHIPPING",user_action:"PAY_NOW"}
-    },"checkout-create-"+reference+"-"+payment.quotedAt.replace(/[^0-9]/g,"").slice(0,14));
+    },"checkout-create-"+reference+"-"+payment.quotedAt.replace(/[^0-9]/g,"").slice(0,14)+"-"+Math.floor(Date.now()/3600000));
     if(!orderResult.id||orderResult.status!=="CREATED")throw Error("PayPal did not create the Sandbox order.");
     await put(bucket,path(id,"checkout-paypal-order.json"),{id,stage,quotedAt:payment.quotedAt,tokenHash:access.tokenHash,paypalOrderId:orderResult.id,createdAt:new Date().toISOString()});
     return json({ok:true,orderID:orderResult.id,sandbox:true});
