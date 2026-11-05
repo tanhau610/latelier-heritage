@@ -106,7 +106,7 @@ async function action(request,env){
   if(Number(request.headers.get("content-length")||0)>4096)return fail("Request too large.",413);
   let input;try{input=await request.json();}catch{return fail("Invalid checkout request.");}
   const id=input?.id,action=input?.action;
-  if(!validId(id)||!["view","create","capture"].includes(action))return fail("Invalid order request.");
+  if(!validId(id)||!["view","create","capture","updateDelivery"].includes(action))return fail("Invalid order request.");
   const auth=request.headers.get("Authorization")||"";
   const token=auth.startsWith("Bearer ")?auth.slice(7):"";
   if(!/^[a-f0-9]{64}$/.test(token))return fail("Invalid checkout access.",403);
@@ -115,7 +115,37 @@ async function action(request,env){
   if(!access||access.id!==id||Date.parse(access.expiresAt)<=Date.now()||!same(await digest(token),access.tokenHash))return fail("Checkout access expired or invalid.",403);
   if(!order||order.id!==id||order.checkoutMode!=="sandbox-inline"||!payment||payment.id!==id||payment.checkoutPlan!==order.checkoutPlan)return fail("Order not found.",404);
   const state=due(order,payment,ledger);
-  if(action==="view")return json({ok:true,id,petName:order.petName||"Pet portrait",plan:order.checkoutPlan,stage:state.stage,amount:(state.amountCents/100).toFixed(2),total:(payment.totalCents/100).toFixed(2),remaining:(payment.balanceCents/100).toFixed(2),status:order.status||"New",clientId:env.PAYPAL_CLIENT_ID,sandbox:true});
+  if(action==="view"){
+    const savedShipping=await read(bucket,path(id,"shipping.json"));
+    return json({ok:true,id,petName:order.petName||"Pet portrait",plan:order.checkoutPlan,stage:state.stage,amount:(state.amountCents/100).toFixed(2),total:(payment.totalCents/100).toFixed(2),remaining:(payment.balanceCents/100).toFixed(2),status:order.status||"New",clientId:env.PAYPAL_CLIENT_ID,sandbox:true,customerName:order.name,customerEmail:order.email,shipping:savedShipping?.details||null,canEditDelivery:["deposit","full"].includes(state.stage)&&order.status==="New"});
+  }
+  if(action==="updateDelivery"){
+    // Only allow edits before the first captured payment. Never create a second order.
+    if(!["deposit","full"].includes(state.stage)||order.status!=="New")return fail("Delivery details can no longer be edited online. Please contact the studio.",409);
+    const data=input.delivery;
+    if(!data||typeof data!=="object"||Array.isArray(data))return fail("Please check your delivery details.");
+    const name=clean(data.customerName,120),email=clean(data.customerEmail,254);
+    if(name.length<2||email.length>254||!(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)))return fail("Enter your full name and a valid email.");
+    const fields=["fullName","phone","address1","address2","city","region","postalCode"];
+    const limits={fullName:120,phone:40,address1:180,address2:180,city:100,region:100,postalCode:32};
+    const shipping={};
+    for(const field of fields){
+      const raw=data[field];
+      if(typeof raw!=="string"||raw.length>limits[field])return fail("Please check your delivery address.");
+      shipping[field]=clean(raw,limits[field]);
+      if(/[<>\x00-\x08\x0b\x0c\x0e-\x1f]/.test(shipping[field]))return fail("Please remove invalid address characters.");
+    }
+    if(["fullName","phone","address1","city","postalCode"].some(f=>shipping[f].length<2))return fail("Please complete the required delivery fields.");
+    if(!countries.has(data.country))return fail("Please choose a supported delivery country.");
+    shipping.country=data.country;
+    // Re-check the ledger before writing in case a payment was captured in another tab.
+    const latestLedger=await read(bucket,path(id,"paypal-sandbox-payments.json"));
+    if(latestLedger?.quotedAt===payment.quotedAt&&(latestLedger.deposit||latestLedger.full))return fail("Payment has already been made. Please contact the studio to change the delivery address.",409);
+    const updatedAt=new Date().toISOString();
+    await put(bucket,path(id,"shipping.json"),{id,details:shipping,updatedAt});
+    await put(bucket,path(id,"details.json"),{...order,name,email,country:shipping.country});
+    return json({ok:true,id,updatedAt,sandbox:true});
+  }
   if(["Cancelled","Shipped","Completed"].includes(order.status))return fail("This order is no longer payable.",409);
   if(!["deposit","balance","full"].includes(state.stage))return fail("No payment is currently due.",409);
   const stage=state.stage,amount=(state.amountCents/100).toFixed(2),reference=id+"-"+stage;
