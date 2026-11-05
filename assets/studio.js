@@ -8,13 +8,15 @@
   const labels = {New:"Yêu cầu mới",Confirmed:"Đã xác nhận",Painting:"Đang vẽ","Ready for balance":"Chờ thanh toán còn lại",Shipped:"Đã gửi hàng",Completed:"Hoàn thành",Cancelled:"Đã hủy"};
   const make = (tag,className,text) => {const n=document.createElement(tag);if(className)n.className=className;if(text!==undefined)n.textContent=String(text);return n;};
   const formatDate = iso => {const d=new Date(iso);return Number.isNaN(d.getTime())?"Không rõ ngày":d.toLocaleString("vi-VN",{dateStyle:"medium",timeStyle:"short",timeZone:"Asia/Ho_Chi_Minh"});};
-  const money = amount => Number.isFinite(Number(amount))?"A$"+Number(amount).toLocaleString("vi-VN"):"Chưa có dữ liệu";
+  const money = amount => amount!==null&&amount!==undefined&&amount!==""&&Number.isFinite(Number(amount))?"A$"+Number(amount).toLocaleString("vi-VN",{minimumFractionDigits:2,maximumFractionDigits:2}):"Chưa có dữ liệu";
   function revokeImages(){state.images.forEach(URL.revokeObjectURL);state.images=[];}
   function lock(){
     document.body.classList.remove("studio-unlocked");
     selectionVersion++;revokeImages();state.key="";state.orders=[];state.cursor=null;state.selected=null;
     dashboard.hidden=true;login.hidden=false;$("access-key").value="";$("access-key").focus();
   }
+  const serverErrors={"Studio access is not configured. Set STUDIO_ADMIN_KEY (32+ characters) in Cloudflare.":"Chưa cấu hình khóa quản trị STUDIO_ADMIN_KEY (ít nhất 32 ký tự) trong Cloudflare.","Origin not allowed.":"Nguồn truy cập không được phép.","Incorrect access key.":"Mã truy cập không đúng.","Invalid cursor.":"Dữ liệu phân trang không hợp lệ.","Unsupported reporting period.":"Khoảng thời gian thống kê không được hỗ trợ.","Invalid image request.":"Yêu cầu xem ảnh không hợp lệ.","Image not found.":"Không tìm thấy ảnh.","Unknown action.":"Thao tác không được hỗ trợ.","Unable to load studio records.":"Không tải được dữ liệu đơn hàng.","Request too large.":"Dữ liệu gửi lên quá lớn.","Invalid request.":"Yêu cầu không hợp lệ.","Invalid order.":"Mã đơn hàng không hợp lệ.","Order not found.":"Không tìm thấy đơn hàng.","Delivery address was collected at checkout; no shipping link is required.":"Địa chỉ đã được nhận khi đặt hàng, không cần liên kết giao hàng.","This order cannot request new shipping details.":"Không thể yêu cầu địa chỉ giao hàng mới cho đơn này.","Could not create shipping link.":"Không tạo được liên kết giao hàng.","Sandbox PayPal credentials are not configured in this environment.":"Chưa cấu hình thông tin PayPal Sandbox trong môi trường này.","Invalid order or instalment.":"Đơn hàng hoặc đợt thanh toán không hợp lệ.","Order cannot request a legacy payment link.":"Đơn hàng này không hỗ trợ tạo liên kết thanh toán kiểu cũ.","This Sandbox instalment has already been recorded.":"Đợt thanh toán Sandbox này đã được ghi nhận.","Complete the Sandbox deposit test first.":"Cần thử thanh toán cọc Sandbox trước.","Could not create payment link.":"Không tạo được liên kết thanh toán.","Sandbox checkout orders cannot be manually repriced or recorded.":"Không thể sửa giá hoặc ghi nhận thủ công cho đơn thanh toán Sandbox.","This order cannot be updated for payment.":"Không thể cập nhật thanh toán cho đơn hàng này.","Enter a confirmed whole-AUD price between A$50 and A$100,000.":"Nhập giá đã chốt là số nguyên từ 50 đến 100.000 AUD.","A payment is already recorded. The agreed price cannot be changed here.":"Đã ghi nhận thanh toán, không thể thay đổi giá tại đây.","Confirm the final price before recording a payment.":"Hãy xác nhận giá cuối cùng trước khi ghi nhận thanh toán.","Verify the transaction in PayPal and enter its transaction ID (6–100 letters/numbers).":"Kiểm tra giao dịch trong PayPal và nhập mã giao dịch hợp lệ (6–100 ký tự).","This payment stage has already been recorded.":"Đợt thanh toán này đã được ghi nhận.","Record the verified deposit first.":"Hãy ghi nhận tiền cọc đã xác minh trước.","Use the unique transaction ID for the second payment.":"Đợt thanh toán thứ hai phải có mã giao dịch khác.","Could not save payment tracking.":"Không lưu được thông tin thanh toán.","Invalid order or status.":"Đơn hàng hoặc trạng thái không hợp lệ.","Note must be 1000 characters or fewer.":"Ghi chú không được vượt quá 1.000 ký tự.","Verify the deposit or full payment before starting production.":"Cần xác minh tiền cọc hoặc thanh toán đầy đủ trước khi bắt đầu vẽ.","Verify full payment before shipping or completing the order.":"Cần xác minh thanh toán đủ trước khi gửi tranh hoặc hoàn tất đơn.","Could not update order.":"Không cập nhật được đơn hàng."};
+  const translateError=message=>serverErrors[message]||message||"Có lỗi xảy ra. Vui lòng thử lại.";
   async function api(action,{method="GET",body,cursor,id,index,days}={}){
     const url=new URL("/api/studio",location.origin);url.searchParams.set("action",action);
     if(cursor)url.searchParams.set("cursor",cursor);
@@ -25,7 +27,7 @@
     if(response.status===401){lock();throw Error("Mã truy cập không đúng hoặc đã hết hiệu lực. Vui lòng đăng nhập lại.");}
     if(action==="photo"&&response.ok)return response.blob();
     let result;try{result=await response.json();}catch{throw Error("Máy chủ trả về dữ liệu không hợp lệ.");}
-    if(!response.ok||!result.ok)throw Error(result.message||"Không thực hiện được yêu cầu.");
+    if(!response.ok||!result.ok)throw Error(translateError(result.message));
     return result;
   }
   function showMessage(text){message.textContent=text||"";}
@@ -214,7 +216,7 @@
         const url=URL.createObjectURL(blob);state.images.push(url);
         if(state.selected!==id||currentVersion!==selectionVersion){URL.revokeObjectURL(url);state.images=state.images.filter(x=>x!==url);return;}
         const a=make("a","studio-photo-link");a.href=url;a.target="_blank";a.rel="noopener noreferrer";a.title="Mở ảnh tham khảo riêng tư";
-        const img=make("img");img.src=url;img.alt= "Ảnh tham khảo: "+(photo.name||"Pet");img.loading="lazy";a.append(img);holder.replaceChildren(a);
+        const img=make("img");img.src=url;img.alt= "Ảnh tham khảo: "+(photo.name||"Thú cưng");img.loading="lazy";a.append(img);holder.replaceChildren(a);
       }catch(e){if(state.selected!==id||currentVersion!==selectionVersion)return;holder.textContent="Không tải được ảnh";if(!state.key)return;}
     }
     if(state.selected!==id||currentVersion!==selectionVersion)return;
@@ -264,8 +266,8 @@
       const row=make("button","studio-recent-row");row.type="button";
       const avatar=make("span","studio-recent-avatar",(o.petName||"P").slice(0,1).toUpperCase());
       const info=make("span","studio-recent-info");
-      info.append(make("strong","",o.petName||"Tranh đặt vẽ"),make("small","",(o.name||"Customer")+" · "+formatDate(o.receivedAt)));
-      const price=make("span","studio-recent-amount",money(o.payment?.totalCents/100||o.estimatedPriceAUD));
+      info.append(make("strong","",o.petName||"Tranh đặt vẽ"),make("small","",(o.name||"Khách hàng")+" · "+formatDate(o.receivedAt)));
+      const price=make("span","studio-recent-amount",money(o.payment?.totalCents!==undefined?o.payment.totalCents/100:o.estimatedPriceAUD));
       row.append(avatar,info,price);
       row.addEventListener("click",()=>{showView("orders");select(o.id);});
       target.append(row);
@@ -315,7 +317,7 @@
   }
   function renderPipeline(counts){
     const target=$("studio-pipeline");target.replaceChildren();
-    const rows=[["Yêu cầu mới",counts.New||0],["Confirmed",counts.Confirmed||0],["Đang vẽ",counts.Painting||0],["Chờ thanh toán còn lại",counts["Chờ thanh toán còn lại"]||0],["Đã gửi / hoàn thành",(counts.Shipped||0)+(counts.Completed||0)]];
+    const rows=[["Yêu cầu mới",counts.New||0],["Đã xác nhận",counts.Confirmed||0],["Đang vẽ",counts.Painting||0],["Chờ thanh toán còn lại",counts["Ready for balance"]||0],["Đã gửi / hoàn thành",(counts.Shipped||0)+(counts.Completed||0)]];
     const max=Math.max(1,...rows.map(r=>r[1]));
     for(const [name,value] of rows){
       const row=make("div","studio-pipeline-row"),top=make("div","studio-pipeline-top");
@@ -362,7 +364,7 @@
       state.orders=result.orders||[];state.cursor=result.nextCursor||null;
       login.hidden=true;dashboard.hidden=false;document.body.classList.add("studio-unlocked");loginMessage.textContent="";
       renderList();void loadAnalytics();if(state.orders.length)select(state.orders[0].id);
-      showMessage(state.orders.length?"Đăng nhập thành công.":"Đăng nhập thành công. No orders yet.");
+      showMessage(state.orders.length?"Đăng nhập thành công.":"Đăng nhập thành công. Chưa có đơn hàng.");
     }catch(error){state.key="";loginMessage.textContent=error.message;}
   });
   $("logout").addEventListener("click",()=>{lock();loginMessage.textContent="Đã khóa trang quản trị.";});
