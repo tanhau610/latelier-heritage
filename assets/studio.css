@@ -176,3 +176,6 @@
 .studio-card-heading{flex-wrap:wrap}
 .studio-kpi-label{line-height:1.45}
 @media(max-width:540px){.studio-chart-switch{width:100%;justify-content:stretch}.studio-chart-choice{flex:1}.studio-chart{height:205px}.studio-chart-card .studio-card-heading{gap:15px}}
+
+.studio-chart-note{font-size:10px;color:#93847a;line-height:1.65;margin:12px 0 0}
+@media(max-width:540px){.studio-chart-choice{font-size:10px;padding:9px 6px}.studio-chart-switch{gap:2px}}
