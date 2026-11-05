@@ -11,7 +11,7 @@ function goTo(step,{scroll=true}={}){
   stages.forEach(el=>{
     const active=Number(el.dataset.checkoutStep)===step;
     el.hidden=!active;
-    if(active)el.scrollTop=0;
+    if(active)el.querySelector('.checkout-stage-content')?.scrollTo({top:0});
   });
   document.querySelectorAll("[data-progress]").forEach(el=>{
     const number=Number(el.dataset.progress);
@@ -134,7 +134,7 @@ async function showPayment(){
   editingDelivery(false);
   document.body.classList.add("is-paying");
   $("payment-edit-delivery").hidden=true;
-  form.hidden=false;stages.forEach(el=>{el.hidden=true;});panel.hidden=false;panel.scrollTop=0;
+  form.hidden=false;stages.forEach(el=>{el.hidden=true;});panel.hidden=false;panel.querySelector('.checkout-pay-content')?.scrollTo({top:0});
   document.querySelectorAll("[data-progress]").forEach(el=>{
     const number=Number(el.dataset.progress);
     el.classList.toggle("is-active",number===3);el.classList.toggle("is-complete",number<3);
@@ -221,7 +221,7 @@ form.addEventListener("submit",async e=>{
   }catch(e){
     message.textContent=e.message;
     if(window.turnstile)try{window.turnstile.reset(form.querySelector(".turnstile-mount"));}catch{}
-  }finally{button.disabled=false;button.textContent="Continue to secure Sandbox payment";}
+  }finally{button.disabled=false;button.textContent="Continue";}
 });
 if(/^LH-\d{8}-[A-F0-9]{8}$/.test(id||"")&&/^[a-f0-9]{64}$/.test(token||""))showPayment();
 else goTo(1,{scroll:false});
