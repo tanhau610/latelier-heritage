@@ -77,7 +77,6 @@ export async function onRequestGet(context){
             const data=await getDetails(bucket,id);
             if(!data||!Number.isFinite(Date.parse(data.receivedAt)))return null;
             const day=new Date(data.receivedAt).toISOString().slice(0,10);
-            if(!daily.has(day))return null;
             const payment=await readJson(bucket,paymentKey(id));
             const sandbox=data.checkoutMode==="sandbox-inline"?await readJson(bucket,sandboxPaymentKey(id)):null;
             return {data,day,payment,sandbox};
@@ -85,30 +84,39 @@ export async function onRequestGet(context){
           for(const row of chunk){
             if(!row)continue;
             const {data,day,payment,sandbox}=row,point=daily.get(day);
-            totals.orders++;point.orders++;
+            const inPeriod=Boolean(point);
+            if(inPeriod){totals.orders++;point.orders++;}
             const status=statuses.has(data.status)?data.status:"New";
-            statusCounts[status]++;
+            if(inPeriod)statusCounts[status]++;
             const totalCents=Number.isInteger(payment?.totalCents)?payment.totalCents:Math.round(Number(data.estimatedPriceAUD||0)*100);
-            if(data.checkoutMode!=="sandbox-inline"&&Number.isFinite(totalCents)&&totalCents>0&&status!=="Cancelled")totals.orderValueCents+=totalCents;
-            if(["Painting","Confirmed"].includes(status))totals.inProduction++;
-            if(status==="Ready for balance")totals.readyForBalance++;
+            if(inPeriod&&data.checkoutMode!=="sandbox-inline"&&Number.isFinite(totalCents)&&totalCents>0&&status!=="Cancelled")totals.orderValueCents+=totalCents;
+            if(inPeriod&&["Painting","Confirmed"].includes(status))totals.inProduction++;
+            if(inPeriod&&status==="Ready for balance")totals.readyForBalance++;
             if(data.checkoutMode==="sandbox-inline"){
-              totals.sandboxOrders++;
-              if(sandbox?.quotedAt===payment?.quotedAt){
+              if(inPeriod)totals.sandboxOrders++;
+              if(inPeriod&&sandbox?.quotedAt===payment?.quotedAt){
                 const sandboxPaid=sandbox.full?payment?.totalCents:(sandbox.deposit?payment?.depositCents||0:0)+(sandbox.balance?payment?.balanceCents||0:0);
                 totals.sandboxTestCents+=Number(sandboxPaid)||0;
               }
             }else{
-              const paid=(payment?.deposit?.verifiedAt?Number(payment.deposit.amountCents)||0:0)+(payment?.balance?.verifiedAt?Number(payment.balance.amountCents)||0:0);
-              totals.revenueCents+=paid;point.revenueCents+=paid;
-              if(!payment?.deposit&&status!=="Cancelled")totals.awaitingDeposit++;
+              // Recognise revenue on the verified payment date, not on the order creation date.
+              // This also includes payments made this period for older orders.
+              for(const instalment of [payment?.deposit,payment?.balance]){
+                const verifiedAt=instalment?.verifiedAt;
+                const amount=Number(instalment?.amountCents);
+                if(typeof verifiedAt!=="string"||!Number.isFinite(Date.parse(verifiedAt))||!Number.isInteger(amount)||amount<=0)continue;
+                const paymentDay=new Date(verifiedAt).toISOString().slice(0,10);
+                const revenuePoint=daily.get(paymentDay);
+                if(revenuePoint){revenuePoint.revenueCents+=amount;totals.revenueCents+=amount;}
+              }
+              if(inPeriod&&!payment?.deposit&&status!=="Cancelled")totals.awaitingDeposit++;
             }
           }
         }
         scanned+=ids.length;pages++;
         more=!!page.truncated;cursor=page.cursor;
       }while(more&&cursor&&pages<20);
-      return respond({ok:true,days,totals,statusCounts,daily:Array.from(daily.values()),partial:more,scanned,asOf:new Date().toISOString(),revenueNote:"Verified manually recorded payments only. Sandbox excluded.",trafficConnected:false});
+      return respond({ok:true,days,totals,statusCounts,daily:Array.from(daily.values()),partial:more,scanned,asOf:new Date().toISOString(),revenueNote:"Only verified manual payments, attributed by verification date (UTC). PayPal Sandbox excluded.",trafficConnected:false});
     }
     if(action==="photo"){
       const id=url.searchParams.get("id"), index=Number(url.searchParams.get("index"));
