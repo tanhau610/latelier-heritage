@@ -225,7 +225,7 @@
     if(state.selected!==id||currentVersion!==selectionVersion)return;
     panel.append(sectionHeading("Tiến độ thực hiện"));
     const form=make("form","studio-update");
-    const statusLabel=make("label","", "Trạng thái");const selectEl=make("select");selectEl.required=true;
+    const statusFieldLabel=make("label","", "Trạng thái");const selectEl=make("select");selectEl.required=true;
     // Keep the complete order history available, but separate exceptional cases.
     const mainStatuses=make("optgroup");mainStatuses.label="QUY TRÌNH ĐƠN HÀNG";
     const exceptionalStatuses=make("optgroup");exceptionalStatuses.label="TRƯỜNG HỢP KHÁC";
@@ -234,13 +234,13 @@
       (value==="Cancelled"?exceptionalStatuses:mainStatuses).append(option);
     }
     selectEl.append(mainStatuses,exceptionalStatuses);
-    statusLabel.append(selectEl);
+    statusFieldLabel.append(selectEl);
     const noteLabel=make("label","", "Ghi chú nội bộ");const note=make("textarea");note.maxLength=1000;note.rows=3;note.placeholder="Chất liệu, yêu cầu khách hàng, lưu ý giao hàng…";note.value=order.internalNote||"";noteLabel.append(note);
     const button=make("button","btn","Lưu tiến độ");button.type="submit";
     const saveFeedback=make("p","studio-save-feedback");saveFeedback.setAttribute("role","status");saveFeedback.setAttribute("aria-live","polite");
     const saveActions=make("div","studio-save-actions");saveActions.append(button,saveFeedback);
     const updatedNote=make("p","studio-footnote",order.updatedAt?"Cập nhật gần nhất: "+formatDate(order.updatedAt):"Chưa có lần cập nhật nào.");
-    form.append(statusLabel,noteLabel,saveActions);panel.append(form,updatedNote);
+    form.append(statusFieldLabel,noteLabel,saveActions);panel.append(form,updatedNote);
     const markEdited=()=>{
       button.textContent="Lưu tiến độ";
       saveFeedback.textContent="Có thay đổi chưa lưu.";
