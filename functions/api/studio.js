@@ -9,6 +9,8 @@ const respond = (body,status=200)=>new Response(JSON.stringify(body),{status,hea
 const validId = id => /^LH-\d{8}-[A-F0-9]{8}$/.test(id||"");
 const detailKey = id => `enquiries/${id}/details.json`;
 const shippingKey = id => `enquiries/${id}/shipping.json`;
+const trackingKey = id => `enquiries/${id}/tracking.json`;
+const previewOnly = env => Boolean(env.CF_PAGES_BRANCH&&env.CF_PAGES_BRANCH!=="main");
 const accessKey = id => `enquiries/${id}/shipping-access.json`;
 const paymentKey = id => `enquiries/${id}/payment.json`;
 const paymentAccessKey = id => `enquiries/${id}/payment-access.json`;
@@ -55,10 +57,10 @@ export async function onRequestGet(context){
         if(!validId(id))return null;
         const data=await getDetails(bucket,id);
         if(!data)return null;
-        const shipping=await readJson(bucket,shippingKey(id));
+        const [shipping,tracking]=await Promise.all([readJson(bucket,shippingKey(id)),readJson(bucket,trackingKey(id))]);
         const payment=await readJson(bucket,paymentKey(id));
         const sandboxPayment=await readJson(bucket,sandboxPaymentKey(id));
-        return {checkoutMode:data.checkoutMode||null,checkoutPlan:data.checkoutPlan||null,sandboxPayment:sandboxPayment?.quotedAt===payment?.quotedAt?sandboxPayment:null,payment:payment||null,shipping:shipping?.details||null,shippingUpdatedAt:shipping?.updatedAt||null,id:data.id,receivedAt:data.receivedAt,name:data.name,email:data.email,petName:data.petName||"",size:data.size,pets:data.pets,country:data.country,card:!!data.card,story:data.story||"",estimatedPriceAUD:data.estimatedPriceAUD,status:statuses.has(data.status)?data.status:"New",internalNote:data.internalNote||"",updatedAt:data.updatedAt||null,photos:(data.photos||[]).map((p,i)=>({index:i,name:p.originalName||`Photo ${i+1}`}))};
+        return {checkoutMode:data.checkoutMode||null,checkoutPlan:data.checkoutPlan||null,sandboxPayment:sandboxPayment?.quotedAt===payment?.quotedAt?sandboxPayment:null,payment:payment||null,shipping:shipping?.details||null,shippingUpdatedAt:shipping?.updatedAt||null,tracking:tracking?.details||null,trackingUpdatedAt:tracking?.updatedAt||null,id:data.id,receivedAt:data.receivedAt,name:data.name,email:data.email,petName:data.petName||"",size:data.size,pets:data.pets,country:data.country,card:!!data.card,story:data.story||"",estimatedPriceAUD:data.estimatedPriceAUD,status:statuses.has(data.status)?data.status:"New",internalNote:data.internalNote||"",updatedAt:data.updatedAt||null,photos:(data.photos||[]).map((p,i)=>({index:i,name:p.originalName||`Photo ${i+1}`}))};
       }))).filter(Boolean);
       orders.sort((a,b)=>String(b.receivedAt).localeCompare(String(a.receivedAt)));
       return respond({ok:true,orders,nextCursor:page.truncated?page.cursor||null:null});
@@ -166,10 +168,59 @@ export async function onRequestPost(context){
     return onStudioOtpRequest(context);
   }
   const denied=await guard(context);if(denied)return denied;
-  if(!["status","shipping-link","payment-quote","payment-record","payment-link"].includes(action))return respond({ok:false,message:"Unknown action."},404);
+  if(!["status","shipping-link","tracking-save","tracking-notify","payment-quote","payment-record","payment-link"].includes(action))return respond({ok:false,message:"Unknown action."},404);
   if(Number(request.headers.get("content-length")||0)>4096)return respond({ok:false,message:"Request too large."},413);
   let payload;try{payload=await request.json();}catch{return respond({ok:false,message:"Invalid request."},400);}
   const {id,status}=payload||{};
+  if(action==="tracking-save"||action==="tracking-notify"){
+    // New tracking workflows remain Preview-only, including R2 writes and email.
+    if(!previewOnly(env))return respond({ok:false,message:"Tracking management is only available on Preview."},403);
+    if(!validId(id))return respond({ok:false,message:"Invalid order."},400);
+    try{
+      const bucket=env.PORTRAIT_UPLOADS;
+      const order=await getDetails(bucket,id);
+      if(!order)return respond({ok:false,message:"Order not found."},404);
+      if(order.status==="Cancelled")return respond({ok:false,message:"Cannot update tracking for a cancelled order."},409);
+      if(action==="tracking-save"){
+        const raw=payload.tracking;
+        if(!raw||typeof raw!=="object"||Array.isArray(raw))return respond({ok:false,message:"Invalid tracking details."},400);
+        const carrier=typeof raw.carrier==="string"?raw.carrier.trim():"";
+        const number=typeof raw.number==="string"?raw.number.trim():"";
+        const url=typeof raw.url==="string"?raw.url.trim():"";
+        if(!carrier||carrier.length>80||!number||number.length>100||!url||url.length>500||
+           /[\x00-\x1f\x7f]/.test(carrier+number+url))return respond({ok:false,message:"Enter a carrier, tracking number and tracking URL."},400);
+        let parsed;
+        try{parsed=new URL(url);}catch{return respond({ok:false,message:"Enter a valid HTTPS tracking URL."},400);}
+        if(parsed.protocol!=="https:"||!parsed.hostname||parsed.username||parsed.password||
+           /^(localhost|.*\.localhost|.*\.local)$/i.test(parsed.hostname)||
+           /^(127\.|10\.|192\.168\.|169\.254\.|0\.|172\.(1[6-9]|2\d|3[01])\.)/.test(parsed.hostname)||
+           parsed.hostname==="::1"||parsed.hostname.startsWith("[")||
+           url.includes("\\")||/\s/.test(url))
+          return respond({ok:false,message:"Enter a valid HTTPS tracking URL."},400);
+        const details={carrier,number,url:parsed.toString()};
+        const existing=await readJson(bucket,trackingKey(id));
+        if(existing?.details?.carrier===details.carrier&&existing.details.number===details.number&&existing.details.url===details.url)
+          return respond({ok:true,tracking:existing.details,updatedAt:existing.updatedAt,unchanged:true});
+        const updatedAt=new Date().toISOString();
+        await bucket.put(trackingKey(id),JSON.stringify({id,details,updatedAt}),{httpMetadata:{contentType:"application/json"}});
+        return respond({ok:true,tracking:details,updatedAt});
+      }
+      if(!["Shipped","Completed"].includes(order.status))return respond({ok:false,message:"Mark the order as shipped before sending tracking."},409);
+      const tracking=await readJson(bucket,trackingKey(id));
+      if(!tracking?.details?.carrier||!tracking?.details?.number||!tracking?.details?.url)return respond({ok:false,message:"Save tracking details first."},409);
+      const payment=await readJson(bucket,paymentKey(id));
+      const sandbox=await readJson(bucket,sandboxPaymentKey(id));
+      const paid=order.checkoutMode==="sandbox-inline"&&sandbox?.quotedAt===payment?.quotedAt
+        ?Boolean(sandbox.full||(sandbox.deposit&&sandbox.balance)):Boolean(payment?.deposit&&payment?.balance);
+      if(!paid)return respond({ok:false,message:"Verify full payment before notifying shipment."},409);
+      const fingerprint=(await sha256([tracking.details.carrier,tracking.details.number,tracking.details.url].join("|"))).slice(0,32);
+      const notification=await sendSandboxCustomerEmail({
+        env,bucket,order,payment:payment||{totalCents:Math.round(Number(order.estimatedPriceAUD||0)*100)},
+        event:"shipping-tracking",eventKey:"tracking-"+fingerprint,tracking:tracking.details,paidInFull:true
+      });
+      return respond({ok:true,emailTest:notification.state});
+    }catch(e){console.error("Studio tracking failed",id,e);return respond({ok:false,message:"Could not save or send tracking information."},500);}
+  }
   if(action==="shipping-link"){
     if(!validId(id))return respond({ok:false,message:"Invalid order."},400);
     try{
@@ -261,11 +312,12 @@ export async function onRequestPost(context){
           await env.PORTRAIT_UPLOADS.put("enquiries/"+id+"/checkout-email-access.json",JSON.stringify({id,tokenHash:await sha256(token),expiresAt,createdAt:data.updatedAt}),{httpMetadata:{contentType:"application/json"}});
           const link=new URL("/checkout",request.url);link.hash=new URLSearchParams({id,token}).toString();checkoutLink=link.toString();
         }
+        const tracking=status==="Shipped"?await readJson(env.PORTRAIT_UPLOADS,trackingKey(id)):null;
         const notification=await sendSandboxCustomerEmail({
           env,bucket:env.PORTRAIT_UPLOADS,order:data,
           payment:payment||{totalCents:Math.round(Number(data.estimatedPriceAUD||0)*100)},
           event:"status-"+status,eventKey:"status-"+data.updatedAt.replace(/[^0-9]/g,""),
-          checkoutLink,paidInFull:fullyVerified
+          checkoutLink,paidInFull:fullyVerified,tracking:tracking?.details||null
         });
         emailTest=notification.state;
       }catch(e){emailTest="failed";console.error("Status email preview failed",id,String(e));}
