@@ -413,8 +413,8 @@
   $("refresh-analytics").addEventListener("click",loadAnalytics);
   function loginMode(mode){
     $("login-form").hidden=mode!=="key";
-    $("otp-request-form").hidden=mode!=="email";
-    $("otp-verify-form").hidden=mode!=="verify";
+    $("otp-request-form").hidden=mode==="key";
+    $("otp-verify-form").hidden=mode==="key";
     $("show-email-login").hidden=mode!=="key";
     $("show-key-login").hidden=mode==="key";
     loginMessage.textContent="";
@@ -440,16 +440,25 @@
   }
   $("show-email-login").addEventListener("click",()=>loginMode("email"));
   $("show-key-login").addEventListener("click",()=>loginMode("key"));
-  $("otp-request-again").addEventListener("click",()=>loginMode("email"));
   $("otp-request-form").addEventListener("submit",async e=>{
     e.preventDefault();
     const button=e.currentTarget.querySelector('button[type="submit"]');
     button.disabled=true;loginMessage.textContent="Đang gửi mã xác thực…";
     try{
       await otpFetch("request");
-      loginMode("verify");
+      $("otp-code").focus();
       loginMessage.textContent="Đã gửi yêu cầu đến Resend. Kiểm tra email quản trị đang nhận thư Sandbox. Mã hết hạn sau 5 phút.";
-    }catch(error){loginMessage.textContent=error.message;}
+    }catch(error){
+      const errors={
+        "Email login is only enabled on the preview branch.":"Bản Preview này chưa cho phép gửi mã email. Vui lòng kiểm tra cấu hình Cloudflare.",
+        "Studio security is not configured.":"Thiếu cấu hình bảo mật Studio trên Cloudflare Preview.",
+        "Email login is not configured. Use your private access key.":"Thiếu cấu hình Resend hoặc email quản trị trong Cloudflare Preview.",
+        "Cannot send the login code. Use your private access key or check Resend configuration.":"Resend chưa chấp nhận yêu cầu gửi mã. Kiểm tra cấu hình Resend trên Cloudflare Preview.",
+        "Please wait 60 seconds before requesting another code.":"Bạn vui lòng đợi 60 giây trước khi yêu cầu mã mới.",
+        "Too many codes requested. Please try again in an hour.":"Đã đạt giới hạn yêu cầu mã. Vui lòng thử lại sau một giờ."
+      };
+      loginMessage.textContent="Không gửi được mã: "+(errors[error.message]||error.message);
+    }
     finally{button.disabled=false;}
   });
   $("otp-verify-form").addEventListener("submit",async e=>{
