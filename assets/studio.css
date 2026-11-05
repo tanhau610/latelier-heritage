@@ -162,3 +162,17 @@
 @media(max-width:1240px){.studio-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.studio-analytics-grid,.studio-bottom-grid{grid-template-columns:1fr}.studio-shell{grid-template-columns:214px minmax(0,1fr)}.studio-content{padding:30px 24px 50px}.studio-topbar{padding:0 24px}}
 @media(max-width:860px){.studio-shell{grid-template-columns:1fr}.studio-sidebar{position:relative;height:auto;min-height:0;padding:15px 18px}.studio-sidebar-brand{padding:0 0 14px}.studio-navigation{display:flex;gap:6px;overflow-x:auto}.studio-nav-item{white-space:nowrap;width:auto;padding:11px 13px}.studio-nav-label,.studio-sidebar-bottom{display:none}.studio-topbar{height:61px}.studio-content{padding:23px 17px 50px}#studio-orders-view .studio-layout{grid-template-columns:1fr}.studio-environment{display:none}}
 @media(max-width:540px){.studio-page-heading{align-items:start;flex-direction:column}.studio-page-heading h1{font-size:42px}.studio-heading-actions{width:100%}.studio-heading-actions select{flex:1}.studio-kpi-grid{gap:10px}.studio-kpi{min-height:136px;padding:16px}.studio-kpi strong{font-size:24px}.studio-kpi-label{font-size:10px}.studio-kpi p{font-size:10px}.studio-insight-card{padding:19px}.studio-card-heading h2{font-size:23px}.studio-traffic-metrics{gap:6px}.studio-traffic-metrics>div{padding:12px 8px}.studio-traffic-metrics span{font-size:9px}.studio-topbar-right{gap:8px}.studio-breadcrumb{font-size:10px}.studio-sidebar-brand strong{font-size:20px}}
+
+/* Biểu đồ kinh doanh: chọn giữa số đơn và doanh thu đã xác minh */
+.studio-chart-switch{display:inline-flex;align-items:center;gap:3px;padding:4px;border:1px solid #e9e1db;background:#f7f3ef;border-radius:10px;flex-shrink:0}
+.studio-chart-choice{appearance:none;border:0;background:transparent;color:#7e716a;border-radius:7px;padding:9px 13px;font:600 11px/1.25 Inter,'Helvetica Neue',Arial,sans-serif;cursor:pointer;white-space:nowrap;transition:background .18s,color .18s,box-shadow .18s}
+.studio-chart-choice:hover{color:#5e3c43;background:#ede4df}
+.studio-chart-choice.active{background:#744b54;color:#fff;box-shadow:0 2px 7px #49303a21}
+.studio-chart-choice:focus-visible{outline:2px solid #744b54;outline-offset:3px}
+.studio-chart svg{overflow:visible}
+.studio-chart svg rect,.studio-chart svg circle{transition:opacity .15s}
+.studio-chart svg rect:hover,.studio-chart svg circle:hover{opacity:.72}
+.studio-page[lang=vi],.studio-dashboard{font-family:Inter,'Segoe UI',Arial,sans-serif}
+.studio-card-heading{flex-wrap:wrap}
+.studio-kpi-label{line-height:1.45}
+@media(max-width:540px){.studio-chart-switch{width:100%;justify-content:stretch}.studio-chart-choice{flex:1}.studio-chart{height:205px}.studio-chart-card .studio-card-heading{gap:15px}}
