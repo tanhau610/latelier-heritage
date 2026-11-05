@@ -27,8 +27,21 @@
         <input id="access-key" type="password" autocomplete="off" minlength="32" required placeholder="Nhập mã truy cập riêng">
         <button class="btn" type="submit">Đăng nhập</button>
       </form>
-      <p id="login-message" class="studio-message" role="status"></p>
-      <p class="studio-footnote">Mã truy cập chỉ được giữ trong bộ nhớ của tab hiện tại, không lưu trên website.</p>
+      <button id="show-email-login" class="studio-login-switch" type="button">Đăng nhập bằng mã gửi qua email ↗</button>
+      <form id="otp-request-form" hidden>
+        <label for="otp-email">Email quản trị</label>
+        <input id="otp-email" type="email" autocomplete="email" inputmode="email" maxlength="254" required placeholder="Nhập email quản trị của bạn">
+        <button class="btn" type="submit">Gửi mã 6 chữ số</button>
+      </form>
+      <form id="otp-verify-form" hidden>
+        <label for="otp-code">Mã xác thực từ email</label>
+        <input id="otp-code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required placeholder="Nhập 6 chữ số">
+        <button class="btn" type="submit">Xác nhận và đăng nhập</button>
+        <button id="otp-request-again" class="studio-login-switch" type="button">Gửi lại mã</button>
+      </form>
+      <button id="show-key-login" class="studio-login-switch" type="button" hidden>← Dùng mã truy cập quản trị</button>
+      <p id="login-message" class="studio-message" role="status" aria-live="polite"></p>
+      <p class="studio-footnote">Mã email có hiệu lực 5 phút, sử dụng một lần. Phiên đăng nhập qua email hết hạn sau 8 giờ. Mã truy cập dài vẫn dùng được như trước.</p>
     </section>
     <section id="studio-dashboard" class="studio-dashboard" hidden>
       <div class="studio-shell">
