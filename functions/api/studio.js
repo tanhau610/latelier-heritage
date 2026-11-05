@@ -89,7 +89,7 @@ export async function onRequestGet(context){
             const status=statuses.has(data.status)?data.status:"New";
             statusCounts[status]++;
             const totalCents=Number.isInteger(payment?.totalCents)?payment.totalCents:Math.round(Number(data.estimatedPriceAUD||0)*100);
-            if(Number.isFinite(totalCents)&&totalCents>0&&status!=="Cancelled")totals.orderValueCents+=totalCents;
+            if(data.checkoutMode!=="sandbox-inline"&&Number.isFinite(totalCents)&&totalCents>0&&status!=="Cancelled")totals.orderValueCents+=totalCents;
             if(["Painting","Confirmed"].includes(status))totals.inProduction++;
             if(status==="Ready for balance")totals.readyForBalance++;
             if(data.checkoutMode==="sandbox-inline"){
