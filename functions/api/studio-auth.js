@@ -22,15 +22,21 @@ export async function onRequestPost({request,env}){
     if(!env.RESEND_API_KEY||!adminEmail||!(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adminEmail)))return fail('Email login is not configured. Use your private access key.',503);
     // The destination is fixed server-side to the existing sandbox notification inbox.
     // Never accept an email destination from the browser.
-    const rate=await read(bucket,'rate')||{};
+    // Claim a rate-limit slot atomically before sending. Concurrent requests cannot
+    // bypass the five-per-hour limit or the 60-second cooldown.
+    const rateObject=await bucket.get('studio-auth/rate');
+    const rate=rateObject?await rateObject.json():{};
     const windowStart=now-(Number(rate.windowStart)||0)<3600000?rate.windowStart:now;
     const count=windowStart===rate.windowStart?(Number(rate.count)||0):0;
     if(now-(Number(rate.lastSent)||0)<60000)return fail('Please wait 60 seconds before requesting another code.',429);
     if(count>=5)return fail('Too many codes requested. Please try again in an hour.',429);
+    const rateCondition=rateObject?{onlyIf:{etagMatches:rateObject.etag}}:{onlyIf:new Headers({'If-None-Match':'*'})};
+    const reserved=await bucket.put('studio-auth/rate',JSON.stringify({windowStart,count:count+1,lastSent:now}),rateCondition);
+    if(!reserved)return fail('Please retry your request in a moment.',429);
     const code=String(crypto.getRandomValues(new Uint32Array(1))[0]%1000000).padStart(6,'0');
     const nonce=tokenHex();
     const record={nonce,codeHash:await mac(env.STUDIO_ADMIN_KEY,nonce+':'+code),expiresAt:now+5*60000,attempts:0};
-    await write(bucket,'challenge',record);
+    const challengeObject=await write(bucket,'challenge',record);
     try{
       const response=await fetch('https://api.resend.com/emails',{
         method:'POST',headers:{'Authorization':'Bearer '+env.RESEND_API_KEY,'Content-Type':'application/json'},
@@ -39,24 +45,26 @@ export async function onRequestPost({request,env}){
       });
       if(!response.ok)throw Error('Resend delivery rejected');
     }catch(e){
-      await bucket.delete('studio-auth/challenge');
+      // Invalidate only the challenge this request wrote, not a newer request's code.
+      await bucket.put('studio-auth/challenge',JSON.stringify({...record,used:true,expiresAt:0}),{onlyIf:{etagMatches:challengeObject.etag}});
       console.error('Studio OTP email delivery failed',String(e));
       return fail('Cannot send the login code. Use your private access key or check Resend configuration.',503);
     }
-    await write(bucket,'rate',{windowStart,count:count+1,lastSent:now});
     return otpJson({ok:true,message:'Login code request accepted.',expiresInSeconds:300});
   }
   const code=typeof body.code==='string'?body.code.trim():'';
   if(!/^\d{6}$/.test(code))return fail('Enter the six-digit email code.');
-  const record=await read(bucket,'challenge');
-  if(!record||record.expiresAt<=now||record.attempts>=5)return fail('The code is invalid or expired. Request a new code.',401);
+  const challengeObject=await bucket.get('studio-auth/challenge');
+  const record=challengeObject?await challengeObject.json():null;
+  if(!record||record.used||record.expiresAt<=now||record.attempts>=5)return fail('The code is invalid or expired. Request a new code.',401);
   const candidate=await mac(env.STUDIO_ADMIN_KEY,record.nonce+':'+code);
-  if(!constantEqual(candidate,record.codeHash)){
-    record.attempts++;
-    await write(bucket,'challenge',record);
-    return fail('Incorrect code. Please try again.',401);
-  }
-  await bucket.delete('studio-auth/challenge');
+  // Conditional writes make the attempt counter and one-time redemption atomic.
+  // Only one simultaneous verification can consume the same six-digit code.
+  const matched=constantEqual(candidate,record.codeHash);
+  const updated={...record,attempts:record.attempts+1,...(matched?{used:true}:{})};
+  const saved=await bucket.put('studio-auth/challenge',JSON.stringify(updated),{onlyIf:{etagMatches:challengeObject.etag}});
+  if(!saved)return fail('The code was already used or changed. Please try again.',409);
+  if(!matched)return fail('Incorrect code. Please try again.',401);
   const token='st_'+tokenHex();
   await write(bucket,'sessions/'+await hash(token),{purpose:'studio-admin-otp',createdAt:now,expiresAt:now+8*3600000});
   return otpJson({ok:true,token,expiresInSeconds:8*3600});
