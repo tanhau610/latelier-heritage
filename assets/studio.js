@@ -411,18 +411,67 @@
   }));
   $("analytics-range").addEventListener("change",loadAnalytics);
   $("refresh-analytics").addEventListener("click",loadAnalytics);
+  function loginMode(mode){
+    $("login-form").hidden=mode!=="key";
+    $("otp-request-form").hidden=mode!=="email";
+    $("otp-verify-form").hidden=mode!=="verify";
+    $("show-email-login").hidden=mode!=="key";
+    $("show-key-login").hidden=mode==="key";
+    loginMessage.textContent="";
+    if(mode==="email")$("otp-email").focus();
+    if(mode==="verify")$("otp-code").focus();
+    if(mode==="key")$("access-key").focus();
+  }
+  async function otpFetch(action,fields={},sessionToken=""){
+    const response=await fetch("/api/studio-auth",{
+      method:"POST",headers:{"Content-Type":"application/json",...(sessionToken?{"Authorization":"Bearer "+sessionToken}:{})},
+      body:JSON.stringify({action,...fields}),cache:"no-store",credentials:"omit"
+    });
+    let data;try{data=await response.json();}catch{throw Error("Không kết nối được dịch vụ xác thực email.");}
+    if(!response.ok||!data.ok)throw Error(data.message||"Không thể xác thực. Vui lòng thử lại.");
+    return data;
+  }
+  async function unlockStudio(){
+    const result=await api("list");
+    state.orders=result.orders||[];state.cursor=result.nextCursor||null;
+    login.hidden=true;dashboard.hidden=false;document.body.classList.add("studio-unlocked");loginMessage.textContent="";
+    renderList();void loadAnalytics();if(state.orders.length)select(state.orders[0].id);
+    showMessage(state.orders.length?"Đăng nhập thành công.":"Đăng nhập thành công. Chưa có đơn hàng.");
+  }
+  $("show-email-login").addEventListener("click",()=>loginMode("email"));
+  $("show-key-login").addEventListener("click",()=>loginMode("key"));
+  $("otp-request-again").addEventListener("click",()=>loginMode("email"));
+  $("otp-request-form").addEventListener("submit",async e=>{
+    e.preventDefault();
+    const button=e.currentTarget.querySelector('button[type="submit"]');
+    button.disabled=true;loginMessage.textContent="Đang gửi mã xác thực…";
+    try{
+      await otpFetch("request",{email:$("otp-email").value.trim()});
+      loginMode("verify");
+      loginMessage.textContent="Nếu email đúng với tài khoản quản trị, mã 6 chữ số sẽ đến trong ít phút. Mã hết hạn sau 5 phút.";
+    }catch(error){loginMessage.textContent=error.message;}
+    finally{button.disabled=false;}
+  });
+  $("otp-verify-form").addEventListener("submit",async e=>{
+    e.preventDefault();
+    const button=e.currentTarget.querySelector('button[type="submit"]');
+    button.disabled=true;loginMessage.textContent="Đang xác thực mã email…";
+    try{
+      const result=await otpFetch("verify",{code:$("otp-code").value.trim()});
+      state.key=result.token;
+      $("otp-code").value="";
+      await unlockStudio();
+    }catch(error){state.key="";loginMessage.textContent=error.message;}
+    finally{button.disabled=false;}
+  });
   $("login-form").addEventListener("submit",async e=>{
     e.preventDefault();state.key=$("access-key").value;$("access-key").value="";
     loginMessage.textContent="Đang kiểm tra mã truy cập…";
     try{
-      const result=await api("list");
-      state.orders=result.orders||[];state.cursor=result.nextCursor||null;
-      login.hidden=true;dashboard.hidden=false;document.body.classList.add("studio-unlocked");loginMessage.textContent="";
-      renderList();void loadAnalytics();if(state.orders.length)select(state.orders[0].id);
-      showMessage(state.orders.length?"Đăng nhập thành công.":"Đăng nhập thành công. Chưa có đơn hàng.");
+      await unlockStudio();
     }catch(error){state.key="";loginMessage.textContent=error.message;}
   });
-  $("logout").addEventListener("click",()=>{lock();loginMessage.textContent="Đã khóa trang quản trị.";});
+  $("logout").addEventListener("click",()=>{const token=state.key;lock();loginMode("key");loginMessage.textContent="Đã khóa trang quản trị.";if(token.startsWith("st_"))void otpFetch("logout",{},token).catch(()=>{});});
   $("refresh").addEventListener("click",()=>load(true));
   $("load-more").addEventListener("click",()=>load(false));
   $("search").addEventListener("input",renderList);
