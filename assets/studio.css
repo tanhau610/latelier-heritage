@@ -339,3 +339,15 @@
 .studio-login #otp-code{font-size:23px;letter-spacing:.24em;font-variant-numeric:tabular-nums}
 .studio-login #otp-request-again{justify-self:start;margin-top:0}
 @media(max-width:600px){.studio-login-switch{font-size:12px}.studio-login #otp-code{font-size:20px}}
+
+
+/* Carrier-agnostic shipment tracking, Preview-only. */
+.studio-tracking{background:#f8f5f0;border:1px solid #e7dfd4;padding:22px;display:grid;gap:14px;margin-bottom:14px}
+.studio-tracking label{display:grid;gap:8px;font-size:12px;font-weight:600;color:#51433b}
+.studio-tracking input,.studio-tracking select{box-sizing:border-box;min-height:46px;width:100%;padding:10px 12px;background:#fff;border:1px solid #d8cdc1;color:#30291d;font:inherit;font-size:13px}
+.studio-tracking input:focus-visible,.studio-tracking select:focus-visible{outline:2px solid #784d53;outline-offset:2px}
+.studio-tracking .studio-footnote{margin:0;line-height:1.6}
+.studio-tracking .studio-email{justify-self:start;overflow-wrap:anywhere;margin:0}
+.studio-tracking .btn:disabled{opacity:.65;cursor:wait}
+.studio-tracking [hidden],.studio-save-actions[hidden]{display:none!important}
+@media(max-width:600px){.studio-tracking{padding:18px}.studio-tracking .studio-save-actions{flex-direction:column;align-items:stretch}.studio-tracking .btn{align-self:start}}
