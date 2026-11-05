@@ -67,8 +67,8 @@ export async function onRequestGet(context){
       const start=new Date();start.setUTCHours(0,0,0,0);start.setUTCDate(start.getUTCDate()-(days-1));
       const daily=new Map();
       for(let i=0;i<days;i++){const day=new Date(start);day.setUTCDate(start.getUTCDate()+i);const key=day.toISOString().slice(0,10);daily.set(key,{date:key,orders:0,revenueCents:0,sandboxCents:0});}
-      const totals={orders:0,revenueCents:0,orderValueCents:0,awaitingDeposit:0,inProduction:0,readyForBalance:0,sandboxOrders:0,sandboxTestCents:0};
-      const statusCounts={New:0,Confirmed:0,Painting:0,"Ready for balance":0,Shipped:0,Completed:0,Cancelled:0};
+      const totals={orders:0,revenueCents:0,orderValueCents:0,awaitingDeposit:0,inProduction:0,readyForBalance:0,paidAwaitingDispatch:0,sandboxOrders:0,sandboxTestCents:0};
+      const statusCounts={New:0,Confirmed:0,Painting:0,"Ready for balance":0,"Paid awaiting dispatch":0,Shipped:0,Completed:0,Cancelled:0};
       let cursor,more=false,pages=0,scanned=0;
       do{
         const page=await bucket.list({prefix:"enquiries/",delimiter:"/",limit:100,...(cursor?{cursor}:{})});
@@ -88,11 +88,16 @@ export async function onRequestGet(context){
             const inPeriod=Boolean(point);
             if(inPeriod){totals.orders++;point.orders++;}
             const status=statuses.has(data.status)?data.status:"New";
-            if(inPeriod)statusCounts[status]++;
+            // A verified final payment ends the waiting-for-balance phase, but does not mean the artwork was shipped.
+            const sandboxFullyPaid=sandbox?.quotedAt===payment?.quotedAt&&Boolean(sandbox?.full||(sandbox?.deposit&&sandbox?.balance));
+            const fullyPaid=data.checkoutMode==="sandbox-inline"?sandboxFullyPaid:Boolean(payment?.deposit&&payment?.balance);
+            const paidAwaitingDispatch=status==="Ready for balance"&&fullyPaid;
+            if(inPeriod)statusCounts[paidAwaitingDispatch?"Paid awaiting dispatch":status]++;
             const totalCents=Number.isInteger(payment?.totalCents)?payment.totalCents:Math.round(Number(data.estimatedPriceAUD||0)*100);
             if(inPeriod&&data.checkoutMode!=="sandbox-inline"&&Number.isFinite(totalCents)&&totalCents>0&&status!=="Cancelled")totals.orderValueCents+=totalCents;
             if(inPeriod&&["Painting","Confirmed"].includes(status))totals.inProduction++;
-            if(inPeriod&&status==="Ready for balance")totals.readyForBalance++;
+            if(inPeriod&&status==="Ready for balance"&&!paidAwaitingDispatch)totals.readyForBalance++;
+            if(inPeriod&&paidAwaitingDispatch)totals.paidAwaitingDispatch++;
             // Count all Sandbox captures separately, including legacy test-payment links.
             if(sandbox && payment && typeof sandbox.quotedAt==="string" && sandbox.quotedAt===payment.quotedAt){
               const testPayments=sandbox.full?[sandbox.full]:[sandbox.deposit,sandbox.balance];
