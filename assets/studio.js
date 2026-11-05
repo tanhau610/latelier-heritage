@@ -418,7 +418,7 @@
     $("show-email-login").hidden=mode!=="key";
     $("show-key-login").hidden=mode==="key";
     loginMessage.textContent="";
-    if(mode==="email")$("otp-email").focus();
+    if(mode==="email")$("otp-request-form").querySelector('button[type="submit"]').focus();
     if(mode==="verify")$("otp-code").focus();
     if(mode==="key")$("access-key").focus();
   }
@@ -446,9 +446,9 @@
     const button=e.currentTarget.querySelector('button[type="submit"]');
     button.disabled=true;loginMessage.textContent="Đang gửi mã xác thực…";
     try{
-      await otpFetch("request",{email:$("otp-email").value.trim()});
+      await otpFetch("request");
       loginMode("verify");
-      loginMessage.textContent="Nếu email đúng với tài khoản quản trị, mã 6 chữ số sẽ đến trong ít phút. Mã hết hạn sau 5 phút.";
+      loginMessage.textContent="Đã gửi yêu cầu đến Resend. Kiểm tra email quản trị đang nhận thư Sandbox. Mã hết hạn sau 5 phút.";
     }catch(error){loginMessage.textContent=error.message;}
     finally{button.disabled=false;}
   });
