@@ -1,83 +1,83 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="referrer" content="no-referrer">
-  <title>Private Studio | L’Atelier Heritage</title>
+  <title>Quản trị xưởng tranh | L’Atelier Heritage</title>
   <link rel="stylesheet" href="assets/style.css">
   <link rel="stylesheet" href="assets/studio.css">
 </head>
 <body class="studio-page">
   <header class="studio-header">
-    <a href="index.html" class="studio-brand"><span class="wordmark">L’Atelier Heritage</span><span class="descriptor">PRIVATE STUDIO</span></a>
-    <a href="index.html" class="studio-back">← Return to website</a>
+    <a href="index.html" class="studio-brand"><span class="wordmark">L’Atelier Heritage</span><span class="descriptor">TRANG QUẢN TRỊ</span></a>
+    <a href="index.html" class="studio-back">← Về trang bán hàng</a>
   </header>
   <main class="studio-main">
     <section class="studio-login" id="studio-login">
-      <span class="eyebrow">Private workspace</span>
-      <h1>Welcome to the studio.</h1>
-      <p>View portrait requests, reference photographs and production progress. Access is restricted to the studio owner.</p>
+      <span class="eyebrow">Khu vực quản trị riêng</span>
+      <h1>Chào mừng trở lại.</h1>
+      <p>Theo dõi đơn đặt tranh, ảnh tham khảo, thanh toán và tiến độ thực hiện. Chỉ người quản trị mới được truy cập.</p>
       <form id="login-form">
-        <label for="access-key">Private access key</label>
-        <input id="access-key" type="password" autocomplete="off" minlength="32" required placeholder="Enter your private studio key">
-        <button class="btn" type="submit">Open studio</button>
+        <label for="access-key">Mã truy cập quản trị</label>
+        <input id="access-key" type="password" autocomplete="off" minlength="32" required placeholder="Nhập mã truy cập riêng">
+        <button class="btn" type="submit">Đăng nhập</button>
       </form>
       <p id="login-message" class="studio-message" role="status"></p>
-      <p class="studio-footnote">Your key is kept only in this browser tab’s memory and is never saved to the website.</p>
+      <p class="studio-footnote">Mã truy cập chỉ được giữ trong bộ nhớ của tab hiện tại, không lưu trên website.</p>
     </section>
     <section id="studio-dashboard" class="studio-dashboard" hidden>
       <div class="studio-shell">
-        <aside class="studio-sidebar" aria-label="Studio navigation">
-          <div class="studio-sidebar-brand"><span class="studio-monogram">LH</span><div><strong>L’Atelier</strong><small>HERITAGE · STUDIO</small></div></div>
-          <div class="studio-nav-label">WORKSPACE</div>
+        <aside class="studio-sidebar" aria-label="Điều hướng quản trị">
+          <div class="studio-sidebar-brand"><span class="studio-monogram">LH</span><div><strong>L’Atelier</strong><small>HERITAGE · QUẢN TRỊ</small></div></div>
+          <div class="studio-nav-label">QUẢN LÝ</div>
           <nav class="studio-navigation">
-            <button type="button" class="studio-nav-item active" data-studio-view="overview" aria-current="page"><span class="studio-nav-icon">◫</span> Overview</button>
-            <button type="button" class="studio-nav-item" data-studio-view="orders"><span class="studio-nav-icon">▤</span> Orders <span id="sidebar-order-count" class="studio-nav-count">0</span></button>
-            <button type="button" class="studio-nav-item" data-studio-view="traffic"><span class="studio-nav-icon">◷</span> Website analytics</button>
+            <button type="button" class="studio-nav-item active" data-studio-view="overview" aria-current="page"><span class="studio-nav-icon">◫</span> Tổng quan</button>
+            <button type="button" class="studio-nav-item" data-studio-view="orders"><span class="studio-nav-icon">▤</span> Đơn hàng <span id="sidebar-order-count" class="studio-nav-count">0</span></button>
+            <button type="button" class="studio-nav-item" data-studio-view="traffic"><span class="studio-nav-icon">◷</span> Truy cập website</button>
           </nav>
-          <div class="studio-sidebar-bottom"><div class="studio-sidebar-note"><span class="studio-online-dot"></span> Private workspace<br><small>Secure order management</small></div><a href="index.html" class="studio-sidebar-site">View storefront ↗</a></div>
+          <div class="studio-sidebar-bottom"><div class="studio-sidebar-note"><span class="studio-online-dot"></span> Khu vực riêng tư<br><small>Quản lý đơn hàng an toàn</small></div><a href="index.html" class="studio-sidebar-site">Xem trang bán hàng ↗</a></div>
         </aside>
         <div class="studio-workspace">
-          <div class="studio-topbar"><div class="studio-breadcrumb">L’Atelier Heritage <span>/</span> <b id="studio-current-view">Overview</b></div><div class="studio-topbar-right"><span class="studio-environment">SANDBOX AWARE</span><button class="studio-lock" id="logout" type="button">Lock studio <span aria-hidden="true">↗</span></button></div></div>
+          <div class="studio-topbar"><div class="studio-breadcrumb">L’Atelier Heritage <span>/</span> <b id="studio-current-view">Tổng quan</b></div><div class="studio-topbar-right"><span class="studio-environment">CHẾ ĐỘ THỬ NGHIỆM</span><button class="studio-lock" id="logout" type="button">Khóa quản trị <span aria-hidden="true">↗</span></button></div></div>
           <div class="studio-content">
-            <section id="studio-overview-view" class="studio-view" aria-label="Business overview">
-              <div class="studio-page-heading"><div><span class="studio-kicker">STUDIO INTELLIGENCE</span><h1>Good to see you.</h1><p>Everything happening at your portrait studio, at a glance.</p></div><div class="studio-heading-actions"><label class="studio-period-label" for="analytics-range">Reporting period</label><select id="analytics-range"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option></select><button type="button" class="studio-refresh-analytics" id="refresh-analytics" title="Refresh overview" aria-label="Refresh overview">↻</button></div></div>
-              <p id="analytics-notice" class="studio-analytics-notice" role="status">Loading business analytics…</p>
+            <section id="studio-overview-view" class="studio-view" aria-label="Tổng quan kinh doanh">
+              <div class="studio-page-heading"><div><span class="studio-kicker">TỔNG QUAN KINH DOANH</span><h1>Chào mừng trở lại!</h1><p>Theo dõi hoạt động kinh doanh và tiến độ đơn đặt tranh tại một nơi.</p></div><div class="studio-heading-actions"><label class="studio-period-label" for="analytics-range">Khoảng thời gian</label><select id="analytics-range"><option value="7">7 ngày gần đây</option><option value="30" selected>30 ngày gần đây</option><option value="90">90 ngày gần đây</option></select><button type="button" class="studio-refresh-analytics" id="refresh-analytics" title="Làm mới thống kê" aria-label="Refresh overview">↻</button></div></div>
+              <p id="analytics-notice" class="studio-analytics-notice" role="status">Đang tải số liệu kinh doanh…</p>
               <div class="studio-kpi-grid">
-                <article class="studio-kpi"><div class="studio-kpi-label">Portrait requests <span>↗</span></div><strong id="metric-orders">—</strong><p>Enquiries received in this period</p></article>
-                <article class="studio-kpi"><div class="studio-kpi-label">Verified revenue <span>↗</span></div><strong id="metric-revenue">—</strong><p>Recorded real payments · AUD</p></article>
-                <article class="studio-kpi"><div class="studio-kpi-label">Order value <span>↗</span></div><strong id="metric-value">—</strong><p>Estimated / agreed order value</p></article>
-                <article class="studio-kpi"><div class="studio-kpi-label">In production <span>↗</span></div><strong id="metric-production">—</strong><p>Confirmed and being painted</p></article>
+                <article class="studio-kpi"><div class="studio-kpi-label">Yêu cầu đặt tranh <span>↗</span></div><strong id="metric-orders">—</strong><p>Số yêu cầu nhận trong kỳ</p></article>
+                <article class="studio-kpi"><div class="studio-kpi-label">Doanh thu đã xác nhận <span>↗</span></div><strong id="metric-revenue">—</strong><p>Tiền thực thu đã xác minh · AUD</p></article>
+                <article class="studio-kpi"><div class="studio-kpi-label">Giá trị đơn hàng <span>↗</span></div><strong id="metric-value">—</strong><p>Giá trị dự kiến / đã báo giá</p></article>
+                <article class="studio-kpi"><div class="studio-kpi-label">Đang thực hiện <span>↗</span></div><strong id="metric-production">—</strong><p>Đã xác nhận hoặc đang vẽ</p></article>
               </div>
               <div class="studio-analytics-grid">
-                <section class="studio-insight-card studio-chart-card"><div class="studio-card-heading"><div><span class="studio-card-eyebrow">PERFORMANCE</span><h2>Enquiry activity</h2></div><span class="studio-card-tag">Orders / day</span></div><div id="studio-chart" class="studio-chart" aria-label="Daily portrait enquiries chart"><div class="studio-chart-empty">Loading chart…</div></div><div class="studio-chart-footer"><span><i class="studio-legend-dot"></i> Portrait enquiries</span><span id="chart-period-caption">Last 30 days</span></div></section>
-                <section class="studio-insight-card studio-pipeline-card"><div class="studio-card-heading"><div><span class="studio-card-eyebrow">PRODUCTION</span><h2>Order pipeline</h2></div><button type="button" class="studio-card-link" data-studio-view="orders">View orders ↗</button></div><div id="studio-pipeline" class="studio-pipeline"><p class="studio-chart-empty">Loading production status…</p></div><p class="studio-pipeline-note">Based on order statuses during the selected period.</p></section>
+                <section class="studio-insight-card studio-chart-card"><div class="studio-card-heading"><div><span class="studio-card-eyebrow">HIỆU SUẤT</span><h2>Biểu đồ kinh doanh</h2></div><div class="studio-chart-switch" role="group" aria-label="Chọn loại biểu đồ"><button type="button" class="studio-chart-choice active" data-chart-mode="orders" aria-pressed="true">Đơn hàng</button><button type="button" class="studio-chart-choice" data-chart-mode="revenue" aria-pressed="false">Doanh thu</button></div></div><div id="studio-chart" class="studio-chart" aria-label="Biểu đồ đơn đặt tranh theo ngày"><div class="studio-chart-empty">Đang tải biểu đồ…</div></div><div class="studio-chart-footer"><span><i class="studio-legend-dot"></i> <span id="chart-legend-label">Số đơn đặt tranh</span></span><span id="chart-period-caption">Last 30 days</span></div></section>
+                <section class="studio-insight-card studio-pipeline-card"><div class="studio-card-heading"><div><span class="studio-card-eyebrow">TIẾN ĐỘ SẢN XUẤT</span><h2>Trạng thái đơn hàng</h2></div><button type="button" class="studio-card-link" data-studio-view="orders">Xem đơn hàng ↗</button></div><div id="studio-pipeline" class="studio-pipeline"><p class="studio-chart-empty">Đang tải tiến độ…</p></div><p class="studio-pipeline-note">Thống kê theo trạng thái của các đơn hàng trong khoảng thời gian đã chọn.</p></section>
               </div>
               <div class="studio-bottom-grid">
-                <section class="studio-insight-card studio-recent-card"><div class="studio-card-heading"><div><span class="studio-card-eyebrow">LATEST ACTIVITY</span><h2>Recent requests</h2></div><button type="button" class="studio-card-link" data-studio-view="orders">All orders ↗</button></div><div id="studio-recent-orders" class="studio-recent-orders"><p class="studio-chart-empty">Loading recent orders…</p></div></section>
-                <section id="studio-traffic-card" class="studio-insight-card studio-traffic-card"><div class="studio-card-heading"><div><span class="studio-card-eyebrow">WEBSITE PERFORMANCE</span><h2>Audience & engagement</h2></div><span class="studio-connection-status">Not connected</span></div><div class="studio-traffic-metrics"><div><span>Unique visitors</span><strong>—</strong></div><div><span>Page views</span><strong>—</strong></div><div><span>Engagement / conversion</span><strong>—</strong></div></div><p>Visitor analytics is not connected to this private dashboard yet. Enable Cloudflare Web Analytics to measure real website traffic. These numbers are intentionally not estimated.</p><a class="studio-connect-link" href="https://dash.cloudflare.com/" target="_blank" rel="noopener noreferrer">Open Cloudflare Analytics ↗</a></section>
+                <section class="studio-insight-card studio-recent-card"><div class="studio-card-heading"><div><span class="studio-card-eyebrow">HOẠT ĐỘNG GẦN ĐÂY</span><h2>Đơn hàng mới nhất</h2></div><button type="button" class="studio-card-link" data-studio-view="orders">Tất cả đơn hàng ↗</button></div><div id="studio-recent-orders" class="studio-recent-orders"><p class="studio-chart-empty">Đang tải đơn hàng…</p></div></section>
+                <section id="studio-traffic-card" class="studio-insight-card studio-traffic-card"><div class="studio-card-heading"><div><span class="studio-card-eyebrow">HIỆU SUẤT WEBSITE</span><h2>Lượt truy cập và tương tác</h2></div><span class="studio-connection-status">Chưa kết nối</span></div><div class="studio-traffic-metrics"><div><span>Khách truy cập</span><strong>—</strong></div><div><span>Lượt xem trang</span><strong>—</strong></div><div><span>Tương tác / chuyển đổi</span><strong>—</strong></div></div><p>Chưa kết nối dữ liệu truy cập thực tế. Bạn có thể bật Cloudflare Web Analytics để đo lượng khách vào website. Hệ thống không tự tạo số liệu giả.</p><a class="studio-connect-link" href="https://dash.cloudflare.com/" target="_blank" rel="noopener noreferrer">Mở Cloudflare Analytics ↗</a></section>
               </div>
-              <div class="studio-sandbox-banner"><span>◎</span><p><strong>Financial reporting is separated from test payments.</strong> Sandbox PayPal payments never count as revenue. <span id="studio-sandbox-caption">Test transactions are reported separately.</span></p></div>
+              <div class="studio-sandbox-banner"><span>◎</span><p><strong>Doanh thu thực được tách khỏi thanh toán thử nghiệm.</strong> Thanh toán PayPal Sandbox không được tính vào doanh thu. <span id="studio-sandbox-caption">Giao dịch thử nghiệm được thống kê riêng.</span></p></div>
             </section>
-            <section id="studio-orders-view" class="studio-view" aria-label="Order management" hidden>
-              <div class="studio-page-heading studio-orders-heading"><div><span class="studio-kicker">ORDER MANAGEMENT</span><h1>Portrait enquiries.</h1><p>Manage customer requests, payments, photographs and artwork progress.</p></div></div>
+            <section id="studio-orders-view" class="studio-view" aria-label="Quản lý đơn hàng" hidden>
+              <div class="studio-page-heading studio-orders-heading"><div><span class="studio-kicker">QUẢN LÝ ĐƠN HÀNG</span><h1>Quản lý đơn đặt tranh.</h1><p>Xem thông tin khách, thanh toán, ảnh tham khảo và cập nhật tiến độ vẽ tranh.</p></div></div>
                     <div class="studio-toolbar">
-        <label class="studio-search"><span>Search enquiries</span><input id="search" type="search" placeholder="Name, pet, email or reference"></label>
-        <label class="studio-filter"><span>Order status</span><select id="status-filter"><option value="">All statuses</option><option>New</option><option>Confirmed</option><option>Painting</option><option>Ready for balance</option><option>Shipped</option><option>Completed</option><option>Cancelled</option></select></label>
-        <button class="btn outline" type="button" id="refresh">Refresh</button>
+        <label class="studio-search"><span>Tìm kiếm đơn hàng</span><input id="search" type="search" placeholder="Tên khách, thú cưng, email hoặc mã đơn"></label>
+        <label class="studio-filter"><span>Trạng thái đơn hàng</span><select id="status-filter"><option value="">Tất cả trạng thái</option><option value="New">Yêu cầu mới</option><option value="Confirmed">Đã xác nhận</option><option value="Painting">Đang vẽ</option><option value="Ready for balance">Chờ thanh toán còn lại</option><option value="Shipped">Đã gửi hàng</option><option value="Completed">Hoàn thành</option><option value="Cancelled">Đã hủy</option></select></label>
+        <button class="btn outline" type="button" id="refresh"> Làm mới</button>
       </div>
 
               <p id="studio-message" class="studio-message" role="status"></p>
                     <div class="studio-layout">
-                <section class="studio-list-panel" aria-label="Order list">
-                  <div class="studio-panel-title"><span>Orders</span><span id="order-count">0</span></div>
+                <section class="studio-list-panel" aria-label="Danh sách đơn hàng">
+                  <div class="studio-panel-title"><span>Đơn hàng</span><span id="order-count">0</span></div>
                   <div id="order-list" class="studio-order-list"></div>
-                  <button id="load-more" class="studio-more" type="button" hidden>Load more enquiries</button>
+                  <button id="load-more" class="studio-more" type="button" hidden>Tải thêm đơn hàng</button>
                 </section>
-                <section class="studio-detail-panel" id="detail-panel" aria-label="Selected order details">
-                  <div class="studio-empty">Select an enquiry to see its details and photographs.</div>
+                <section class="studio-detail-panel" id="detail-panel" aria-label="Chi tiết đơn hàng đã chọn">
+                  <div class="studio-empty">Chọn một đơn hàng để xem thông tin và ảnh tham khảo.</div>
                 </section>
               </div>
             </section>
