@@ -257,7 +257,9 @@
         const badge=head.querySelector(".studio-status");badge.className="studio-status status-"+order.status.toLowerCase();badge.textContent=labels[order.status]||order.status;
         updatedNote.textContent="Cập nhật gần nhất: "+formatDate(result.updatedAt);
         button.textContent="✓ Đã lưu";
-        saveFeedback.textContent="Đã lưu thành công · Trạng thái: "+(labels[order.status]||order.status)+".";
+        const emailLabels={sent:"Email mẫu đã gửi đến hộp thư thử nghiệm.",failed:"Không gửi được email mẫu; tiến độ vẫn đã lưu.",skipped:"Chưa cấu hình gửi email mẫu.",unchanged:"Không gửi email vì trạng thái không thay đổi.","already-sent":"Email mẫu đã gửi trước đó."};
+         saveFeedback.textContent="Đã lưu thành công · Trạng thái: "+(labels[order.status]||order.status)+". "+(emailLabels[result.emailTest]||"");
+         void refreshEmailHistory();
         saveFeedback.className="studio-save-feedback is-success";
       }catch(e){
         showMessage(e.message);
@@ -268,6 +270,25 @@
         button.disabled=false;selectEl.disabled=false;note.disabled=false;
       }
     });
+    panel.append(sectionHeading("Lịch sử email tự động"));
+    const emailInfo=make("p","studio-footnote","CHẾ ĐỘ THỬ NGHIỆM: Email mẫu chỉ gửi đến hộp thư quản trị đã cấu hình, không gửi đến địa chỉ khách hàng.");
+    const emailHistory=make("div","studio-email-history","Đang tải lịch sử email…");
+    panel.append(emailInfo,emailHistory);
+    async function refreshEmailHistory(){
+      try {
+        const result=await api("email-history",{id:order.id});
+        if(state.selected!==id||currentVersion!==selectionVersion)return;
+        emailHistory.replaceChildren();
+        if(!result.events?.length){emailHistory.append(make("p","studio-footnote","Chưa có email tự động nào được tạo cho đơn hàng này."));return;}
+        const eventNames={"payment-deposit":"Xác nhận đặt cọc","payment-balance":"Xác nhận thanh toán phần còn lại","payment-full":"Xác nhận thanh toán toàn bộ","status-Confirmed":"Đơn hàng đã xác nhận","status-Painting":"Đang vẽ","status-Ready for balance":"Yêu cầu thanh toán còn lại","status-Shipped":"Đã gửi hàng","status-Completed":"Hoàn thành","status-Cancelled":"Đã hủy"};
+        const statuses={sent:"Resend đã tiếp nhận",failed:"Gửi thất bại",skipped:"Chưa gửi (thiếu cấu hình)"};
+        for(const e of result.events){
+          const line=make("p","studio-footnote",(eventNames[e.event]||e.event)+" · "+(statuses[e.state]||e.state)+" · "+formatDate(e.sentAt||e.createdAt));
+          emailHistory.append(line);
+        }
+      }catch(e){if(state.selected===id&&currentVersion===selectionVersion)emailHistory.textContent="Không tải được lịch sử email: "+e.message;}
+    }
+    void refreshEmailHistory();
   }
 
   const fmtAUD=cents=>"A$"+(Number(cents||0)/100).toLocaleString("vi-VN",{minimumFractionDigits:0,maximumFractionDigits:2});
