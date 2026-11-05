@@ -1,3 +1,4 @@
+import {sendSandboxCustomerEmail} from "../_lib/sandbox-customer-email.js";
 // Private studio dashboard API. The admin key must be a 32+ character Cloudflare secret.
 // Never embed STUDIO_ADMIN_KEY in frontend code or expose the private R2 bucket.
 const statuses = new Set(["New","Confirmed","Painting","Ready for balance","Shipped","Completed","Cancelled"]);
@@ -125,6 +126,14 @@ export async function onRequestGet(context){
       }while(more&&cursor&&pages<20);
       return respond({ok:true,days,totals,statusCounts,daily:Array.from(daily.values()),partial:more,scanned,asOf:new Date().toISOString(),revenueNote:"Only verified manual payments, attributed by verification date (UTC). PayPal Sandbox excluded.",trafficConnected:false});
     }
+    if(action==="email-history"){
+      const id=url.searchParams.get("id");
+      if(!validId(id)||!(await getDetails(bucket,id)))return respond({ok:false,message:"Order not found."},404);
+      const page=await bucket.list({prefix:"enquiries/"+id+"/email-events/",limit:100});
+      const events=(await Promise.all(page.objects.map(async item=>readJson(bucket,item.key)))).filter(Boolean);
+      events.sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
+      return respond({ok:true,events:events.slice(0,50).map(e=>({event:e.event,state:e.state,createdAt:e.createdAt,sentAt:e.sentAt||null,testRecipient:e.testRecipient||null}))});
+    }
     if(action==="photo"){
       const id=url.searchParams.get("id"), index=Number(url.searchParams.get("index"));
       if(!validId(id)||!Number.isInteger(index)||index<0||index>4)return respond({ok:false,message:"Invalid image request."},400);
@@ -224,8 +233,30 @@ export async function onRequestPost(context){
     const fullyVerified=checkoutPaid?Boolean(sandbox.full||(sandbox.deposit&&sandbox.balance)):Boolean(payment?.deposit&&payment?.balance);
     if(status!==data.status&&["Painting","Ready for balance"].includes(status)&&!depositVerified)return respond({ok:false,message:"Verify the deposit or full payment before starting production."},409);
     if(status!==data.status&&["Shipped","Completed"].includes(status)&&!fullyVerified)return respond({ok:false,message:"Verify full payment before shipping or completing the order."},409);
+    const previousStatus=data.status;
     data.status=status;data.internalNote=payload.internalNote.trim();data.updatedAt=new Date().toISOString();
     await env.PORTRAIT_UPLOADS.put(detailKey(id),JSON.stringify(data,null,2),{httpMetadata:{contentType:"application/json"}});
-    return respond({ok:true,id,status,updatedAt:data.updatedAt});
+    // Only genuine status transitions trigger a customer-facing email preview.
+    // The customer is NEVER the recipient while running on Preview/Sandbox.
+    let emailTest="unchanged";
+    if(status!==previousStatus&&status!=="New"){
+      let checkoutLink=null;
+      try{
+        if(status==="Ready for balance"&&data.checkoutMode==="sandbox-inline"&&depositVerified&&!fullyVerified){
+          const token=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,"0")).join("");
+          const expiresAt=new Date(Date.now()+30*86400000).toISOString();
+          await env.PORTRAIT_UPLOADS.put("enquiries/"+id+"/checkout-email-access.json",JSON.stringify({id,tokenHash:await sha256(token),expiresAt,createdAt:data.updatedAt}),{httpMetadata:{contentType:"application/json"}});
+          const link=new URL("/checkout",request.url);link.hash=new URLSearchParams({id,token}).toString();checkoutLink=link.toString();
+        }
+        const notification=await sendSandboxCustomerEmail({
+          env,bucket:env.PORTRAIT_UPLOADS,order:data,
+          payment:payment||{totalCents:Math.round(Number(data.estimatedPriceAUD||0)*100)},
+          event:"status-"+status,eventKey:"status-"+data.updatedAt.replace(/[^0-9]/g,""),
+          checkoutLink,paidInFull:fullyVerified
+        });
+        emailTest=notification.state;
+      }catch(e){emailTest="failed";console.error("Status email preview failed",id,String(e));}
+    }
+    return respond({ok:true,id,status,updatedAt:data.updatedAt,emailTest});
   }catch(e){console.error("Studio update failed",e);return respond({ok:false,message:"Could not update order."},500);}
 }
