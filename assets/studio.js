@@ -4,13 +4,14 @@
   const loginMessage = $("login-message"), message = $("studio-message");
   const list = $("order-list"), panel = $("detail-panel");
   const state = { key:"",orders:[],cursor:null,selected:null,images:[],loading:false };
-  const labels = {New:"New request",Confirmed:"Confirmed",Painting:"In progress",Shipped:"Shipped",Completed:"Completed",Cancelled:"Cancelled"};
+  let selectionVersion=0;
+  const labels = {New:"New request",Confirmed:"Confirmed",Painting:"In progress","Ready for balance":"Ready for balance",Shipped:"Shipped",Completed:"Completed",Cancelled:"Cancelled"};
   const make = (tag,className,text) => {const n=document.createElement(tag);if(className)n.className=className;if(text!==undefined)n.textContent=String(text);return n;};
   const formatDate = iso => {const d=new Date(iso);return Number.isNaN(d.getTime())?"Unknown date":d.toLocaleString("en-AU",{dateStyle:"medium",timeStyle:"short"});};
   const money = amount => Number.isFinite(Number(amount))?"A$"+Number(amount).toLocaleString("en-AU"):"Not available";
   function revokeImages(){state.images.forEach(URL.revokeObjectURL);state.images=[];}
   function lock(){
-    revokeImages();state.key="";state.orders=[];state.cursor=null;state.selected=null;
+    selectionVersion++;revokeImages();state.key="";state.orders=[];state.cursor=null;state.selected=null;
     dashboard.hidden=true;login.hidden=false;$("access-key").value="";$("access-key").focus();
   }
   async function api(action,{method="GET",body,cursor,id,index}={}){
@@ -54,7 +55,7 @@
       const button=make("button","studio-order"+(state.selected===o.id?" selected":""),undefined);
       button.type="button";button.addEventListener("click",()=>select(o.id));
       const top=make("div","studio-order-top");top.append(make("strong","",o.petName||"Pet portrait"),make("span","studio-status status-"+o.status.toLowerCase(),labels[o.status]||o.status));
-      button.append(top,make("div","studio-order-name",o.name||"Unnamed customer"),make("div","studio-order-meta",o.id+" · "+formatDate(o.receivedAt)),make("div","studio-order-price",money(o.payment?o.payment.totalCents/100:o.estimatedPriceAUD)),make("div","studio-order-meta",o.payment?.balance?"Both payments recorded":o.payment?.deposit?"Deposit recorded · balance due":o.payment?"Awaiting 50% deposit":"No agreed quote"));
+      button.append(top,make("div","studio-order-name",o.name||"Unnamed customer"),make("div","studio-order-meta",o.id+" · "+formatDate(o.receivedAt)),make("div","studio-order-price",money(o.payment?o.payment.totalCents/100:o.estimatedPriceAUD)),make("div","studio-order-meta",o.checkoutMode==="sandbox-inline"?(o.sandboxPayment?.full?"Sandbox: paid 100%":o.sandboxPayment?.balance?"Sandbox: paid in full":o.sandboxPayment?.deposit?"Sandbox: deposit paid": "Sandbox: awaiting payment"):(o.payment?.balance?"Both payments recorded":o.payment?.deposit?"Deposit recorded · balance due":o.payment?"Awaiting 50% deposit":"No agreed quote")));
       list.append(button);
     }
     $("load-more").hidden=!state.cursor;
@@ -65,6 +66,7 @@
   function sectionHeading(text){return make("h3","studio-subheading",text);}
   async function select(id){
     const order=state.orders.find(o=>o.id===id);if(!order)return;
+    const currentVersion=++selectionVersion;
     state.selected=id;revokeImages();renderList();panel.replaceChildren();
     const head=make("div","studio-detail-head");
     const heading=make("div");heading.append(make("span","eyebrow","Portrait enquiry"),make("h2","",order.petName||"Pet portrait"),make("p","studio-reference",order.id));
@@ -77,12 +79,20 @@
     const emailLink=make("a","studio-email","Reply to customer");emailLink.href="mailto:"+encodeURIComponent(order.email||"");panel.append(emailLink);
     panel.append(sectionHeading("Customer’s story"));
     panel.append(make("p","studio-story",order.story||"No special requests."));
-    panel.append(sectionHeading("Payment plan · 50 / 50"));
+    panel.append(sectionHeading(order.checkoutMode==="sandbox-inline"?"Sandbox checkout · "+(order.checkoutPlan==="full"?"100%":"50 / 50"):"Payment plan · 50 / 50"));
     const paymentBox=make("div","studio-payment");
     const payment=order.payment;
     const paymentNote=make("p","studio-footnote","Manual tracking only. This dashboard does NOT charge the customer or verify PayPal transactions automatically. Check the transaction in your own PayPal account before recording it.");
-    paymentBox.append(paymentNote);
+    if(order.checkoutMode!=="sandbox-inline")paymentBox.append(paymentNote);
     const amountText=cents=>"A$"+(cents/100).toLocaleString("en-AU",{minimumFractionDigits:2,maximumFractionDigits:2});
+    if(order.checkoutMode==="sandbox-inline"){
+      const sandbox=order.sandboxPayment;
+      paymentBox.append(make("p","studio-footnote","SANDBOX ONLY — this test has not moved real money. Customers pay on their checkout page."));
+      if(payment)paymentBox.append(make("p","studio-payment-due","Order total: "+amountText(payment.totalCents)));
+      paymentBox.append(make("p","studio-payment-due",sandbox?.full?"✓ 100% Sandbox payment verified":sandbox?.balance?"✓ Deposit and balance verified":sandbox?.deposit?"✓ 50% Sandbox deposit verified · awaiting final balance": "Awaiting Sandbox payment"));
+      if(sandbox?.deposit&&!sandbox?.balance&&order.status!=="Ready for balance")paymentBox.append(make("p","studio-story","When the portrait is finished, change the order status to Ready for balance. The customer can then pay the remaining 50% using their saved private checkout page."));
+      if(order.checkoutPlan==="full")paymentBox.append(make("p","studio-footnote","Customer selected full payment at checkout."));
+    }else{
     if(!payment){
       paymentBox.append(make("p","studio-story","No agreed quote yet. Confirm the final price with the customer before requesting a deposit."));
     }else{
@@ -152,6 +162,7 @@
         paymentBox.append(sandboxButton,sandboxResult);
       }
     }
+    }
     panel.append(paymentBox);
     panel.append(sectionHeading("Delivery address"));
     const shippingBox=make("div","studio-shipping");
@@ -161,6 +172,9 @@
       shippingBox.append(make("p","studio-shipping-address",address));
       if(order.shippingUpdatedAt)shippingBox.append(make("p","studio-footnote","Customer updated "+formatDate(order.shippingUpdatedAt)));
     }else shippingBox.append(make("p","studio-story","No delivery address submitted yet."));
+    if(order.checkoutMode==="sandbox-inline"){
+      shippingBox.append(make("p","studio-footnote","Delivery details were collected at checkout. No separate shipping link is needed."));
+    }else{
     const linkHelp=make("p","studio-footnote","Create a private link to request the customer’s delivery address. It expires in 14 days. Creating a new link cancels the previous one.");
     const linkButton=make("button","btn","Create shipping link");linkButton.type="button";
     const linkResult=make("div","studio-shipping-link");
@@ -181,6 +195,7 @@
       finally{linkButton.disabled=false;linkButton.textContent="Create shipping link";}
     });
     shippingBox.append(linkHelp,linkButton,linkResult);
+    }
     panel.append(shippingBox);
     panel.append(sectionHeading("Reference photographs"));
     const gallery=make("div","studio-photo-grid");panel.append(gallery);
@@ -190,13 +205,14 @@
       const caption=make("figcaption","",photo.name||"Reference photo");figure.append(holder,caption);gallery.append(figure);
       try{
         const blob=await api("photo",{id:order.id,index:photo.index});
+        if(state.selected!==id||currentVersion!==selectionVersion)return;
         const url=URL.createObjectURL(blob);state.images.push(url);
-        if(state.selected!==id){URL.revokeObjectURL(url);state.images=state.images.filter(x=>x!==url);return;}
+        if(state.selected!==id||currentVersion!==selectionVersion){URL.revokeObjectURL(url);state.images=state.images.filter(x=>x!==url);return;}
         const a=make("a","studio-photo-link");a.href=url;a.target="_blank";a.rel="noopener noreferrer";a.title="Open private reference photograph";
         const img=make("img");img.src=url;img.alt="Reference photo: "+(photo.name||"Pet");img.loading="lazy";a.append(img);holder.replaceChildren(a);
-      }catch(e){holder.textContent="Photo unavailable";if(!state.key)return;}
+      }catch(e){if(state.selected!==id||currentVersion!==selectionVersion)return;holder.textContent="Photo unavailable";if(!state.key)return;}
     }
-    if(state.selected!==id)return;
+    if(state.selected!==id||currentVersion!==selectionVersion)return;
     panel.append(sectionHeading("Production status"));
     const form=make("form","studio-update");
     const statusLabel=make("label","", "Status");const selectEl=make("select");selectEl.required=true;
