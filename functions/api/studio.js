@@ -1,5 +1,6 @@
 import {sendSandboxCustomerEmail} from "../_lib/sandbox-customer-email.js";
 import {verifyStudioSession} from "../_lib/studio-otp-auth.js";
+import {onRequestPost as onStudioOtpRequest} from "./studio-auth.js";
 // Private studio dashboard API. The admin key must be a 32+ character Cloudflare secret.
 // Never embed STUDIO_ADMIN_KEY in frontend code or expose the private R2 bucket.
 const statuses = new Set(["New","Confirmed","Painting","Ready for balance","Shipped","Completed","Cancelled"]);
@@ -156,9 +157,15 @@ export async function onRequestGet(context){
   }catch(e){console.error("Studio read failed",e);return respond({ok:false,message:"Unable to load studio records."},500);}
 }
 export async function onRequestPost(context){
-  const denied=await guard(context);if(denied)return denied;
   const {request,env}=context;
   const action=new URL(request.url).searchParams.get("action");
+  // Reuse the already deployed /api/studio route for OTP to avoid preview route registration issues.
+  // Only these exact unauthenticated POST actions bypass the existing studio-key guard.
+  if(["otp-request","otp-verify","otp-logout"].includes(action)){
+    // The OTP handler reads its action from the request JSON.
+    return onStudioOtpRequest(context);
+  }
+  const denied=await guard(context);if(denied)return denied;
   if(!["status","shipping-link","payment-quote","payment-record","payment-link"].includes(action))return respond({ok:false,message:"Unknown action."},404);
   if(Number(request.headers.get("content-length")||0)>4096)return respond({ok:false,message:"Request too large."},413);
   let payload;try{payload=await request.json();}catch{return respond({ok:false,message:"Invalid request."},400);}
