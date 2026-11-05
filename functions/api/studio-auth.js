@@ -17,13 +17,11 @@ export async function onRequestPost({request,env}){
   }
   if(!['request','verify'].includes(action))return fail('Unknown action.',404);
   const bucket=env.PORTRAIT_UPLOADS,now=Date.now();
-  const adminEmail=String(env.STUDIO_LOGIN_EMAIL||env.NOTIFICATION_EMAIL||'').trim().toLowerCase();
+  const adminEmail=String(env.NOTIFICATION_EMAIL||'').trim().toLowerCase();
   if(action==='request'){
     if(!env.RESEND_API_KEY||!adminEmail||!(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adminEmail)))return fail('Email login is not configured. Use your private access key.',503);
-    const email=typeof body.email==='string'?body.email.trim().toLowerCase():'';
-    if(email.length>254||!(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)))return fail('Please enter a valid email.');
-    // Generic success prevents discovery of the configured admin email.
-    if(email!==adminEmail)return otpJson({ok:true,message:'If this is the studio email, a code will arrive shortly.'});
+    // The destination is fixed server-side to the existing sandbox notification inbox.
+    // Never accept an email destination from the browser.
     const rate=await read(bucket,'rate')||{};
     const windowStart=now-(Number(rate.windowStart)||0)<3600000?rate.windowStart:now;
     const count=windowStart===rate.windowStart?(Number(rate.count)||0):0;
@@ -46,7 +44,7 @@ export async function onRequestPost({request,env}){
       return fail('Cannot send the login code. Use your private access key or check Resend configuration.',503);
     }
     await write(bucket,'rate',{windowStart,count:count+1,lastSent:now});
-    return otpJson({ok:true,message:'If this is the studio email, a code will arrive shortly.',expiresInSeconds:300});
+    return otpJson({ok:true,message:'Login code request accepted.',expiresInSeconds:300});
   }
   const code=typeof body.code==='string'?body.code.trim():'';
   if(!/^\d{6}$/.test(code))return fail('Enter the six-digit email code.');
