@@ -60,6 +60,56 @@ export async function onRequestGet(context){
       orders.sort((a,b)=>String(b.receivedAt).localeCompare(String(a.receivedAt)));
       return respond({ok:true,orders,nextCursor:page.truncated?page.cursor||null:null});
     }
+    if(action==="summary"){
+      const days=Number(url.searchParams.get("days")||30);
+      if(![7,30,90].includes(days))return respond({ok:false,message:"Unsupported reporting period."},400);
+      const start=new Date();start.setUTCHours(0,0,0,0);start.setUTCDate(start.getUTCDate()-(days-1));
+      const daily=new Map();
+      for(let i=0;i<days;i++){const day=new Date(start);day.setUTCDate(start.getUTCDate()+i);const key=day.toISOString().slice(0,10);daily.set(key,{date:key,orders:0,revenueCents:0});}
+      const totals={orders:0,revenueCents:0,orderValueCents:0,awaitingDeposit:0,inProduction:0,readyForBalance:0,sandboxOrders:0,sandboxTestCents:0};
+      const statusCounts={New:0,Confirmed:0,Painting:0,"Ready for balance":0,Shipped:0,Completed:0,Cancelled:0};
+      let cursor,more=false,pages=0,scanned=0;
+      do{
+        const page=await bucket.list({prefix:"enquiries/",delimiter:"/",limit:100,...(cursor?{cursor}:{})});
+        const ids=(page.delimitedPrefixes||[]).map(p=>p.slice("enquiries/".length).replace(/\/$/,"")).filter(validId);
+        for(let i=0;i<ids.length;i+=20){
+          const chunk=await Promise.all(ids.slice(i,i+20).map(async id=>{
+            const data=await getDetails(bucket,id);
+            if(!data||!Number.isFinite(Date.parse(data.receivedAt)))return null;
+            const day=new Date(data.receivedAt).toISOString().slice(0,10);
+            if(!daily.has(day))return null;
+            const payment=await readJson(bucket,paymentKey(id));
+            const sandbox=data.checkoutMode==="sandbox-inline"?await readJson(bucket,sandboxPaymentKey(id)):null;
+            return {data,day,payment,sandbox};
+          }));
+          for(const row of chunk){
+            if(!row)continue;
+            const {data,day,payment,sandbox}=row,point=daily.get(day);
+            totals.orders++;point.orders++;
+            const status=statuses.has(data.status)?data.status:"New";
+            statusCounts[status]++;
+            const totalCents=Number.isInteger(payment?.totalCents)?payment.totalCents:Math.round(Number(data.estimatedPriceAUD||0)*100);
+            if(Number.isFinite(totalCents)&&totalCents>0&&status!=="Cancelled")totals.orderValueCents+=totalCents;
+            if(["Painting","Confirmed"].includes(status))totals.inProduction++;
+            if(status==="Ready for balance")totals.readyForBalance++;
+            if(data.checkoutMode==="sandbox-inline"){
+              totals.sandboxOrders++;
+              if(sandbox?.quotedAt===payment?.quotedAt){
+                const sandboxPaid=sandbox.full?payment?.totalCents:(sandbox.deposit?payment?.depositCents||0:0)+(sandbox.balance?payment?.balanceCents||0:0);
+                totals.sandboxTestCents+=Number(sandboxPaid)||0;
+              }
+            }else{
+              const paid=(payment?.deposit?.verifiedAt?Number(payment.deposit.amountCents)||0:0)+(payment?.balance?.verifiedAt?Number(payment.balance.amountCents)||0:0);
+              totals.revenueCents+=paid;point.revenueCents+=paid;
+              if(!payment?.deposit&&status!=="Cancelled")totals.awaitingDeposit++;
+            }
+          }
+        }
+        scanned+=ids.length;pages++;
+        more=!!page.truncated;cursor=page.cursor;
+      }while(more&&cursor&&pages<20);
+      return respond({ok:true,days,totals,statusCounts,daily:Array.from(daily.values()),partial:more,scanned,asOf:new Date().toISOString(),revenueNote:"Verified manually recorded payments only. Sandbox excluded.",trafficConnected:false});
+    }
     if(action==="photo"){
       const id=url.searchParams.get("id"), index=Number(url.searchParams.get("index"));
       if(!validId(id)||!Number.isInteger(index)||index<0||index>4)return respond({ok:false,message:"Invalid image request."},400);
