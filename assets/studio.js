@@ -3,7 +3,8 @@
   const login = $("studio-login"), dashboard = $("studio-dashboard");
   const loginMessage = $("login-message"), message = $("studio-message");
   const list = $("order-list"), panel = $("detail-panel");
-  const state = { key:"",orders:[],cursor:null,selected:null,images:[],loading:false };
+  const state = { key:"",sessionExpiresAt:0,orders:[],cursor:null,selected:null,images:[],loading:false };
+  let sessionExpiryTimer=null;
   let selectionVersion=0;
   const labels = {New:"Yêu cầu mới",Confirmed:"Đã xác nhận",Painting:"Đang vẽ","Ready for balance":"Chờ thanh toán còn lại",Shipped:"Đã gửi hàng",Completed:"Hoàn thành",Cancelled:"Đã hủy"};
   // Payment confirmation and production progress are separate. Do not mark an order shipped automatically.
@@ -15,7 +16,15 @@
   function revokeImages(){state.images.forEach(URL.revokeObjectURL);state.images=[];}
   function lock(){
     document.body.classList.remove("studio-unlocked");
-    selectionVersion++;revokeImages();state.key="";state.orders=[];state.cursor=null;state.selected=null;
+    if(sessionExpiryTimer!==null){clearTimeout(sessionExpiryTimer);sessionExpiryTimer=null;}
+    selectionVersion++;analyticsVersion++;revokeImages();
+    state.key="";state.sessionExpiresAt=0;state.orders=[];state.cursor=null;state.selected=null;
+    lastAnalyticsData=[];
+    // Remove private customer details and rendered charts, not just hide the dashboard.
+    for(const id of ["order-list","detail-panel","studio-recent-orders","studio-chart","studio-pipeline"])$(id).replaceChildren();
+    for(const id of ["metric-orders","metric-revenue","metric-value","metric-production","sidebar-order-count","order-count"])$(id).textContent="—";
+    for(const id of ["analytics-notice","studio-sandbox-caption","studio-message"])$(id).textContent="";
+    $("otp-code").value="";
     dashboard.hidden=true;login.hidden=false;$("access-key").value="";$("access-key").focus();
   }
   const serverErrors={"Studio access is not configured. Set STUDIO_ADMIN_KEY (32+ characters) in Cloudflare.":"Chưa cấu hình khóa quản trị STUDIO_ADMIN_KEY (ít nhất 32 ký tự) trong Cloudflare.","Origin not allowed.":"Nguồn truy cập không được phép.","Incorrect access key.":"Mã truy cập không đúng.","Invalid cursor.":"Dữ liệu phân trang không hợp lệ.","Unsupported reporting period.":"Khoảng thời gian thống kê không được hỗ trợ.","Invalid image request.":"Yêu cầu xem ảnh không hợp lệ.","Image not found.":"Không tìm thấy ảnh.","Unknown action.":"Thao tác không được hỗ trợ.","Unable to load studio records.":"Không tải được dữ liệu đơn hàng.","Request too large.":"Dữ liệu gửi lên quá lớn.","Invalid request.":"Yêu cầu không hợp lệ.","Invalid order.":"Mã đơn hàng không hợp lệ.","Order not found.":"Không tìm thấy đơn hàng.","Delivery address was collected at checkout; no shipping link is required.":"Địa chỉ đã được nhận khi đặt hàng, không cần liên kết giao hàng.","This order cannot request new shipping details.":"Không thể yêu cầu địa chỉ giao hàng mới cho đơn này.","Could not create shipping link.":"Không tạo được liên kết giao hàng.","Sandbox PayPal credentials are not configured in this environment.":"Chưa cấu hình thông tin PayPal Sandbox trong môi trường này.","Invalid order or instalment.":"Đơn hàng hoặc đợt thanh toán không hợp lệ.","Order cannot request a legacy payment link.":"Đơn hàng này không hỗ trợ tạo liên kết thanh toán kiểu cũ.","This Sandbox instalment has already been recorded.":"Đợt thanh toán Sandbox này đã được ghi nhận.","Complete the Sandbox deposit test first.":"Cần thử thanh toán cọc Sandbox trước.","Could not create payment link.":"Không tạo được liên kết thanh toán.","Sandbox checkout orders cannot be manually repriced or recorded.":"Không thể sửa giá hoặc ghi nhận thủ công cho đơn thanh toán Sandbox.","This order cannot be updated for payment.":"Không thể cập nhật thanh toán cho đơn hàng này.","Enter a confirmed whole-AUD price between A$50 and A$100,000.":"Nhập giá đã chốt là số nguyên từ 50 đến 100.000 AUD.","A payment is already recorded. The agreed price cannot be changed here.":"Đã ghi nhận thanh toán, không thể thay đổi giá tại đây.","Confirm the final price before recording a payment.":"Hãy xác nhận giá cuối cùng trước khi ghi nhận thanh toán.","Verify the transaction in PayPal and enter its transaction ID (6–100 letters/numbers).":"Kiểm tra giao dịch trong PayPal và nhập mã giao dịch hợp lệ (6–100 ký tự).","This payment stage has already been recorded.":"Đợt thanh toán này đã được ghi nhận.","Record the verified deposit first.":"Hãy ghi nhận tiền cọc đã xác minh trước.","Use the unique transaction ID for the second payment.":"Đợt thanh toán thứ hai phải có mã giao dịch khác.","Could not save payment tracking.":"Không lưu được thông tin thanh toán.","Invalid order or status.":"Đơn hàng hoặc trạng thái không hợp lệ.","Note must be 1000 characters or fewer.":"Ghi chú không được vượt quá 1.000 ký tự.","Verify the deposit or full payment before starting production.":"Cần xác minh tiền cọc hoặc thanh toán đầy đủ trước khi bắt đầu vẽ.","Verify full payment before shipping or completing the order.":"Cần xác minh thanh toán đủ trước khi gửi tranh hoặc hoàn tất đơn.","Could not update order.":"Không cập nhật được đơn hàng."};
@@ -26,7 +35,9 @@
     if(days)url.searchParams.set("days",String(days));
     if(id)url.searchParams.set("id",id);
     if(index!==undefined)url.searchParams.set("index",String(index));
-    const response=await fetch(url,{method,headers:{"Authorization":"Bearer "+state.key,...(body?{"Content-Type":"application/json"}:{})},body:body?JSON.stringify(body):undefined,cache:"no-store",credentials:"omit"});
+    const requestToken=state.key;
+    const response=await fetch(url,{method,headers:{"Authorization":"Bearer "+requestToken,...(body?{"Content-Type":"application/json"}:{})},body:body?JSON.stringify(body):undefined,cache:"no-store",credentials:"omit"});
+    if(requestToken!==state.key)throw Error("Phiên đăng nhập đã thay đổi.");
     if(response.status===401){lock();throw Error("Mã truy cập không đúng hoặc đã hết hiệu lực. Vui lòng đăng nhập lại.");}
     if(action==="photo"&&response.ok)return response.blob();
     let result;try{result=await response.json();}catch{throw Error("Máy chủ trả về dữ liệu không hợp lệ.");}
@@ -411,6 +422,16 @@
   }));
   $("analytics-range").addEventListener("change",loadAnalytics);
   $("refresh-analytics").addEventListener("click",loadAnalytics);
+  function checkSessionExpiry(){
+    if(!state.sessionExpiresAt||Date.now()<state.sessionExpiresAt)return;
+    lock();loginMode("key");
+    loginMessage.textContent="Phiên đăng nhập email đã hết hạn sau 8 giờ. Vui lòng nhận mã mới để tiếp tục.";
+  }
+  function scheduleSessionExpiry(){
+    if(sessionExpiryTimer!==null)clearTimeout(sessionExpiryTimer);
+    if(state.sessionExpiresAt)sessionExpiryTimer=setTimeout(checkSessionExpiry,Math.max(0,state.sessionExpiresAt-Date.now()));
+  }
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkSessionExpiry();});
   function loginMode(mode){
     $("login-form").hidden=mode!=="key";
     $("otp-request-form").hidden=mode==="key";
@@ -470,8 +491,10 @@
     try{
       const result=await otpFetch("verify",{code:$("otp-code").value.trim()});
       state.key=result.token;
+      state.sessionExpiresAt=Date.now()+Math.min(8*3600,Math.max(0,Number(result.expiresInSeconds)||0))*1000;
       $("otp-code").value="";
       await unlockStudio();
+      scheduleSessionExpiry();
     }catch(error){state.key="";loginMessage.textContent=error.message;}
     finally{button.disabled=false;}
   });
