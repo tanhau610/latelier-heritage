@@ -1,6 +1,6 @@
 // Private studio dashboard API. The admin key must be a 32+ character Cloudflare secret.
 // Never embed STUDIO_ADMIN_KEY in frontend code or expose the private R2 bucket.
-const statuses = new Set(["New","Confirmed","Painting","Shipped","Completed","Cancelled"]);
+const statuses = new Set(["New","Confirmed","Painting","Ready for balance","Shipped","Completed","Cancelled"]);
 const headers = {"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store","X-Content-Type-Options":"nosniff","Referrer-Policy":"no-referrer"};
 const respond = (body,status=200)=>new Response(JSON.stringify(body),{status,headers});
 const validId = id => /^LH-\d{8}-[A-F0-9]{8}$/.test(id||"");
@@ -55,7 +55,7 @@ export async function onRequestGet(context){
         const shipping=await readJson(bucket,shippingKey(id));
         const payment=await readJson(bucket,paymentKey(id));
         const sandboxPayment=await readJson(bucket,sandboxPaymentKey(id));
-        return {sandboxPayment:sandboxPayment?.quotedAt===payment?.quotedAt?sandboxPayment:null,payment:payment||null,shipping:shipping?.details||null,shippingUpdatedAt:shipping?.updatedAt||null,id:data.id,receivedAt:data.receivedAt,name:data.name,email:data.email,petName:data.petName||"",size:data.size,pets:data.pets,country:data.country,card:!!data.card,story:data.story||"",estimatedPriceAUD:data.estimatedPriceAUD,status:statuses.has(data.status)?data.status:"New",internalNote:data.internalNote||"",updatedAt:data.updatedAt||null,photos:(data.photos||[]).map((p,i)=>({index:i,name:p.originalName||`Photo ${i+1}`}))};
+        return {checkoutMode:data.checkoutMode||null,checkoutPlan:data.checkoutPlan||null,sandboxPayment:sandboxPayment?.quotedAt===payment?.quotedAt?sandboxPayment:null,payment:payment||null,shipping:shipping?.details||null,shippingUpdatedAt:shipping?.updatedAt||null,id:data.id,receivedAt:data.receivedAt,name:data.name,email:data.email,petName:data.petName||"",size:data.size,pets:data.pets,country:data.country,card:!!data.card,story:data.story||"",estimatedPriceAUD:data.estimatedPriceAUD,status:statuses.has(data.status)?data.status:"New",internalNote:data.internalNote||"",updatedAt:data.updatedAt||null,photos:(data.photos||[]).map((p,i)=>({index:i,name:p.originalName||`Photo ${i+1}`}))};
       }))).filter(Boolean);
       orders.sort((a,b)=>String(b.receivedAt).localeCompare(String(a.receivedAt)));
       return respond({ok:true,orders,nextCursor:page.truncated?page.cursor||null:null});
@@ -103,7 +103,7 @@ export async function onRequestPost(context){
     try{
       const bucket=env.PORTRAIT_UPLOADS;
       const [order,payment,sandbox]=await Promise.all([getDetails(bucket,id),readJson(bucket,paymentKey(id)),readJson(bucket,sandboxPaymentKey(id))]);
-      if(!order||!payment||["Cancelled","Shipped","Completed"].includes(order.status))return respond({ok:false,message:"Order cannot request payment."},409);
+      if(!order||!payment||order.checkoutMode==="sandbox-inline"||["Cancelled","Shipped","Completed"].includes(order.status))return respond({ok:false,message:"Order cannot request a legacy payment link."},409);
       if(sandbox?.quotedAt===payment.quotedAt&&sandbox[payload.stage])return respond({ok:false,message:"This Sandbox instalment has already been recorded."},409);
       if(payload.stage==="balance"&&!(sandbox?.quotedAt===payment.quotedAt&&sandbox.deposit))return respond({ok:false,message:"Complete the Sandbox deposit test first."},409);
       const token=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,"0")).join("");
@@ -120,6 +120,7 @@ export async function onRequestPost(context){
       const bucket=env.PORTRAIT_UPLOADS;
       const order=await getDetails(bucket,id);
       if(!order)return respond({ok:false,message:"Order not found."},404);
+      if(order.checkoutMode==="sandbox-inline")return respond({ok:false,message:"Sandbox checkout orders cannot be manually repriced or recorded."},409);
       if(["Cancelled","Shipped","Completed"].includes(order.status))return respond({ok:false,message:"This order cannot be updated for payment."},409);
       const key=paymentKey(id);
       const current=await readJson(bucket,key);
@@ -151,8 +152,12 @@ export async function onRequestPost(context){
     const data=await getDetails(env.PORTRAIT_UPLOADS,id);
     if(!data)return respond({ok:false,message:"Order not found."},404);
     const payment=await readJson(env.PORTRAIT_UPLOADS,paymentKey(id));
-    if(status!==data.status&&status==="Painting"&&!payment?.deposit)return respond({ok:false,message:"Verify and record the 50% deposit before starting painting."},409);
-    if(status!==data.status&&["Shipped","Completed"].includes(status)&&(!payment?.deposit||!payment?.balance))return respond({ok:false,message:"Verify and record both payments before shipping or completing the order."},409);
+    const sandbox=await readJson(env.PORTRAIT_UPLOADS,sandboxPaymentKey(id));
+    const checkoutPaid=data.checkoutMode==="sandbox-inline"&&sandbox?.quotedAt===payment?.quotedAt;
+    const depositVerified=checkoutPaid?Boolean(sandbox.deposit||sandbox.full):Boolean(payment?.deposit);
+    const fullyVerified=checkoutPaid?Boolean(sandbox.full||(sandbox.deposit&&sandbox.balance)):Boolean(payment?.deposit&&payment?.balance);
+    if(status!==data.status&&["Painting","Ready for balance"].includes(status)&&!depositVerified)return respond({ok:false,message:"Verify the deposit or full payment before starting production."},409);
+    if(status!==data.status&&["Shipped","Completed"].includes(status)&&!fullyVerified)return respond({ok:false,message:"Verify full payment before shipping or completing the order."},409);
     data.status=status;data.internalNote=payload.internalNote.trim();data.updatedAt=new Date().toISOString();
     await env.PORTRAIT_UPLOADS.put(detailKey(id),JSON.stringify(data,null,2),{httpMetadata:{contentType:"application/json"}});
     return respond({ok:true,id,status,updatedAt:data.updatedAt});
