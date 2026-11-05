@@ -93,7 +93,7 @@ export async function onRequestGet(context){
             if(inPeriod&&["Painting","Confirmed"].includes(status))totals.inProduction++;
             if(inPeriod&&status==="Ready for balance")totals.readyForBalance++;
             // Count all Sandbox captures separately, including legacy test-payment links.
-            if(sandbox?.quotedAt===payment?.quotedAt){
+            if(sandbox && payment && typeof sandbox.quotedAt==="string" && sandbox.quotedAt===payment.quotedAt){
               const testPayments=sandbox.full?[sandbox.full]:[sandbox.deposit,sandbox.balance];
               for(const instalment of testPayments){
                 const verifiedAt=instalment?.verifiedAt;
