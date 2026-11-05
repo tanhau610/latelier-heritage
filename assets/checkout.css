@@ -42,3 +42,5 @@
 .checkout-body.is-editing-delivery .checkout-edit-only:not([hidden]){display:inline-flex;align-items:center;justify-content:center}
 .checkout-body.is-editing-delivery #save-delivery-edit{min-width:245px}
 @media(max-width:540px){.checkout-body.is-editing-delivery #save-delivery-edit{min-width:0;font-size:10px}}
+
+.checkout-edit-link[hidden],.checkout-edit-only[hidden]{display:none!important}
