@@ -10,7 +10,7 @@ export function constantEqual(a,b){if(typeof a!=='string'||typeof b!=='string'||
 export const read=async(bucket,key)=>{const obj=await bucket.get(prefix+key);if(!obj)return null;try{return await obj.json();}catch{return null;}};
 export const write=(bucket,key,data)=>bucket.put(prefix+key,JSON.stringify(data),{httpMetadata:{contentType:'application/json'}});
 export async function verifyStudioSession(env,bearer){
-  if(!env.PORTRAIT_UPLOADS||typeof bearer!=='string'||!/^st_[a-f0-9]{64}$/.test(bearer))return false;
+  if(!env.CF_PAGES_BRANCH||env.CF_PAGES_BRANCH==='main'||!env.PORTRAIT_UPLOADS||typeof bearer!=='string'||!/^st_[a-f0-9]{64}$/.test(bearer))return false;
   const session=await read(env.PORTRAIT_UPLOADS,'sessions/'+await hash(bearer));
   return Boolean(session&&session.expiresAt>Date.now()&&session.purpose==='studio-admin-otp');
 }
