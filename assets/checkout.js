@@ -8,7 +8,11 @@ const params=new URLSearchParams(location.hash.slice(1));
 let id=params.get("id"),token=params.get("token"),sdk=null,turnstileStarted=false;
 const stages=[...document.querySelectorAll("[data-checkout-step]")];
 function goTo(step,{scroll=true}={}){
-  stages.forEach(el=>{el.hidden=Number(el.dataset.checkoutStep)!==step;});
+  stages.forEach(el=>{
+    const active=Number(el.dataset.checkoutStep)===step;
+    el.hidden=!active;
+    if(active)el.scrollTop=0;
+  });
   document.querySelectorAll("[data-progress]").forEach(el=>{
     const number=Number(el.dataset.progress);
     el.classList.toggle("is-active",number===step);
@@ -130,13 +134,13 @@ async function showPayment(){
   editingDelivery(false);
   document.body.classList.add("is-paying");
   $("payment-edit-delivery").hidden=true;
-  form.hidden=false;stages.forEach(el=>{el.hidden=true;});panel.hidden=false;
+  form.hidden=false;stages.forEach(el=>{el.hidden=true;});panel.hidden=false;panel.scrollTop=0;
   document.querySelectorAll("[data-progress]").forEach(el=>{
     const number=Number(el.dataset.progress);
     el.classList.toggle("is-active",number===3);el.classList.toggle("is-complete",number<3);
     if(number===3)el.setAttribute("aria-current","step");else el.removeAttribute("aria-current");
   });
-  panel.scrollIntoView({behavior:"smooth",block:"start"});
+  document.querySelector(".checkout-progress").scrollIntoView({behavior:"smooth",block:"start"});
   const msg=$("payment-message"),buttons=$("paypal-buttons");buttons.replaceChildren();
   msg.textContent="Loading your secure Sandbox checkout…";
   try{
