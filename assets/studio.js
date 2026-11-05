@@ -286,14 +286,15 @@
     const pad={l:73,r:14,t:13,b:32},w=800-pad.l-pad.r,h=240-pad.t-pad.b;
     const val=v=>chartMode==="revenue"?(Number(v.revenueCents)||0)/100:chartMode==="sandbox"?(Number(v.sandboxCents)||0)/100:Number(v.orders)||0;
     const max=Math.max(1,...values.map(val));
-    const fmtTick=n=>chartMode!=="orders"?"A$"+n.toLocaleString("vi-VN",{maximumFractionDigits:0}):Math.round(n).toLocaleString("vi-VN");
+    const fmtTick=n=>chartMode!=="orders"?"A$"+n.toLocaleString("vi-VN",{minimumFractionDigits:max<4?2:0,maximumFractionDigits:max<4?2:0}):Math.round(n).toLocaleString("vi-VN");
     const line=(x1,y1,x2,y2,color,width=1,dash="")=>{
       const n=document.createElementNS(ns,"line");Object.entries({x1,y1,x2,y2,stroke:color,"stroke-width":width,...(dash?{"stroke-dasharray":dash}:{})}).forEach(([k,v])=>n.setAttribute(k,String(v)));svg.append(n);
     };
     const label=(x,y,t,anchor="start")=>{
       const n=document.createElementNS(ns,"text");n.setAttribute("x",x);n.setAttribute("y",y);n.setAttribute("text-anchor",anchor);n.setAttribute("font-size","11");n.setAttribute("fill","#9b8d84");n.textContent=t;svg.append(n);
     };
-    for(let i=0;i<=4;i++){const y=pad.t+h*i/4;line(pad.l,y,800-pad.r,y,"#ede7e1",1,"4 6");label(pad.l-9,y+4,fmtTick(max*(4-i)/4),"end");}
+    const tickSteps=chartMode==="orders"?Math.min(4,Math.max(1,Math.ceil(max))):4;
+    for(let i=0;i<=tickSteps;i++){const y=pad.t+h*i/tickSteps;line(pad.l,y,800-pad.r,y,"#ede7e1",1,"4 6");label(pad.l-9,y+4,fmtTick(max*(tickSteps-i)/tickSteps),"end");}
     const pts=values.map((v,i)=>({x:pad.l+w*(i+.5)/values.length,y:pad.t+h-val(v)/max*h,value:val(v),date:v.date}));
     if(chartMode==="orders"){
       const bw=Math.max(2,Math.min(42,w/values.length*.72));
