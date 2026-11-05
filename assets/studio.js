@@ -56,7 +56,7 @@
   }
   function renderList(){
     const q=$("search").value.trim().toLowerCase(),status=$("status-filter").value;
-    const visible=state.orders.filter(o=>(!status||o.status===status)&&(!q||[o.id,o.name,o.email,o.petName].some(v=>String(v||"").toLowerCase().includes(q))));
+    const visible=state.orders.filter(o=>(!status||(status==="Paid awaiting dispatch"?o.status==="Ready for balance"&&paidInFull(o):status==="Ready for balance"?o.status==="Ready for balance"&&!paidInFull(o):o.status===status))&&(!q||[o.id,o.name,o.email,o.petName].some(v=>String(v||"").toLowerCase().includes(q))));
     list.replaceChildren();$("order-count").textContent=visible.length+" / "+state.orders.length;
     if(!visible.length)list.append(make("p","studio-list-empty","Không tìm thấy đơn hàng phù hợp."));
     $("sidebar-order-count").textContent=String(state.orders.length);
