@@ -1,3 +1,4 @@
+import {sendSandboxCustomerEmail} from "../_lib/sandbox-customer-email.js";
 // Preview-only one-page checkout. SANDBOX ONLY. Never use this handler for live payments.
 // All customer records and photos are private Cloudflare R2 objects; the browser receives only a bearer token.
 const prices={"20x25":[229,299],"30x40":[379,469],"40x50":[499,599],"50x70":[699,829]};
@@ -111,8 +112,10 @@ async function action(request,env){
   const token=auth.startsWith("Bearer ")?auth.slice(7):"";
   if(!/^[a-f0-9]{64}$/.test(token))return fail("Invalid checkout access.",403);
   const bucket=env.PORTRAIT_UPLOADS;
-  const [access,order,payment,ledger]=await Promise.all(["checkout-access.json","details.json","payment.json","paypal-sandbox-payments.json"].map(f=>read(bucket,path(id,f))));
-  if(!access||access.id!==id||Date.parse(access.expiresAt)<=Date.now()||!same(await digest(token),access.tokenHash))return fail("Checkout access expired or invalid.",403);
+  const [access,emailAccess,order,payment,ledger]=await Promise.all(["checkout-access.json","checkout-email-access.json","details.json","payment.json","paypal-sandbox-payments.json"].map(f=>read(bucket,path(id,f))));
+  const hashedToken=await digest(token);
+  const activeAccess=[access,emailAccess].find(a=>a?.id===id&&Date.parse(a.expiresAt)>Date.now()&&same(hashedToken,a.tokenHash));
+  if(!activeAccess)return fail("Checkout access expired or invalid.",403);
   if(!order||order.id!==id||order.checkoutMode!=="sandbox-inline"||!payment||payment.id!==id||payment.checkoutPlan!==order.checkoutPlan)return fail("Order not found.",404);
   const state=due(order,payment,ledger);
   // A capture may have succeeded even if the customer's network lost the response.
@@ -164,11 +167,11 @@ async function action(request,env){
       application_context:{shipping_preference:"NO_SHIPPING",user_action:"PAY_NOW"}
     },"checkout-create-"+reference+"-"+payment.quotedAt.replace(/[^0-9]/g,"").slice(0,14)+"-"+Math.floor(Date.now()/3600000));
     if(!orderResult.id||orderResult.status!=="CREATED")throw Error("PayPal did not create the Sandbox order.");
-    await put(bucket,path(id,"checkout-paypal-order.json"),{id,stage,quotedAt:payment.quotedAt,tokenHash:access.tokenHash,paypalOrderId:orderResult.id,createdAt:new Date().toISOString()});
+    await put(bucket,path(id,"checkout-paypal-order.json"),{id,stage,quotedAt:payment.quotedAt,tokenHash:activeAccess.tokenHash,paypalOrderId:orderResult.id,createdAt:new Date().toISOString()});
     return json({ok:true,orderID:orderResult.id,sandbox:true});
   }
   const pending=await read(bucket,path(id,"checkout-paypal-order.json"));
-  if(!pending||pending.stage!==stage||pending.quotedAt!==payment.quotedAt||pending.tokenHash!==access.tokenHash||pending.paypalOrderId!==input.orderID)return fail("Payment session mismatch. Refresh checkout.",409);
+  if(!pending||pending.stage!==stage||pending.quotedAt!==payment.quotedAt||pending.tokenHash!==activeAccess.tokenHash||pending.paypalOrderId!==input.orderID)return fail("Payment session mismatch. Refresh checkout.",409);
   if(!/^[A-Za-z0-9]{8,50}$/.test(input.orderID||""))return fail("Invalid PayPal order ID.");
   let result;
   try{result=await paypal(env,"/v2/checkout/orders/"+encodeURIComponent(input.orderID)+"/capture","POST",null,"checkout-capture-"+input.orderID);}
@@ -183,7 +186,13 @@ async function action(request,env){
   const next=current?.quotedAt===payment.quotedAt?current:{id,quotedAt:payment.quotedAt};
   next[stage]={reference:matched.id,paypalOrderId:result.id,amountCents:state.amountCents,verifiedAt:new Date().toISOString(),verification:"paypal-sandbox-capture",sandbox:true};
   await put(bucket,path(id,"paypal-sandbox-payments.json"),next);
-  return json({ok:true,paid:true,stage,sandbox:true});
+  // Payment is already securely recorded. Email is best-effort and cannot undo a capture.
+  let emailTest="skipped";
+  try {
+    const notification=await sendSandboxCustomerEmail({env,bucket,order,payment,event:"payment-"+stage,eventKey:"payment-"+stage});
+    emailTest=notification.state;
+  } catch(e) {console.error("Payment confirmation email logging failed",id,String(e));emailTest="failed";}
+  return json({ok:true,paid:true,stage,sandbox:true,emailTest});
 }
 export async function onRequestPost({request,env}){
   // Explicit branch guard: even accidental production deployment cannot use this checkout.
