@@ -11,12 +11,14 @@
   const money = amount => Number.isFinite(Number(amount))?"A$"+Number(amount).toLocaleString("en-AU"):"Not available";
   function revokeImages(){state.images.forEach(URL.revokeObjectURL);state.images=[];}
   function lock(){
+    document.body.classList.remove("studio-unlocked");
     selectionVersion++;revokeImages();state.key="";state.orders=[];state.cursor=null;state.selected=null;
     dashboard.hidden=true;login.hidden=false;$("access-key").value="";$("access-key").focus();
   }
-  async function api(action,{method="GET",body,cursor,id,index}={}){
+  async function api(action,{method="GET",body,cursor,id,index,days}={}){
     const url=new URL("/api/studio",location.origin);url.searchParams.set("action",action);
     if(cursor)url.searchParams.set("cursor",cursor);
+    if(days)url.searchParams.set("days",String(days));
     if(id)url.searchParams.set("id",id);
     if(index!==undefined)url.searchParams.set("index",String(index));
     const response=await fetch(url,{method,headers:{"Authorization":"Bearer "+state.key,...(body?{"Content-Type":"application/json"}:{})},body:body?JSON.stringify(body):undefined,cache:"no-store",credentials:"omit"});
@@ -39,6 +41,7 @@
       state.orders.sort((a,b)=>String(b.receivedAt).localeCompare(String(a.receivedAt)));
       state.cursor=result.nextCursor||null;
       renderList();
+      if(reset)void loadAnalytics();
       if(!state.selected&&state.orders.length)select(state.orders[0].id);
       else if(state.selected&&state.orders.some(o=>o.id===state.selected))select(state.selected);
       if(state.selected&&!state.orders.some(o=>o.id===state.selected)){state.selected=null;panel.replaceChildren(make("div","studio-empty","Select an enquiry to view its details."));}
@@ -51,6 +54,8 @@
     const visible=state.orders.filter(o=>(!status||o.status===status)&&(!q||[o.id,o.name,o.email,o.petName].some(v=>String(v||"").toLowerCase().includes(q))));
     list.replaceChildren();$("order-count").textContent=visible.length+" / "+state.orders.length;
     if(!visible.length)list.append(make("p","studio-list-empty","No matching enquiries."));
+    $("sidebar-order-count").textContent=String(state.orders.length);
+    renderRecent();
     for(const o of visible){
       const button=make("button","studio-order"+(state.selected===o.id?" selected":""),undefined);
       button.type="button";button.addEventListener("click",()=>select(o.id));
@@ -227,20 +232,106 @@
       try{
         const result=await api("status",{method:"POST",body:{id:order.id,status:selectEl.value,internalNote:note.value}});
         order.status=selectEl.value;order.internalNote=note.value;order.updatedAt=result.updatedAt;
-        showMessage("Saved progress for "+order.id+".");renderList();
+        showMessage("Saved progress for "+order.id+".");renderList();void loadAnalytics();
         const badge=head.querySelector(".studio-status");badge.className="studio-status status-"+order.status.toLowerCase();badge.textContent=labels[order.status];
       }catch(e){showMessage(e.message);}
       finally{button.disabled=false;button.textContent="Save progress";}
     });
   }
+
+  const fmtAUD=cents=>"A$"+(Number(cents||0)/100).toLocaleString("en-AU",{minimumFractionDigits:0,maximumFractionDigits:2});
+  let analyticsVersion=0;
+  function showView(view){
+    const overview=view!=="orders";
+    $("studio-overview-view").hidden=!overview;
+    $("studio-orders-view").hidden=overview;
+    $("studio-current-view").textContent=overview?"Overview":"Orders";
+    document.querySelectorAll("[data-studio-view]").forEach(el=>{
+      if(!el.classList.contains("studio-nav-item"))return;
+      const active=el.dataset.studioView===(overview?"overview":"orders");
+      el.classList.toggle("active",active);
+      if(active)el.setAttribute("aria-current","page");else el.removeAttribute("aria-current");
+    });
+    if(view==="traffic")requestAnimationFrame(()=>$("studio-traffic-card").scrollIntoView({behavior:"smooth",block:"center"}));
+    else window.scrollTo({top:0,behavior:"smooth"});
+  }
+  function renderRecent(){
+    const target=$("studio-recent-orders");if(!target)return;
+    target.replaceChildren();
+    const recent=state.orders.slice(0,5);
+    if(!recent.length){target.append(make("p","studio-chart-empty","No enquiries yet."));return;}
+    for(const o of recent){
+      const row=make("button","studio-recent-row");row.type="button";
+      const avatar=make("span","studio-recent-avatar",(o.petName||"P").slice(0,1).toUpperCase());
+      const info=make("span","studio-recent-info");
+      info.append(make("strong","",o.petName||"Custom portrait"),make("small","",(o.name||"Customer")+" · "+formatDate(o.receivedAt)));
+      const price=make("span","studio-recent-amount",money(o.payment?.totalCents/100||o.estimatedPriceAUD));
+      row.append(avatar,info,price);
+      row.addEventListener("click",()=>{showView("orders");select(o.id);});
+      target.append(row);
+    }
+  }
+  function renderTrend(data){
+    const target=$("studio-chart");target.replaceChildren();
+    const values=Array.isArray(data)?data:[];
+    if(!values.length){target.append(make("p","studio-chart-empty","No reporting data."));return;}
+    const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg");
+    svg.setAttribute("viewBox","0 0 800 240");svg.setAttribute("role","img");svg.setAttribute("aria-label","Portrait requests over the reporting period");
+    const pad={l:28,r:12,t:12,b:31},w=800-pad.l-pad.r,h=240-pad.t-pad.b;
+    const max=Math.max(1,...values.map(v=>Number(v.orders)||0));
+    const line=(x1,y1,x2,y2,color,width=1,dash="")=>{
+      const n=document.createElementNS(ns,"line");Object.entries({x1,y1,x2,y2,stroke:color,"stroke-width":width,...(dash?{"stroke-dasharray":dash}:{})}).forEach(([k,v])=>n.setAttribute(k,String(v)));svg.append(n);
+    };
+    const label=(x,y,t,anchor="start")=>{const n=document.createElementNS(ns,"text");n.setAttribute("x",x);n.setAttribute("y",y);n.setAttribute("text-anchor",anchor);n.setAttribute("font-size","11");n.setAttribute("fill","#9b8d84");n.textContent=t;svg.append(n);};
+    for(let i=0;i<=4;i++){const y=pad.t+h*i/4;line(pad.l,y,800-pad.r,y,"#ede7e1",1,"4 6");label(pad.l-8,y+4,String(Math.round(max*(4-i)/4)),"end");}
+    const pts=values.map((v,i)=>({x:pad.l+(values.length===1?w/2:w*i/(values.length-1)),y:pad.t+h-(Number(v.orders)||0)/max*h}));
+    const path=document.createElementNS(ns,"path");path.setAttribute("d",pts.map((p,i)=>(i?"L":"M")+p.x.toFixed(2)+" "+p.y.toFixed(2)).join(" "));path.setAttribute("fill","none");path.setAttribute("stroke","#7b4d56");path.setAttribute("stroke-width","3");path.setAttribute("stroke-linecap","round");path.setAttribute("stroke-linejoin","round");svg.append(path);
+    if(values.length<=30)pts.forEach((p,i)=>{if(Number(values[i].orders)<=0)return;const dot=document.createElementNS(ns,"circle");dot.setAttribute("cx",p.x);dot.setAttribute("cy",p.y);dot.setAttribute("r","4");dot.setAttribute("fill","#7b4d56");const tip=document.createElementNS(ns,"title");tip.textContent=values[i].date+": "+values[i].orders+" requests";dot.append(tip);svg.append(dot);});
+    [0,Math.floor((values.length-1)/2),values.length-1].forEach((i,j)=>label(pts[i].x,234,values[i].date.slice(5),j===0?"start":j===2?"end":"middle"));
+    target.append(svg);
+  }
+  function renderPipeline(counts){
+    const target=$("studio-pipeline");target.replaceChildren();
+    const rows=[["New requests",counts.New||0],["Confirmed",counts.Confirmed||0],["In progress",counts.Painting||0],["Ready for balance",counts["Ready for balance"]||0],["Shipped / completed",(counts.Shipped||0)+(counts.Completed||0)]];
+    const max=Math.max(1,...rows.map(r=>r[1]));
+    for(const [name,value] of rows){
+      const row=make("div","studio-pipeline-row"),top=make("div","studio-pipeline-top");
+      top.append(make("span","",name),make("strong","",value));
+      const track=make("div","studio-pipeline-track"),fill=make("span","studio-pipeline-fill");
+      fill.style.width=(value/max*100)+"%";track.append(fill);row.append(top,track);target.append(row);
+    }
+  }
+  async function loadAnalytics(){
+    if(!state.key)return;
+    const version=++analyticsVersion,days=Number($("analytics-range").value);
+    $("analytics-notice").textContent="Updating business overview…";
+    $("refresh-analytics").disabled=true;
+    try{
+      const result=await api("summary",{days});
+      if(version!==analyticsVersion||!state.key)return;
+      const t=result.totals||{};
+      $("metric-orders").textContent=(t.orders||0).toLocaleString("en-AU");
+      $("metric-revenue").textContent=fmtAUD(t.revenueCents);
+      $("metric-value").textContent=fmtAUD(t.orderValueCents);
+      $("metric-production").textContent=(t.inProduction||0).toLocaleString("en-AU");
+      $("studio-sandbox-caption").textContent=(t.sandboxOrders||0)+" Sandbox test orders in this period; A$"+(Number(t.sandboxTestCents||0)/100).toLocaleString("en-AU")+" in simulated payments.";
+      $("chart-period-caption").textContent="Last "+days+" days";
+      renderTrend(result.daily);renderPipeline(result.statusCounts||{});
+      $("analytics-notice").textContent=(result.partial?"Partial report: storage scan limit reached. ":"")+"Updated "+formatDate(result.asOf)+". Verified payments only; Sandbox excluded.";
+    }catch(error){if(version===analyticsVersion)$("analytics-notice").textContent="Analytics unavailable: "+error.message;}
+    finally{if(version===analyticsVersion)$("refresh-analytics").disabled=false;}
+  }
+  document.querySelectorAll("[data-studio-view]").forEach(el=>el.addEventListener("click",()=>showView(el.dataset.studioView)));
+  $("analytics-range").addEventListener("change",loadAnalytics);
+  $("refresh-analytics").addEventListener("click",loadAnalytics);
   $("login-form").addEventListener("submit",async e=>{
     e.preventDefault();state.key=$("access-key").value;$("access-key").value="";
     loginMessage.textContent="Checking secure access…";
     try{
       const result=await api("list");
       state.orders=result.orders||[];state.cursor=result.nextCursor||null;
-      login.hidden=true;dashboard.hidden=false;loginMessage.textContent="";
-      renderList();if(state.orders.length)select(state.orders[0].id);
+      login.hidden=true;dashboard.hidden=false;document.body.classList.add("studio-unlocked");loginMessage.textContent="";
+      renderList();void loadAnalytics();if(state.orders.length)select(state.orders[0].id);
       showMessage(state.orders.length?"Studio unlocked.":"Studio unlocked. No orders yet.");
     }catch(error){state.key="";loginMessage.textContent=error.message;}
   });
