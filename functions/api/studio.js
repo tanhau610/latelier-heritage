@@ -1,4 +1,5 @@
 import {sendSandboxCustomerEmail} from "../_lib/sandbox-customer-email.js";
+import {verifyStudioSession} from "../_lib/studio-otp-auth.js";
 // Private studio dashboard API. The admin key must be a 32+ character Cloudflare secret.
 // Never embed STUDIO_ADMIN_KEY in frontend code or expose the private R2 bucket.
 const statuses = new Set(["New","Confirmed","Painting","Ready for balance","Shipped","Completed","Cancelled"]);
@@ -31,7 +32,7 @@ async function guard({request,env}){
   if(origin&&origin!==new URL(request.url).origin)return respond({ok:false,message:"Origin not allowed."},403);
   const authorization=request.headers.get("Authorization")||"";
   const key=authorization.startsWith("Bearer ")?authorization.slice(7):"";
-  if(!(await sameSecret(key,env.STUDIO_ADMIN_KEY)))return respond({ok:false,message:"Incorrect access key."},401);
+  if(!(await sameSecret(key,env.STUDIO_ADMIN_KEY))&&!(await verifyStudioSession(env,key)))return respond({ok:false,message:"Incorrect access key."},401);
   return null;
 }
 async function getDetails(bucket,id){
