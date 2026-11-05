@@ -27,7 +27,7 @@
     $("otp-code").value="";
     dashboard.hidden=true;login.hidden=false;$("access-key").value="";$("access-key").focus();
   }
-  const serverErrors={"Studio access is not configured. Set STUDIO_ADMIN_KEY (32+ characters) in Cloudflare.":"Chưa cấu hình khóa quản trị STUDIO_ADMIN_KEY (ít nhất 32 ký tự) trong Cloudflare.","Origin not allowed.":"Nguồn truy cập không được phép.","Incorrect access key.":"Mã truy cập không đúng.","Invalid cursor.":"Dữ liệu phân trang không hợp lệ.","Unsupported reporting period.":"Khoảng thời gian thống kê không được hỗ trợ.","Invalid image request.":"Yêu cầu xem ảnh không hợp lệ.","Image not found.":"Không tìm thấy ảnh.","Unknown action.":"Thao tác không được hỗ trợ.","Unable to load studio records.":"Không tải được dữ liệu đơn hàng.","Request too large.":"Dữ liệu gửi lên quá lớn.","Invalid request.":"Yêu cầu không hợp lệ.","Invalid order.":"Mã đơn hàng không hợp lệ.","Order not found.":"Không tìm thấy đơn hàng.","Delivery address was collected at checkout; no shipping link is required.":"Địa chỉ đã được nhận khi đặt hàng, không cần liên kết giao hàng.","This order cannot request new shipping details.":"Không thể yêu cầu địa chỉ giao hàng mới cho đơn này.","Could not create shipping link.":"Không tạo được liên kết giao hàng.","Sandbox PayPal credentials are not configured in this environment.":"Chưa cấu hình thông tin PayPal Sandbox trong môi trường này.","Invalid order or instalment.":"Đơn hàng hoặc đợt thanh toán không hợp lệ.","Order cannot request a legacy payment link.":"Đơn hàng này không hỗ trợ tạo liên kết thanh toán kiểu cũ.","This Sandbox instalment has already been recorded.":"Đợt thanh toán Sandbox này đã được ghi nhận.","Complete the Sandbox deposit test first.":"Cần thử thanh toán cọc Sandbox trước.","Could not create payment link.":"Không tạo được liên kết thanh toán.","Sandbox checkout orders cannot be manually repriced or recorded.":"Không thể sửa giá hoặc ghi nhận thủ công cho đơn thanh toán Sandbox.","This order cannot be updated for payment.":"Không thể cập nhật thanh toán cho đơn hàng này.","Enter a confirmed whole-AUD price between A$50 and A$100,000.":"Nhập giá đã chốt là số nguyên từ 50 đến 100.000 AUD.","A payment is already recorded. The agreed price cannot be changed here.":"Đã ghi nhận thanh toán, không thể thay đổi giá tại đây.","Confirm the final price before recording a payment.":"Hãy xác nhận giá cuối cùng trước khi ghi nhận thanh toán.","Verify the transaction in PayPal and enter its transaction ID (6–100 letters/numbers).":"Kiểm tra giao dịch trong PayPal và nhập mã giao dịch hợp lệ (6–100 ký tự).","This payment stage has already been recorded.":"Đợt thanh toán này đã được ghi nhận.","Record the verified deposit first.":"Hãy ghi nhận tiền cọc đã xác minh trước.","Use the unique transaction ID for the second payment.":"Đợt thanh toán thứ hai phải có mã giao dịch khác.","Could not save payment tracking.":"Không lưu được thông tin thanh toán.","Invalid order or status.":"Đơn hàng hoặc trạng thái không hợp lệ.","Note must be 1000 characters or fewer.":"Ghi chú không được vượt quá 1.000 ký tự.","Verify the deposit or full payment before starting production.":"Cần xác minh tiền cọc hoặc thanh toán đầy đủ trước khi bắt đầu vẽ.","Verify full payment before shipping or completing the order.":"Cần xác minh thanh toán đủ trước khi gửi tranh hoặc hoàn tất đơn.","Could not update order.":"Không cập nhật được đơn hàng."};
+  const serverErrors={"Studio access is not configured. Set STUDIO_ADMIN_KEY (32+ characters) in Cloudflare.":"Chưa cấu hình khóa quản trị STUDIO_ADMIN_KEY (ít nhất 32 ký tự) trong Cloudflare.","Origin not allowed.":"Nguồn truy cập không được phép.","Incorrect access key.":"Mã truy cập không đúng.","Invalid cursor.":"Dữ liệu phân trang không hợp lệ.","Unsupported reporting period.":"Khoảng thời gian thống kê không được hỗ trợ.","Invalid image request.":"Yêu cầu xem ảnh không hợp lệ.","Image not found.":"Không tìm thấy ảnh.","Unknown action.":"Thao tác không được hỗ trợ.","Unable to load studio records.":"Không tải được dữ liệu đơn hàng.","Request too large.":"Dữ liệu gửi lên quá lớn.","Invalid request.":"Yêu cầu không hợp lệ.","Invalid order.":"Mã đơn hàng không hợp lệ.","Order not found.":"Không tìm thấy đơn hàng.","Delivery address was collected at checkout; no shipping link is required.":"Địa chỉ đã được nhận khi đặt hàng, không cần liên kết giao hàng.","This order cannot request new shipping details.":"Không thể yêu cầu địa chỉ giao hàng mới cho đơn này.","Could not create shipping link.":"Không tạo được liên kết giao hàng.","Sandbox PayPal credentials are not configured in this environment.":"Chưa cấu hình thông tin PayPal Sandbox trong môi trường này.","Invalid order or instalment.":"Đơn hàng hoặc đợt thanh toán không hợp lệ.","Order cannot request a legacy payment link.":"Đơn hàng này không hỗ trợ tạo liên kết thanh toán kiểu cũ.","This Sandbox instalment has already been recorded.":"Đợt thanh toán Sandbox này đã được ghi nhận.","Complete the Sandbox deposit test first.":"Cần thử thanh toán cọc Sandbox trước.","Could not create payment link.":"Không tạo được liên kết thanh toán.","Sandbox checkout orders cannot be manually repriced or recorded.":"Không thể sửa giá hoặc ghi nhận thủ công cho đơn thanh toán Sandbox.","This order cannot be updated for payment.":"Không thể cập nhật thanh toán cho đơn hàng này.","Enter a confirmed whole-AUD price between A$50 and A$100,000.":"Nhập giá đã chốt là số nguyên từ 50 đến 100.000 AUD.","A payment is already recorded. The agreed price cannot be changed here.":"Đã ghi nhận thanh toán, không thể thay đổi giá tại đây.","Confirm the final price before recording a payment.":"Hãy xác nhận giá cuối cùng trước khi ghi nhận thanh toán.","Verify the transaction in PayPal and enter its transaction ID (6–100 letters/numbers).":"Kiểm tra giao dịch trong PayPal và nhập mã giao dịch hợp lệ (6–100 ký tự).","This payment stage has already been recorded.":"Đợt thanh toán này đã được ghi nhận.","Record the verified deposit first.":"Hãy ghi nhận tiền cọc đã xác minh trước.","Use the unique transaction ID for the second payment.":"Đợt thanh toán thứ hai phải có mã giao dịch khác.","Could not save payment tracking.":"Không lưu được thông tin thanh toán.","Invalid order or status.":"Đơn hàng hoặc trạng thái không hợp lệ.","Note must be 1000 characters or fewer.":"Ghi chú không được vượt quá 1.000 ký tự.","Verify the deposit or full payment before starting production.":"Cần xác minh tiền cọc hoặc thanh toán đầy đủ trước khi bắt đầu vẽ.","Verify full payment before shipping or completing the order.":"Cần xác minh thanh toán đủ trước khi gửi tranh hoặc hoàn tất đơn.","Could not update order.":"Không cập nhật được đơn hàng.","Tracking management is only available on Preview.":"Chức năng vận chuyển hiện chỉ sử dụng trên bản Preview.","Cannot update tracking for a cancelled order.":"Không thể cập nhật vận đơn cho đơn đã hủy.","Invalid tracking details.":"Thông tin vận đơn không hợp lệ.","Enter a carrier, tracking number and tracking URL.":"Vui lòng nhập hãng vận chuyển, mã vận đơn và đường dẫn theo dõi.","Enter a valid HTTPS tracking URL.":"Đường dẫn theo dõi phải là liên kết HTTPS hợp lệ.","Mark the order as shipped before sending tracking.":"Chuyển đơn sang Đã gửi hàng trước khi gửi email tracking.","Save tracking details first.":"Hãy lưu thông tin vận đơn trước.","Verify full payment before notifying shipment.":"Cần xác nhận đã thanh toán đủ trước khi gửi email vận chuyển.","Could not save or send tracking information.":"Không thể lưu hoặc gửi thông tin vận đơn."};
   const translateError=message=>serverErrors[message]||message||"Có lỗi xảy ra. Vui lòng thử lại.";
   async function api(action,{method="GET",body,cursor,id,index,days}={}){
     const url=new URL("/api/studio",location.origin);url.searchParams.set("action",action);
@@ -218,6 +218,70 @@
     shippingBox.append(linkHelp,linkButton,linkResult);
     }
     panel.append(shippingBox);
+    panel.append(sectionHeading("Thông tin vận chuyển quốc tế"));
+    const trackingForm=make("form","studio-tracking");
+    const trackingIntro=make("p","studio-footnote","Chọn bất kỳ đơn vị vận chuyển nào. Lưu mã vận đơn trước khi chuyển sang “Đã gửi hàng” để email tự động có thông tin theo dõi.");
+    const carriers=["DHL Express","FedEx","UPS","EMS / Vietnam Post"];
+    const previousCarrier=order.tracking?.carrier||"DHL Express";
+    const carrierLabel=make("label","","Đơn vị vận chuyển");
+    const carrierSelect=make("select");
+    for(const name of carriers){const option=make("option","",name);option.value=name;carrierSelect.append(option);}
+    const otherOption=make("option","","Đơn vị khác");otherOption.value="other";carrierSelect.append(otherOption);
+    carrierSelect.value=carriers.includes(previousCarrier)?previousCarrier:"other";
+    const otherLabel=make("label","","Tên đơn vị khác");const otherInput=make("input");otherInput.type="text";otherInput.maxLength=80;otherInput.placeholder="Nhập tên hãng vận chuyển";
+    otherInput.value=carriers.includes(previousCarrier)?"":previousCarrier;
+    otherLabel.append(otherInput);
+    const syncOther=()=>{otherLabel.hidden=carrierSelect.value!=="other";otherInput.required=carrierSelect.value==="other";};
+    carrierSelect.addEventListener("change",syncOther);syncOther();carrierLabel.append(carrierSelect);
+    const numberLabel=make("label","","Mã vận đơn / Tracking number");
+    const numberInput=make("input");numberInput.type="text";numberInput.required=true;numberInput.maxLength=100;numberInput.autocomplete="off";numberInput.placeholder="Nhập mã vận đơn";numberInput.value=order.tracking?.number||"";
+    numberLabel.append(numberInput);
+    const urlLabel=make("label","","Đường dẫn theo dõi (HTTPS)");
+    const urlInput=make("input");urlInput.type="url";urlInput.required=true;urlInput.maxLength=500;urlInput.placeholder="https://...";urlInput.value=order.tracking?.url||"";
+    urlLabel.append(urlInput);
+    const trackingHelp=make("p","studio-footnote","Dán liên kết theo dõi chính xác do hãng cung cấp. Lưu thông tin không tự gửi email cho khách.");
+    const trackingButton=make("button","btn","Lưu thông tin vận chuyển");trackingButton.type="submit";
+    const trackingFeedback=make("p","studio-save-feedback");trackingFeedback.setAttribute("role","status");trackingFeedback.setAttribute("aria-live","polite");
+    const trackingActions=make("div","studio-save-actions");trackingActions.append(trackingButton,trackingFeedback);
+    const trackingLink=make("a","studio-email","Mở trang theo dõi ↗");
+    trackingLink.target="_blank";trackingLink.rel="noopener noreferrer";
+    const refreshTrackingLink=()=>{
+      const link=order.tracking?.url||"";
+      trackingLink.hidden=!link;
+      if(link)trackingLink.href=link;else trackingLink.removeAttribute("href");
+    };
+    refreshTrackingLink();
+    trackingForm.append(trackingIntro,carrierLabel,otherLabel,numberLabel,urlLabel,trackingHelp,trackingActions,trackingLink);
+    const notifyButton=make("button","btn outline","Gửi email cập nhật mã vận đơn (Sandbox)");
+    notifyButton.type="button";
+    const notifyFeedback=make("p","studio-save-feedback");notifyFeedback.setAttribute("role","status");
+    const notifyActions=make("div","studio-save-actions");notifyActions.append(notifyButton,notifyFeedback);
+    const refreshNotify=()=>{notifyActions.hidden=!["Shipped","Completed"].includes(order.status)||!order.tracking;};
+    refreshNotify();
+    trackingForm.addEventListener("submit",async e=>{
+      e.preventDefault();
+      const carrier=carrierSelect.value==="other"?otherInput.value.trim():carrierSelect.value;
+      trackingButton.disabled=true;trackingButton.textContent="Đang lưu…";trackingFeedback.textContent="Đang lưu thông tin vận chuyển…";
+      try{
+        const result=await api("tracking-save",{method:"POST",body:{id:order.id,tracking:{carrier,number:numberInput.value.trim(),url:urlInput.value.trim()}}});
+        order.tracking=result.tracking;order.trackingUpdatedAt=result.updatedAt;
+        trackingFeedback.textContent=result.unchanged?"Thông tin vận chuyển đã được lưu trước đó.":"✓ Đã lưu thông tin vận chuyển. Chưa gửi email.";
+        trackingFeedback.className="studio-save-feedback is-success";refreshTrackingLink();refreshNotify();
+      }catch(error){trackingFeedback.textContent=error.message;trackingFeedback.className="studio-save-feedback is-error";}
+      finally{trackingButton.disabled=false;trackingButton.textContent="Lưu thông tin vận chuyển";}
+    });
+    notifyButton.addEventListener("click",async()=>{
+      notifyButton.disabled=true;notifyFeedback.textContent="Đang gửi email thử nghiệm…";
+      try{
+        const result=await api("tracking-notify",{method:"POST",body:{id:order.id}});
+        const notices={sent:"✓ Resend đã tiếp nhận email cập nhật tracking (chỉ hộp thư thử nghiệm).","already-sent":"Email cho mã vận đơn này đã được gửi trước đó.",failed:"Không gửi được email thử nghiệm. Mã vận đơn vẫn đã lưu.",skipped:"Chưa cấu hình gửi email thử nghiệm."};
+        notifyFeedback.textContent=notices[result.emailTest]||"Đã xử lý yêu cầu.";
+        notifyFeedback.className="studio-save-feedback "+(["sent","already-sent"].includes(result.emailTest)?"is-success":"is-error");
+        void refreshEmailHistory();
+      }catch(error){notifyFeedback.textContent=error.message;notifyFeedback.className="studio-save-feedback is-error";}
+      finally{notifyButton.disabled=false;}
+    });
+    panel.append(trackingForm,notifyActions);
     panel.append(sectionHeading("Ảnh tham khảo"));
     const gallery=make("div","studio-photo-grid");panel.append(gallery);
     if(!order.photos?.length)gallery.append(make("p","studio-story","Chưa có ảnh tham khảo."));
@@ -266,7 +330,7 @@
       saveFeedback.textContent="Đang cập nhật đơn hàng…";saveFeedback.className="studio-save-feedback is-pending";
       try{
         const result=await api("status",{method:"POST",body:{id:order.id,status:newStatus,internalNote:newNote}});
-        order.status=result.status||newStatus;order.internalNote=newNote.trim();order.updatedAt=result.updatedAt;
+        order.status=result.status||newStatus;order.internalNote=newNote.trim();order.updatedAt=result.updatedAt;refreshNotify();
         showMessage("Đã lưu tiến độ cho đơn "+order.id+".");renderList();void loadAnalytics();
         const badge=head.querySelector(".studio-status");badge.className="studio-status status-"+order.status.toLowerCase();badge.textContent=statusLabel(order);
         updatedNote.textContent="Cập nhật gần nhất: "+formatDate(result.updatedAt);
@@ -294,7 +358,7 @@
         if(state.selected!==id||currentVersion!==selectionVersion)return;
         emailHistory.replaceChildren();
         if(!result.events?.length){emailHistory.append(make("p","studio-footnote","Chưa có email tự động nào được tạo cho đơn hàng này."));return;}
-        const eventNames={"payment-deposit":"Xác nhận đặt cọc","payment-balance":"Xác nhận thanh toán phần còn lại","payment-full":"Xác nhận thanh toán toàn bộ","status-Confirmed":"Đơn hàng đã xác nhận","status-Painting":"Đang vẽ","status-Ready for balance":"Yêu cầu thanh toán còn lại","status-Shipped":"Đã gửi hàng","status-Completed":"Hoàn thành","status-Cancelled":"Đã hủy"};
+        const eventNames={"payment-deposit":"Xác nhận đặt cọc","payment-balance":"Xác nhận thanh toán phần còn lại","payment-full":"Xác nhận thanh toán toàn bộ","status-Confirmed":"Đơn hàng đã xác nhận","status-Painting":"Đang vẽ","status-Ready for balance":"Yêu cầu thanh toán còn lại","status-Shipped":"Đã gửi hàng","status-Completed":"Hoàn thành","status-Cancelled":"Đã hủy","shipping-tracking":"Cập nhật mã vận đơn"};
         const statuses={sent:"Resend đã tiếp nhận",failed:"Gửi thất bại",skipped:"Chưa gửi (thiếu cấu hình)"};
         for(const e of result.events){
           const line=make("p","studio-footnote",(eventNames[e.event]||e.event)+" · "+(statuses[e.state]||e.state)+" · "+formatDate(e.sentAt||e.createdAt));
