@@ -65,7 +65,7 @@ export async function onRequestGet(context){
       if(![7,30,90].includes(days))return respond({ok:false,message:"Unsupported reporting period."},400);
       const start=new Date();start.setUTCHours(0,0,0,0);start.setUTCDate(start.getUTCDate()-(days-1));
       const daily=new Map();
-      for(let i=0;i<days;i++){const day=new Date(start);day.setUTCDate(start.getUTCDate()+i);const key=day.toISOString().slice(0,10);daily.set(key,{date:key,orders:0,revenueCents:0});}
+      for(let i=0;i<days;i++){const day=new Date(start);day.setUTCDate(start.getUTCDate()+i);const key=day.toISOString().slice(0,10);daily.set(key,{date:key,orders:0,revenueCents:0,sandboxCents:0});}
       const totals={orders:0,revenueCents:0,orderValueCents:0,awaitingDeposit:0,inProduction:0,readyForBalance:0,sandboxOrders:0,sandboxTestCents:0};
       const statusCounts={New:0,Confirmed:0,Painting:0,"Ready for balance":0,Shipped:0,Completed:0,Cancelled:0};
       let cursor,more=false,pages=0,scanned=0;
@@ -94,9 +94,17 @@ export async function onRequestGet(context){
             if(inPeriod&&status==="Ready for balance")totals.readyForBalance++;
             if(data.checkoutMode==="sandbox-inline"){
               if(inPeriod)totals.sandboxOrders++;
-              if(inPeriod&&sandbox?.quotedAt===payment?.quotedAt){
-                const sandboxPaid=sandbox.full?payment?.totalCents:(sandbox.deposit?payment?.depositCents||0:0)+(sandbox.balance?payment?.balanceCents||0:0);
-                totals.sandboxTestCents+=Number(sandboxPaid)||0;
+              if(sandbox?.quotedAt===payment?.quotedAt){
+                // Sandbox transactions are visualised separately, by their capture date.
+                const testPayments=sandbox.full?[sandbox.full]:[sandbox.deposit,sandbox.balance];
+                for(const instalment of testPayments){
+                  const verifiedAt=instalment?.verifiedAt;
+                  const amount=Number(instalment?.amountCents);
+                  if(typeof verifiedAt!=="string"||!Number.isFinite(Date.parse(verifiedAt))||!Number.isInteger(amount)||amount<=0)continue;
+                  const paymentDay=new Date(verifiedAt).toISOString().slice(0,10);
+                  const testPoint=daily.get(paymentDay);
+                  if(testPoint){testPoint.sandboxCents+=amount;totals.sandboxTestCents+=amount;}
+                }
               }
             }else{
               // Recognise revenue on the verified payment date, not on the order creation date.
