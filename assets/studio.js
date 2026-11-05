@@ -271,22 +271,45 @@
       target.append(row);
     }
   }
+  let chartMode="orders",lastAnalyticsData=[];
   function renderTrend(data){
     const target=$("studio-chart");target.replaceChildren();
     const values=Array.isArray(data)?data:[];
+    $("chart-legend-label").textContent=chartMode==="revenue"?"Doanh thu đã xác minh (AUD)":"Số đơn đặt tranh";
     if(!values.length){target.append(make("p","studio-chart-empty","Chưa có dữ liệu thống kê."));return;}
     const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg");
-    svg.setAttribute("viewBox","0 0 800 240");svg.setAttribute("role","img");svg.setAttribute("aria-label","Yêu cầu đặt tranh theo thời gian");
-    const pad={l:28,r:12,t:12,b:31},w=800-pad.l-pad.r,h=240-pad.t-pad.b;
-    const max=Math.max(1,...values.map(v=>Number(v.orders)||0));
+    svg.setAttribute("viewBox","0 0 800 240");svg.setAttribute("role","img");
+    svg.setAttribute("aria-label",chartMode==="revenue"?"Doanh thu thực theo ngày, không tính Sandbox":"Số yêu cầu đặt tranh theo ngày");
+    const pad={l:73,r:14,t:13,b:32},w=800-pad.l-pad.r,h=240-pad.t-pad.b;
+    const val=v=>chartMode==="revenue"?(Number(v.revenueCents)||0)/100:Number(v.orders)||0;
+    const max=Math.max(1,...values.map(val));
+    const fmtTick=n=>chartMode==="revenue"?"A$"+n.toLocaleString("vi-VN",{maximumFractionDigits:0}):Math.round(n).toLocaleString("vi-VN");
     const line=(x1,y1,x2,y2,color,width=1,dash="")=>{
       const n=document.createElementNS(ns,"line");Object.entries({x1,y1,x2,y2,stroke:color,"stroke-width":width,...(dash?{"stroke-dasharray":dash}:{})}).forEach(([k,v])=>n.setAttribute(k,String(v)));svg.append(n);
     };
-    const label=(x,y,t,anchor="start")=>{const n=document.createElementNS(ns,"text");n.setAttribute("x",x);n.setAttribute("y",y);n.setAttribute("text-anchor",anchor);n.setAttribute("font-size","11");n.setAttribute("fill","#9b8d84");n.textContent=t;svg.append(n);};
-    for(let i=0;i<=4;i++){const y=pad.t+h*i/4;line(pad.l,y,800-pad.r,y,"#ede7e1",1,"4 6");label(pad.l-8,y+4,String(Math.round(max*(4-i)/4)),"end");}
-    const pts=values.map((v,i)=>({x:pad.l+(values.length===1?w/2:w*i/(values.length-1)),y:pad.t+h-(Number(v.orders)||0)/max*h}));
-    const path=document.createElementNS(ns,"path");path.setAttribute("d",pts.map((p,i)=>(i?"L":"M")+p.x.toFixed(2)+" "+p.y.toFixed(2)).join(" "));path.setAttribute("fill","none");path.setAttribute("stroke","#7b4d56");path.setAttribute("stroke-width","3");path.setAttribute("stroke-linecap","round");path.setAttribute("stroke-linejoin","round");svg.append(path);
-    if(values.length<=30)pts.forEach((p,i)=>{if(Number(values[i].orders)<=0)return;const dot=document.createElementNS(ns,"circle");dot.setAttribute("cx",p.x);dot.setAttribute("cy",p.y);dot.setAttribute("r","4");dot.setAttribute("fill","#7b4d56");const tip=document.createElementNS(ns,"title");tip.textContent=values[i].date+": "+values[i].orders+" requests";dot.append(tip);svg.append(dot);});
+    const label=(x,y,t,anchor="start")=>{
+      const n=document.createElementNS(ns,"text");n.setAttribute("x",x);n.setAttribute("y",y);n.setAttribute("text-anchor",anchor);n.setAttribute("font-size","11");n.setAttribute("fill","#9b8d84");n.textContent=t;svg.append(n);
+    };
+    for(let i=0;i<=4;i++){const y=pad.t+h*i/4;line(pad.l,y,800-pad.r,y,"#ede7e1",1,"4 6");label(pad.l-9,y+4,fmtTick(max*(4-i)/4),"end");}
+    const pts=values.map((v,i)=>({x:pad.l+w*(i+.5)/values.length,y:pad.t+h-val(v)/max*h,value:val(v),date:v.date}));
+    if(chartMode==="orders"){
+      const bw=Math.max(2,Math.min(42,w/values.length*.72));
+      for(const p of pts){
+        const bar=document.createElementNS(ns,"rect");
+        const y=Math.min(p.y,pad.t+h-.5);
+        Object.entries({x:p.x-bw/2,y,width:bw,height:Math.max(.5,pad.t+h-y),rx:Math.min(5,bw/4),fill:"#80545d"}).forEach(([k,v])=>bar.setAttribute(k,String(v)));
+        const tip=document.createElementNS(ns,"title");tip.textContent=p.date+": "+fmtTick(p.value)+" đơn";bar.append(tip);svg.append(bar);
+      }
+    }else{
+      const path=document.createElementNS(ns,"path");
+      path.setAttribute("d",pts.map((p,i)=>(i?"L":"M")+p.x.toFixed(2)+" "+p.y.toFixed(2)).join(" "));
+      path.setAttribute("fill","none");path.setAttribute("stroke","#80545d");path.setAttribute("stroke-width","3");path.setAttribute("stroke-linecap","round");path.setAttribute("stroke-linejoin","round");svg.append(path);
+      for(const p of pts){
+        const dot=document.createElementNS(ns,"circle");dot.setAttribute("cx",p.x);dot.setAttribute("cy",p.y);
+        dot.setAttribute("r",p.value>0?"4":"2");dot.setAttribute("fill","#80545d");
+        const tip=document.createElementNS(ns,"title");tip.textContent=p.date+": A$"+p.value.toLocaleString("vi-VN",{minimumFractionDigits:2,maximumFractionDigits:2});dot.append(tip);svg.append(dot);
+      }
+    }
     [0,Math.floor((values.length-1)/2),values.length-1].forEach((i,j)=>label(pts[i].x,234,values[i].date.slice(5),j===0?"start":j===2?"end":"middle"));
     target.append(svg);
   }
@@ -316,12 +339,19 @@
       $("metric-production").textContent=(t.inProduction||0).toLocaleString("vi-VN");
       $("studio-sandbox-caption").textContent=(t.sandboxOrders||0)+" đơn hàng thử Sandbox trong kỳ; A$"+(Number(t.sandboxTestCents||0)/100).toLocaleString("vi-VN")+" là thanh toán mô phỏng.";
       $("chart-period-caption").textContent=days+" ngày gần đây";
-      renderTrend(result.daily);renderPipeline(result.statusCounts||{});
+      lastAnalyticsData=result.daily||[];renderTrend(lastAnalyticsData);renderPipeline(result.statusCounts||{});
       $("analytics-notice").textContent=(result.partial?"Báo cáo chưa đầy đủ vì đã đạt giới hạn quét dữ liệu. ":"")+"Cập nhật: "+formatDate(result.asOf)+". Chỉ tính tiền đã xác minh; không tính Sandbox.";
     }catch(error){if(version===analyticsVersion)$("analytics-notice").textContent="Không tải được thống kê: "+error.message;}
     finally{if(version===analyticsVersion)$("refresh-analytics").disabled=false;}
   }
   document.querySelectorAll("[data-studio-view]").forEach(el=>el.addEventListener("click",()=>showView(el.dataset.studioView)));
+  document.querySelectorAll("[data-chart-mode]").forEach(button=>button.addEventListener("click",()=>{
+    chartMode=button.dataset.chartMode==="revenue"?"revenue":"orders";
+    document.querySelectorAll("[data-chart-mode]").forEach(item=>{
+      const active=item.dataset.chartMode===chartMode;item.classList.toggle("active",active);item.setAttribute("aria-pressed",String(active));
+    });
+    renderTrend(lastAnalyticsData);
+  }));
   $("analytics-range").addEventListener("change",loadAnalytics);
   $("refresh-analytics").addEventListener("click",loadAnalytics);
   $("login-form").addEventListener("submit",async e=>{
