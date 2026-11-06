@@ -38,3 +38,11 @@
 .hero-copy,.editorial-hero-inner{position:relative;z-index:2}
 .editorial-hero .hero-intro{max-width:520px}
 @media(max-width:720px){.hero-photo>img,.editorial-hero>img{object-position:54% center}.hero-photo:after,.editorial-hero:after{background:linear-gradient(90deg,rgba(24,23,19,.6),rgba(24,23,19,.08))}}
+
+/* Commission is a price configurator; customer details belong to Checkout only. */
+.commission-intro{color:#625a52;font-size:14px;line-height:1.85;margin:10px 0 28px;max-width:620px}
+.commission-proceed{display:inline-flex;align-items:center;justify-content:center;gap:16px;margin-top:24px;min-height:52px;text-decoration:none}
+.commission-proceed span{font-size:19px;line-height:1}
+.commission-checkout-note{max-width:550px;color:#73695e;font-size:12px;line-height:1.75;margin:16px 0 0}
+.commission-checkout-note strong{font-weight:600;color:#794b4c}
+@media(max-width:510px){.commission-proceed{width:100%;box-sizing:border-box}.commission-intro{font-size:13px}}
