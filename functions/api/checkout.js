@@ -100,31 +100,10 @@ async function start(request,env){
     await put(env.PORTRAIT_UPLOADS,path(id,"shipping.json"),{id,details:shipping,updatedAt:quotedAt});
     await put(env.PORTRAIT_UPLOADS,path(id,"payment.json"),{id,quotedAt,totalCents,depositCents,balanceCents,checkoutPlan:plan,sandbox:true});
     await put(env.PORTRAIT_UPLOADS,path(id,"checkout-access.json"),{id,tokenHash:await digest(token),expiresAt:new Date(Date.now()+30*86400000).toISOString(),createdAt:quotedAt});
+    // The scheduled Worker checks this private marker after ten minutes. No email is sent now.
+    await put(env.PORTRAIT_UPLOADS,"pending-checkouts/"+id+".json",{id,createdAt:quotedAt,notifyAfter:new Date(Date.now()+10*60*1000).toISOString(),sandbox:true});
   }catch(e){console.error("Sandbox order storage failed",id,e);return fail("Could not save your order securely. Please contact the studio.",503);}
-  // This notification means the customer submitted details, NOT that payment succeeded.
-  // It is sent immediately, so do not call this an abandoned cart.
-  await notifyStudio(env,"[SANDBOX] [CHƯA THANH TOÁN] Khách bắt đầu đặt tranh - "+id,[
-    "L’ATELIER HERITAGE — THÔNG BÁO QUẢN TRỊ",
-    "CHẾ ĐỘ THỬ NGHIỆM SANDBOX — KHÔNG CÓ TIỀN THẬT.",
-    "",
-    "TRẠNG THÁI: CHƯA THANH TOÁN.",
-    "Khách đã gửi thông tin đặt tranh và có thể đang thực hiện thanh toán.",
-    "Đây chưa phải đơn hàng đã được thanh toán. Không bắt đầu vẽ hoặc gửi hàng.",
-    "",
-    "Mã đơn: "+id,
-    "Khách hàng: "+name,
-    "Email khách: "+email,
-    "Tên thú cưng: "+(petName||"Chưa cung cấp"),
-    "Kích thước: "+size+" cm",
-    "Số thú cưng: "+pets,
-    "Quốc gia giao hàng: "+country,
-    "Thiệp viết tay: "+(card?"Có":"Không"),
-    "Giá trị đơn: "+aud(totalCents/100),
-    "Hình thức thanh toán dự kiến: "+(plan==="deposit"?"Đặt cọc 50%":"Thanh toán toàn bộ"),
-    "Số ảnh tham khảo: "+photos.length,
-    "",
-    "Bạn có thể xem chi tiết và ảnh trong Studio. Chờ email xác nhận thanh toán thành công."
-  ],id);
+  // Unpaid notifications are handled by the scheduled Cloudflare Worker, not this request.
   return json({ok:true,id,token,sandbox:true});
 }
 function due(order,payment,ledger){
@@ -192,6 +171,16 @@ async function action(request,env){
     },"checkout-create-"+reference+"-"+payment.quotedAt.replace(/[^0-9]/g,"").slice(0,14));
     if(!orderResult.id||orderResult.status!=="CREATED")throw Error("PayPal did not create the Sandbox order.");
     await put(bucket,path(id,"checkout-paypal-order.json"),{id,stage,quotedAt:payment.quotedAt,tokenHash:access.tokenHash,paypalOrderId:orderResult.id,createdAt:new Date().toISOString()});
+    // Give the buyer a full ten-minute window from opening the PayPal payment flow.
+    try{
+      const key="pending-checkouts/"+id+".json";
+      const marker=await read(bucket,key);
+      if(marker?.id===id){
+        const later=new Date(Date.now()+10*60*1000).toISOString();
+        if(Date.parse(marker.notifyAfter)<Date.parse(later))await put(bucket,key,{...marker,notifyAfter:later,paypalStartedAt:new Date().toISOString()});
+      }
+    }catch(error){console.error("Could not extend unpaid notification window",id,error);}
+
     return json({ok:true,orderID:orderResult.id,sandbox:true});
   }
   const pending=await read(bucket,path(id,"checkout-paypal-order.json"));
@@ -210,6 +199,9 @@ async function action(request,env){
   const next=current?.quotedAt===payment.quotedAt?current:{id,quotedAt:payment.quotedAt};
   next[stage]={reference:matched.id,paypalOrderId:result.id,amountCents:state.amountCents,verifiedAt:new Date().toISOString(),verification:"paypal-sandbox-capture",sandbox:true};
   await put(bucket,path(id,"paypal-sandbox-payments.json"),next);
+  // A verified capture cancels the delayed unpaid email. The Worker independently re-checks this ledger.
+  try{await bucket.delete("pending-checkouts/"+id+".json");}
+  catch(error){console.error("Could not clear unpaid notification marker",id,error);}
   // Send only after a verified PayPal Sandbox capture has been persisted.
   // Duplicate capture requests return above without sending a second email.
   const paidLabel=stage==="deposit"?"ĐÃ THANH TOÁN CỌC 50%":stage==="balance"?"ĐÃ THANH TOÁN PHẦN CÒN LẠI":"ĐÃ THANH TOÁN TOÀN BỘ";
