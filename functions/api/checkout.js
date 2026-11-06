@@ -41,6 +41,23 @@ async function paypal(env,endpoint,method="GET",body=null,requestId=null){
   if(!r.ok){const e=Error("PayPal Sandbox error ("+r.status+")");e.status=r.status;throw e;}
   return data;
 }
+// Admin-only Vietnamese notifications. Keep customer-facing checkout in English.
+const aud=value=>"A$"+Number(value).toLocaleString("vi-VN",{minimumFractionDigits:2,maximumFractionDigits:2});
+async function notifyStudio(env,subject,lines,id){
+  if(!env.RESEND_API_KEY||!env.NOTIFICATION_EMAIL)return;
+  try{
+    const response=await fetch("https://api.resend.com/emails",{
+      method:"POST",
+      headers:{"Authorization":"Bearer "+env.RESEND_API_KEY,"Content-Type":"application/json; charset=utf-8"},
+      body:JSON.stringify({
+        from:env.RESEND_FROM||"L'Atelier Heritage <onboarding@resend.dev>",
+        to:[env.NOTIFICATION_EMAIL],
+        subject,text:lines.join("\n")
+      })
+    });
+    if(!response.ok)console.error("Vietnamese studio notification failed",id,response.status);
+  }catch(error){console.error("Vietnamese studio notification error",id,error);}
+}
 async function start(request,env){
   if(Number(request.headers.get("content-length")||0)>23*1024*1024)return fail("Photos exceed the upload limit.",413);
   let form;try{form=await request.formData();}catch{return fail("Could not read your order.");}
@@ -84,15 +101,9 @@ async function start(request,env){
     await put(env.PORTRAIT_UPLOADS,path(id,"shipping.json"),{id,details:shipping,updatedAt:quotedAt});
     await put(env.PORTRAIT_UPLOADS,path(id,"payment.json"),{id,quotedAt,totalCents,depositCents,balanceCents,checkoutPlan:plan,sandbox:true});
     await put(env.PORTRAIT_UPLOADS,path(id,"checkout-access.json"),{id,tokenHash:await digest(token),expiresAt:new Date(Date.now()+90*86400000).toISOString(),createdAt:quotedAt});
+    // Register an unpaid checkout for the scheduled Worker; no email is sent at order creation.
+    await put(env.PORTRAIT_UPLOADS,"pending-checkouts/"+id+".json",{id,createdAt:quotedAt,notifyAfter:new Date(Date.now()+10*60*1000).toISOString(),sandbox:true});
   }catch(e){console.error("Sandbox order storage failed",id,e);return fail("Could not save your order securely. Please contact the studio.",503);}
-  // Notification is best-effort; a stored order is not lost when email delivery fails.
-  if(env.RESEND_API_KEY&&env.NOTIFICATION_EMAIL){
-    try{
-      const textBody=["NEW SANDBOX CHECKOUT (NO REAL MONEY)",id,"Name: "+name,"Email: "+email,"Pet: "+petName,"Size: "+size,"Pets: "+pets,"Country: "+country,"Total AUD: "+(totalCents/100),"Payment choice: "+plan,"Delivery details are private in Studio Dashboard.","Photos: "+photos.length].join("\n");
-      const response=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+env.RESEND_API_KEY,"Content-Type":"application/json"},body:JSON.stringify({from:env.RESEND_FROM||"L'Atelier Heritage <onboarding@resend.dev>",to:[env.NOTIFICATION_EMAIL],subject:"[SANDBOX] New checkout "+id,text:textBody})});
-      if(!response.ok)console.error("Sandbox order notification failed",id,response.status);
-    }catch(e){console.error("Sandbox notification error",id,e);}
-  }
   return json({ok:true,id,token,sandbox:true});
 }
 function due(order,payment,ledger){
@@ -168,6 +179,17 @@ async function action(request,env){
     },"checkout-create-"+reference+"-"+payment.quotedAt.replace(/[^0-9]/g,"").slice(0,14)+"-"+Math.floor(Date.now()/3600000));
     if(!orderResult.id||orderResult.status!=="CREATED")throw Error("PayPal did not create the Sandbox order.");
     await put(bucket,path(id,"checkout-paypal-order.json"),{id,stage,quotedAt:payment.quotedAt,tokenHash:activeAccess.tokenHash,paypalOrderId:orderResult.id,createdAt:new Date().toISOString()});
+    // Give the buyer a full ten-minute window from opening the PayPal payment flow.
+    try{
+      const key="pending-checkouts/"+id+".json";
+      const marker=await read(bucket,key);
+      if(marker?.id===id){
+        const later=new Date(Date.now()+10*60*1000).toISOString();
+        if(Date.parse(marker.notifyAfter)<Date.parse(later))await put(bucket,key,{...marker,notifyAfter:later,paypalStartedAt:new Date().toISOString()});
+      }
+    }catch(error){console.error("Could not extend unpaid notification window",id,error);}
+
+
     return json({ok:true,orderID:orderResult.id,sandbox:true});
   }
   const pending=await read(bucket,path(id,"checkout-paypal-order.json"));
@@ -186,6 +208,35 @@ async function action(request,env){
   const next=current?.quotedAt===payment.quotedAt?current:{id,quotedAt:payment.quotedAt};
   next[stage]={reference:matched.id,paypalOrderId:result.id,amountCents:state.amountCents,verifiedAt:new Date().toISOString(),verification:"paypal-sandbox-capture",sandbox:true};
   await put(bucket,path(id,"paypal-sandbox-payments.json"),next);
+  // A verified capture cancels the delayed unpaid email. The Worker independently re-checks this ledger.
+  try{await bucket.delete("pending-checkouts/"+id+".json");}
+  catch(error){console.error("Could not clear unpaid notification marker",id,error);}
+  // Send only after a verified PayPal Sandbox capture has been persisted.
+  // Duplicate capture requests return above without sending a second email.
+  const paidLabel=stage==="deposit"?"ĐÃ THANH TOÁN CỌC 50%":stage==="balance"?"ĐÃ THANH TOÁN PHẦN CÒN LẠI":"ĐÃ THANH TOÁN TOÀN BỘ";
+  const outstanding=stage==="deposit"?payment.balanceCents/100:0;
+  await notifyStudio(env,"[SANDBOX] ["+paidLabel+"] Đơn tranh "+id,[
+    "L’ATELIER HERITAGE — XÁC NHẬN THANH TOÁN",
+    "CHẾ ĐỘ THỬ NGHIỆM SANDBOX — KHÔNG CÓ TIỀN THẬT.",
+    "",
+    "TRẠNG THÁI: "+paidLabel,
+    "PayPal Sandbox đã xác nhận giao dịch thành công.",
+    "",
+    "Mã đơn: "+id,
+    "Khách hàng: "+order.name,
+    "Email khách: "+order.email,
+    "Tên thú cưng: "+(order.petName||"Chưa cung cấp"),
+    "Kích thước: "+order.size+" cm",
+    "Số thú cưng: "+order.pets,
+    "Giá trị đơn: "+aud(payment.totalCents/100),
+    "Vừa thanh toán: "+aud(state.amountCents/100),
+    "Số tiền còn lại: "+aud(outstanding),
+    "Mã giao dịch PayPal: "+matched.id,
+    "",
+    stage==="deposit"?"Bước tiếp theo: Kiểm tra ảnh và yêu cầu trước khi bắt đầu vẽ.":"Bước tiếp theo: Kiểm tra trạng thái đơn và tiếp tục xử lý trong Studio.",
+    "Lưu ý: Đây là thanh toán thử, không phải doanh thu thực tế."
+  ],id);
+
   // Payment is already securely recorded. Email is best-effort and cannot undo a capture.
   let emailTest="skipped";
   try {
