@@ -54,3 +54,11 @@
 .brand .descriptor{font-size:8px;letter-spacing:.28em;margin-top:11px;color:var(--wine)}
 @media(max-width:1150px){.brand .wordmark-atelier{font-size:11px}.brand .wordmark-hau{font-size:37px}}
 @media(max-width:800px){.brand .wordmark-atelier{font-size:11px}.brand .wordmark-hau{font-size:37px}.brand .descriptor{font-size:7px;margin-top:9px}}
+
+/* Approved visual identity trial — B on desktop, A on mobile. Preview branch only.
+   Source: logo artwork selected by the studio; not a recreated typeface. */
+.header .brand{display:block;flex:0 0 292px;width:292px;height:52px;margin-right:auto;background:url('atelier-hau-logo-desktop.png') left center/contain no-repeat}
+.header .brand .wordmark,.header .brand .descriptor{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip-path:inset(50%)!important;white-space:nowrap!important}
+@media(max-width:1150px) and (min-width:801px){.header .brand{flex-basis:245px;width:245px;height:45px}}
+@media(max-width:800px){.header .brand{flex:0 0 211px;width:211px;height:49px;background-image:url('atelier-hau-logo-mobile.png')}}
+@media(max-width:375px){.header .brand{flex-basis:185px;width:185px;height:44px}}
