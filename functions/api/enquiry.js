@@ -65,13 +65,14 @@ export async function onRequestPost({request,env}){
     if(message.length<5)return fail("Please enter a message.");
     details={id,type,receivedAt:new Date().toISOString(),name,email,topic,message};
   }
+  // Vietnamese emails go only to the studio; preserve the customer's original message.
   const lines=type==="commission"?
-    [`New portrait enquiry: ${id}`,`Name: ${name}`,`Customer email: ${email}`,`Pet: ${details.petName||"Not provided"}`,`Size: ${details.size} cm`,`Pets: ${details.pets}`,`Country: ${details.country}`,`Handwritten card: ${details.card?"Yes":"No"}`,`Estimated AUD: ${details.estimatedPriceAUD}`,`Story: ${details.story||"Not provided"}`,`Private photo storage: Cloudflare R2 bucket / enquiries/${id}/photos/ (${details.photos.length} images)`,`Order details: enquiries/${id}/details.json`]:
-    [`New contact enquiry: ${id}`,`Name: ${name}`,`Customer email: ${email}`,`Topic: ${details.topic}`,`Message: ${details.message}`];
+    [`L’ATELIER HERITAGE — YÊU CẦU VẼ TRANH MỚI`,`Trạng thái: Đã nhận yêu cầu, CHƯA xác nhận thanh toán.`,`Mã yêu cầu: ${id}`,`Khách hàng: ${name}`,`Email khách: ${email}`,`Tên thú cưng: ${details.petName||"Chưa cung cấp"}`,`Kích thước: ${details.size} cm`,`Số thú cưng: ${details.pets}`,`Quốc gia: ${details.country}`,`Thiệp viết tay: ${details.card?"Có":"Không"}`,`Giá dự kiến: A${Number(details.estimatedPriceAUD).toLocaleString("vi-VN",{minimumFractionDigits:2,maximumFractionDigits:2})}`,`Lời nhắn gốc của khách (giữ nguyên ngôn ngữ): ${details.story||"Không có"}`,`Ảnh tham khảo: ${details.photos.length} ảnh, xem riêng trong Studio.`,`Lưu trữ nội bộ: enquiries/${id}/details.json`]:
+    [`L’ATELIER HERITAGE — TIN NHẮN LIÊN HỆ MỚI`,`Mã yêu cầu: ${id}`,`Khách hàng: ${name}`,`Email khách: ${email}`,`Chủ đề gốc: ${details.topic}`,`Nội dung gốc của khách (giữ nguyên ngôn ngữ): ${details.message}`];
   // No automatic customer email is sent. The private Gmail is a recipient only.
   let delivered=false;
   try{
-    const response=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":`Bearer ${env.RESEND_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify({from:env.RESEND_FROM||"L'Atelier Heritage <onboarding@resend.dev>",to:[env.NOTIFICATION_EMAIL],subject:`[L'Atelier Heritage] ${type==="commission"?"New portrait request":"New contact message"} ${id}`,text:lines.join("\n")})});
+    const response=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":`Bearer ${env.RESEND_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify({from:env.RESEND_FROM||"L'Atelier Heritage <onboarding@resend.dev>",to:[env.NOTIFICATION_EMAIL],subject:`[L'Atelier Heritage] ${type==="commission"?"YÊU CẦU VẼ TRANH MỚI - CHƯA THANH TOÁN":"TIN NHẮN LIÊN HỆ MỚI"} ${id}`,text:lines.join("\n")})});
     delivered=response.ok;
     if(!delivered)console.error("Resend delivery rejected",id,response.status);
   }catch(error){console.error("Resend request failed",id,error);}
