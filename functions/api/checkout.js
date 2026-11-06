@@ -40,6 +40,23 @@ async function paypal(env,endpoint,method="GET",body=null,requestId=null){
   if(!r.ok){const e=Error("PayPal Sandbox error ("+r.status+")");e.status=r.status;throw e;}
   return data;
 }
+// Admin-only Vietnamese notifications. Keep customer-facing checkout in English.
+const aud=value=>"A$"+Number(value).toLocaleString("vi-VN",{minimumFractionDigits:2,maximumFractionDigits:2});
+async function notifyStudio(env,subject,lines,id){
+  if(!env.RESEND_API_KEY||!env.NOTIFICATION_EMAIL)return;
+  try{
+    const response=await fetch("https://api.resend.com/emails",{
+      method:"POST",
+      headers:{"Authorization":"Bearer "+env.RESEND_API_KEY,"Content-Type":"application/json; charset=utf-8"},
+      body:JSON.stringify({
+        from:env.RESEND_FROM||"L'Atelier Heritage <onboarding@resend.dev>",
+        to:[env.NOTIFICATION_EMAIL],
+        subject,text:lines.join("\n")
+      })
+    });
+    if(!response.ok)console.error("Vietnamese studio notification failed",id,response.status);
+  }catch(error){console.error("Vietnamese studio notification error",id,error);}
+}
 async function start(request,env){
   if(Number(request.headers.get("content-length")||0)>23*1024*1024)return fail("Photos exceed the upload limit.",413);
   let form;try{form=await request.formData();}catch{return fail("Could not read your order.");}
@@ -84,14 +101,30 @@ async function start(request,env){
     await put(env.PORTRAIT_UPLOADS,path(id,"payment.json"),{id,quotedAt,totalCents,depositCents,balanceCents,checkoutPlan:plan,sandbox:true});
     await put(env.PORTRAIT_UPLOADS,path(id,"checkout-access.json"),{id,tokenHash:await digest(token),expiresAt:new Date(Date.now()+30*86400000).toISOString(),createdAt:quotedAt});
   }catch(e){console.error("Sandbox order storage failed",id,e);return fail("Could not save your order securely. Please contact the studio.",503);}
-  // Notification is best-effort; a stored order is not lost when email delivery fails.
-  if(env.RESEND_API_KEY&&env.NOTIFICATION_EMAIL){
-    try{
-      const textBody=["NEW SANDBOX CHECKOUT (NO REAL MONEY)",id,"Name: "+name,"Email: "+email,"Pet: "+petName,"Size: "+size,"Pets: "+pets,"Country: "+country,"Total AUD: "+(totalCents/100),"Payment choice: "+plan,"Delivery details are private in Studio Dashboard.","Photos: "+photos.length].join("\n");
-      const response=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+env.RESEND_API_KEY,"Content-Type":"application/json"},body:JSON.stringify({from:env.RESEND_FROM||"L'Atelier Heritage <onboarding@resend.dev>",to:[env.NOTIFICATION_EMAIL],subject:"[SANDBOX] New checkout "+id,text:textBody})});
-      if(!response.ok)console.error("Sandbox order notification failed",id,response.status);
-    }catch(e){console.error("Sandbox notification error",id,e);}
-  }
+  // This notification means the customer submitted details, NOT that payment succeeded.
+  // It is sent immediately, so do not call this an abandoned cart.
+  await notifyStudio(env,"[SANDBOX] [CHƯA THANH TOÁN] Khách bắt đầu đặt tranh - "+id,[
+    "L’ATELIER HERITAGE — THÔNG BÁO QUẢN TRỊ",
+    "CHẾ ĐỘ THỬ NGHIỆM SANDBOX — KHÔNG CÓ TIỀN THẬT.",
+    "",
+    "TRẠNG THÁI: CHƯA THANH TOÁN.",
+    "Khách đã gửi thông tin đặt tranh và có thể đang thực hiện thanh toán.",
+    "Đây chưa phải đơn hàng đã được thanh toán. Không bắt đầu vẽ hoặc gửi hàng.",
+    "",
+    "Mã đơn: "+id,
+    "Khách hàng: "+name,
+    "Email khách: "+email,
+    "Tên thú cưng: "+(petName||"Chưa cung cấp"),
+    "Kích thước: "+size+" cm",
+    "Số thú cưng: "+pets,
+    "Quốc gia giao hàng: "+country,
+    "Thiệp viết tay: "+(card?"Có":"Không"),
+    "Giá trị đơn: "+aud(totalCents/100),
+    "Hình thức thanh toán dự kiến: "+(plan==="deposit"?"Đặt cọc 50%":"Thanh toán toàn bộ"),
+    "Số ảnh tham khảo: "+photos.length,
+    "",
+    "Bạn có thể xem chi tiết và ảnh trong Studio. Chờ email xác nhận thanh toán thành công."
+  ],id);
   return json({ok:true,id,token,sandbox:true});
 }
 function due(order,payment,ledger){
@@ -177,6 +210,31 @@ async function action(request,env){
   const next=current?.quotedAt===payment.quotedAt?current:{id,quotedAt:payment.quotedAt};
   next[stage]={reference:matched.id,paypalOrderId:result.id,amountCents:state.amountCents,verifiedAt:new Date().toISOString(),verification:"paypal-sandbox-capture",sandbox:true};
   await put(bucket,path(id,"paypal-sandbox-payments.json"),next);
+  // Send only after a verified PayPal Sandbox capture has been persisted.
+  // Duplicate capture requests return above without sending a second email.
+  const paidLabel=stage==="deposit"?"ĐÃ THANH TOÁN CỌC 50%":stage==="balance"?"ĐÃ THANH TOÁN PHẦN CÒN LẠI":"ĐÃ THANH TOÁN TOÀN BỘ";
+  const outstanding=stage==="deposit"?payment.balanceCents/100:0;
+  await notifyStudio(env,"[SANDBOX] ["+paidLabel+"] Đơn tranh "+id,[
+    "L’ATELIER HERITAGE — XÁC NHẬN THANH TOÁN",
+    "CHẾ ĐỘ THỬ NGHIỆM SANDBOX — KHÔNG CÓ TIỀN THẬT.",
+    "",
+    "TRẠNG THÁI: "+paidLabel,
+    "PayPal Sandbox đã xác nhận giao dịch thành công.",
+    "",
+    "Mã đơn: "+id,
+    "Khách hàng: "+order.name,
+    "Email khách: "+order.email,
+    "Tên thú cưng: "+(order.petName||"Chưa cung cấp"),
+    "Kích thước: "+order.size+" cm",
+    "Số thú cưng: "+order.pets,
+    "Giá trị đơn: "+aud(payment.totalCents/100),
+    "Vừa thanh toán: "+aud(state.amountCents/100),
+    "Số tiền còn lại: "+aud(outstanding),
+    "Mã giao dịch PayPal: "+matched.id,
+    "",
+    stage==="deposit"?"Bước tiếp theo: Kiểm tra ảnh và yêu cầu trước khi bắt đầu vẽ.":"Bước tiếp theo: Kiểm tra trạng thái đơn và tiếp tục xử lý trong Studio.",
+    "Lưu ý: Đây là thanh toán thử, không phải doanh thu thực tế."
+  ],id);
   return json({ok:true,paid:true,stage,sandbox:true});
 }
 export async function onRequestPost({request,env}){
