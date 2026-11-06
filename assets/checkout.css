@@ -163,3 +163,8 @@
   .checkout-pay-footer-note{font-size:10px}
   .checkout-summary img{height:170px}
 }
+
+/* Approved logo trial for private checkout. */
+.checkout-header .checkout-brand{display:block!important;flex:0 0 292px;width:292px;height:52px;background:url('atelier-hau-logo-desktop.png') left center/contain no-repeat;font-size:0!important;color:transparent!important;white-space:nowrap;overflow:hidden}
+@media(max-width:850px){.checkout-header .checkout-brand{flex-basis:210px;width:210px;height:48px;background-image:url('atelier-hau-logo-mobile.png')}}
+@media(max-width:540px){.checkout-header .checkout-brand{flex-basis:170px;width:170px;height:40px}}
