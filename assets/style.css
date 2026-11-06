@@ -46,3 +46,11 @@
 .commission-checkout-note{max-width:550px;color:#73695e;font-size:12px;line-height:1.75;margin:16px 0 0}
 .commission-checkout-note strong{font-weight:600;color:#794b4c}
 @media(max-width:510px){.commission-proceed{width:100%;box-sizing:border-box}.commission-intro{font-size:13px}}
+
+/* ATELIER HAU — temporary typographic identity for visual preview only. */
+.brand .wordmark{display:flex;align-items:baseline;gap:8px;line-height:1;white-space:nowrap}
+.brand .wordmark-atelier{font-family:'DM Sans',Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:.22em}
+.brand .wordmark-hau{font-family:'Cormorant Garamond',Georgia,serif;font-size:43px;font-weight:600;letter-spacing:.055em;line-height:.8}
+.brand .descriptor{font-size:8px;letter-spacing:.28em;margin-top:11px;color:var(--wine)}
+@media(max-width:1150px){.brand .wordmark-atelier{font-size:11px}.brand .wordmark-hau{font-size:37px}}
+@media(max-width:800px){.brand .wordmark-atelier{font-size:11px}.brand .wordmark-hau{font-size:37px}.brand .descriptor{font-size:7px;margin-top:9px}}
