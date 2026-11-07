@@ -151,3 +151,13 @@
 
 /* Selected Works: move the two-dog artwork down inside the frame to reveal both bodies. */
 .editorial-gallery .editorial-pair .pair-b img{object-position:center 100%}
+
+
+/* Selected Works — approved artwork focal points, desktop and mobile.
+   Crown stays fully visible; both Pomeranian faces remain visible. */
+.editorial-gallery .editorial-pair .pair-a img{object-position:50% 0%}
+.editorial-gallery .editorial-pair .pair-b img{object-position:50% 38%}
+@media(max-width:520px){
+ .editorial-gallery .editorial-pair .pair-a img{object-position:50% 0%}
+ .editorial-gallery .editorial-pair .pair-b img{object-position:50% 38%}
+}
