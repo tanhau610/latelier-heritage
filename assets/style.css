@@ -102,3 +102,21 @@
 .art-in-home-copy .utility-note{font-size:12px;border-left:2px solid #a88a5b;padding-left:13px;margin:25px 0}
 @media(max-width:800px){.art-in-home-layout{grid-template-columns:1fr}.art-in-home-wall{min-height:400px}.art-in-home-copy{padding:10px 0 0}}
 @media(max-width:480px){.art-in-home-wall{min-height:320px}.art-in-home-frame{width:55%}.art-in-home-copy h2{font-size:49px}}
+
+/* ATELIER HAU — gallery-led editorial refresh. Scoped to public content; checkout untouched. */
+.editorial-home{grid-template-columns:minmax(0,44%) minmax(0,56%);min-height:min(790px,calc(100svh - 104px))}
+.editorial-home .home-copy{background:#f1ebe1;color:#3d302b;padding:clamp(48px,6.8vw,110px) clamp(34px,5.5vw,100px)}
+.editorial-home .home-copy h1{font-size:clamp(64px,6.7vw,118px);line-height:.9;letter-spacing:-.05em;margin:clamp(35px,6vh,85px) 0 42px}
+.editorial-home .home-copy h1 em{font-weight:400;color:#763d45}
+.editorial-home .home-copy p{color:#5d524a;font-size:clamp(13px,1.1vw,15px);max-width:370px}
+.editorial-home .hero-proof{color:#7d7066}
+.editorial-home .home-copy .btn.light{background:#6c3d42;color:#fff;border-color:#6c3d42}
+.editorial-home .home-copy .text-link{color:#4e3733}
+.editorial-home .home-visual img{object-position:50% 45%}
+.editorial-collection{align-items:start;gap:clamp(20px,3vw,56px)}
+.editorial-collection .art-card:nth-child(2){margin-top:clamp(55px,9vw,160px)}
+.editorial-collection .art-card:nth-child(3){margin-top:clamp(12px,3vw,55px)}
+.editorial-collection .art-card .art-frame{background:#e7dfd4}
+.editorial-collection .art-card h3{font-size:clamp(29px,3vw,44px)}
+@media(max-width:900px){.editorial-home{grid-template-columns:1fr;min-height:auto}.editorial-home .home-copy{padding:55px 7% 45px}.editorial-home .home-copy h1{font-size:clamp(60px,11vw,90px);margin:32px 0}.editorial-home .home-visual{height:clamp(350px,62vw,670px)}.editorial-collection .art-card:nth-child(n){margin-top:0}}
+@media(max-width:600px){.editorial-home .home-copy h1{font-size:clamp(59px,13.4vw,82px)}.editorial-home .home-visual{height:390px}.editorial-collection{display:grid;grid-template-columns:1fr 1fr;gap:20px}.editorial-collection .art-card:first-child{grid-column:1/-1}.editorial-collection .art-card h3{font-size:27px}}
