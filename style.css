@@ -178,3 +178,52 @@
 .header-cta,.section-line a,.underline-link,.pill-light,.footer-button,.action-main,.commission-proceed{letter-spacing:.11em}
 @media(max-width:800px){.site-header .mobile-menu{display:flex;flex-shrink:0}.site-header .mobile-menu:focus-visible{outline:2px solid var(--wine);outline-offset:3px}.round-link b{width:42px;height:42px}.round-link b::before{top:20px;left:14px}.round-link b::after{top:12px;left:21px}.manifesto .tiny-star{margin-top:28px}}
 @media(max-width:520px){.round-link{font-size:9px;gap:14px;justify-content:flex-start}.round-link b{width:40px;height:40px}.round-link b::before{top:19px;left:13px}.round-link b::after{top:11px;left:20px}.manifesto .tiny-star{width:26px;height:26px}.manifesto .tiny-star::before,.manifesto .tiny-star::after{width:20px}}
+
+/* Brand palette refinement — inspired by approved burgundy/gold ATELIER HAU logo.
+   Ivory is the primary canvas; burgundy is the signature, not a wall of red. */
+:root{
+ --paper:#F5F0E7;
+ --cream:#FAF7F0;
+ --ink:#302723;
+ --wine:#632D34;
+ --muted:#74675E;
+ --line:#D8C9B8;
+ --brand-gold:#B08B51;
+ --brand-burgundy:#632D34;
+ --brand-dark:#39252A;
+}
+body,.site-header{background:var(--paper)}
+.site-header{border-bottom-color:#DDD1C3}
+.navigation a{color:#55453F}
+.navigation a.current,.navigation a:hover{color:var(--wine)}
+.header-cta{border-color:var(--wine);color:var(--wine)}
+.header-cta:hover{background:var(--wine);color:#FFF9F0}
+.announcement{background:var(--brand-dark);color:#F5EDE2}
+.announcement span{color:var(--brand-gold)}
+.hero-editorial,.commission-panel,.pricing-copy,.about-copy,.contact-panel{background:#EDE3D6}
+.hero-title h1 em,.manifesto em,.inner-intro h1 em,.quote-block h2 em{color:var(--wine)}
+.hero-title p,.hero-bottom,.hero-index,.inner-intro p{color:#6B5B52}
+.round-link b{border-color:var(--wine);color:var(--wine)}
+.round-link:hover b{background:var(--wine);color:#FFF}
+.tiny-star{color:var(--brand-gold)}
+.quote-block{background:#DED0BF}
+.section-line,.steps-row>div{border-color:#CDBBA9}
+.underline-link{border-bottom-color:var(--wine)}
+.pill-light{background:var(--cream);color:var(--wine)}
+.pill-light:hover{background:var(--wine);color:#fff}
+.action-main,.v2-commission .commission-proceed{background:var(--wine);color:#FFF}
+.action-main:hover,.v2-commission .commission-proceed:hover{background:#4A2027}
+.v2-commission .commission-intro-text,.v2-commission .commission-config-panel{background:#EDE3D6}
+.v2-commission .price-display{background:#F8F2E8}
+.v2-commission .commission-reassurance{background:#E8DCCF}
+.footer{background:var(--brand-dark);color:#F6EEE5}
+.footer h2 em{color:#D4B6A1}
+.footer-button{border-color:#B99674;color:#FFF5EA}
+.footer-button:hover{background:#F5F0E7;color:var(--brand-dark)}
+.footer-links span,.footer-bottom{color:#D3BDA9}
+.footer-bottom{border-top-color:#70575B}
+.footer-links a:hover{color:#E3C398}
+@media(max-width:800px){
+ .navigation{background:var(--paper)}
+ .site-header .mobile-menu{color:var(--wine)}
+}
