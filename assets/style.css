@@ -62,3 +62,26 @@
 @media(max-width:1150px) and (min-width:801px){.header .brand{flex-basis:245px;width:245px;height:45px}}
 @media(max-width:800px){.header .brand{flex:0 0 211px;width:211px;height:49px;background-image:url('atelier-hau-logo-mobile.png')}}
 @media(max-width:375px){.header .brand{flex-basis:185px;width:185px;height:44px}}
+
+
+/* Editorial homepage V1: scoped visual refinement, no commission/checkout changes */
+:root{--wine:#71353e;--gold:#a88a5b;--ivory:#f6f0e5;--paper:#faf7f1}
+.editorial-home{min-height:clamp(650px,79vh,900px);grid-template-columns:52% 48%;background:#3b292c}
+.editorial-home .home-copy{background:radial-gradient(circle at 10% 0%,#69464a 0%,#452d32 43%,#302529 100%);padding:clamp(48px,6.3vw,112px) clamp(32px,6vw,100px);gap:35px}
+.editorial-home .eyebrow{color:#d6bb8c;letter-spacing:.19em}
+.editorial-home h1{font-size:clamp(65px,7.6vw,124px);line-height:.87;letter-spacing:-.035em;margin:45px 0 15px;max-width:740px}
+.editorial-home h1 em{font-weight:400;color:#e4c9a6}
+.editorial-home .home-copy p{font-size:clamp(14px,1.15vw,17px);line-height:1.8;max-width:510px;color:#efe5dc}
+.editorial-home .home-visual img{object-position:center 42%}
+.hero-actions{display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin:28px 0}
+.hero-actions .text-link{color:#f7ebdd}
+.hero-proof{display:block;color:#c6ad94;font-size:10px;letter-spacing:.12em;line-height:1.8}
+.home-closing{padding:clamp(85px,11vw,160px) 0;background:#4a3035;color:#f8f0e6;text-align:center}
+.home-closing-inner{max-width:900px}
+.home-closing .eyebrow{color:#d7bd91}
+.home-closing h2{margin:23px auto;max-width:860px;font-size:clamp(48px,6.2vw,85px)}
+.home-closing p{margin:0 auto 32px;max-width:600px;color:#e9ded4}
+.home-closing .btn.light{background:#f6f0e5;color:#4a3035}
+@media(max-width:800px){.editorial-home{grid-template-columns:1fr;min-height:0}.editorial-home .home-copy{min-height:0;padding:62px 26px 55px}.editorial-home h1{font-size:clamp(62px,13vw,94px);margin:30px 0 15px}.editorial-home .home-visual{min-height:420px;max-height:580px}.hero-actions{gap:20px}.home-closing{padding:85px 0}}
+@media(max-width:420px){.editorial-home h1{font-size:clamp(54px,13.5vw,72px)}.hero-actions{align-items:flex-start;flex-direction:column}.editorial-home .home-visual{min-height:340px}}
+@media(prefers-reduced-motion:reduce){.editorial-home *, .home-closing *{scroll-behavior:auto;transition:none!important}}
