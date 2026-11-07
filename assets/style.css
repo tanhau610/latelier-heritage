@@ -120,3 +120,20 @@
 .editorial-collection .art-card h3{font-size:clamp(29px,3vw,44px)}
 @media(max-width:900px){.editorial-home{grid-template-columns:1fr;min-height:auto}.editorial-home .home-copy{padding:55px 7% 45px}.editorial-home .home-copy h1{font-size:clamp(60px,11vw,90px);margin:32px 0}.editorial-home .home-visual{height:clamp(350px,62vw,670px)}.editorial-collection .art-card:nth-child(n){margin-top:0}}
 @media(max-width:600px){.editorial-home .home-copy h1{font-size:clamp(59px,13.4vw,82px)}.editorial-home .home-visual{height:390px}.editorial-collection{display:grid;grid-template-columns:1fr 1fr;gap:20px}.editorial-collection .art-card:first-child{grid-column:1/-1}.editorial-collection .art-card h3{font-size:27px}}
+
+/* Gallery V2 — asymmetrical editorial wall with existing real artwork */
+.editorial-gallery{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:clamp(18px,2.8vw,48px);row-gap:clamp(45px,6vw,110px);align-items:start}
+.editorial-gallery .gallery-tile{grid-column:span 4;min-width:0}
+.editorial-gallery .gallery-tile:nth-child(6n + 1){grid-column:span 7}
+.editorial-gallery .gallery-tile:nth-child(6n + 2){grid-column:span 5;margin-top:clamp(70px,11vw,190px)}
+.editorial-gallery .gallery-tile:nth-child(6n + 3){grid-column:span 5}
+.editorial-gallery .gallery-tile:nth-child(6n + 4){grid-column:span 7;margin-top:clamp(50px,7vw,125px)}
+.editorial-gallery .gallery-tile:nth-child(6n + 5){grid-column:span 6}
+.editorial-gallery .gallery-tile:nth-child(6n){grid-column:span 6;margin-top:clamp(50px,8vw,120px)}
+.editorial-gallery .gallery-tile.hide{display:none}
+.editorial-gallery .gallery-image{background:#eae2d8;overflow:hidden}
+.editorial-gallery .gallery-image img{transition:transform .65s cubic-bezier(.2,.7,.2,1)}
+.editorial-gallery .gallery-tile:hover .gallery-image img{transform:scale(1.035)}
+.editorial-gallery .gallery-tile h3{font-family:'Cormorant Garamond',Georgia,serif;font-size:clamp(28px,3.4vw,48px);font-weight:400;margin-top:18px}
+.editorial-gallery .gallery-tile p{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#7b7067}
+@media(max-width:760px){.editorial-gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:30px 16px}.editorial-gallery .gallery-tile:nth-child(n){grid-column:span 1;margin-top:0}.editorial-gallery .gallery-tile:nth-child(5n + 1){grid-column:span 2}.editorial-gallery .gallery-tile h3{font-size:27px}.editorial-gallery .gallery-tile p{font-size:10px}}
