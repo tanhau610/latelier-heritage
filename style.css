@@ -37,3 +37,50 @@
  .hero-editorial{min-height:480px}
  .hero-title h1{font-size:clamp(51px,12vw,72px)}
 }
+
+
+/* Commission V2: independent editorial layout, preserves original pricing JS and checkout form */
+.v2-commission{background:#f2eee6}
+.v2-commission .commission-intro-v2{display:grid;grid-template-columns:49% 51%;min-height:620px;background:#e9e0d4}
+.v2-commission .commission-intro-text{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:clamp(45px,7vw,120px);min-width:0}
+.v2-commission .commission-intro-text h1{font-size:clamp(66px,7.5vw,130px);line-height:.94;margin:34px 0;letter-spacing:-.055em}
+.v2-commission .commission-intro-text h1 em,.v2-commission .commission-builder-heading h2 em{color:#633a3a}
+.v2-commission .commission-intro-text p{max-width:410px;color:#685e55;font-size:14px;line-height:1.85}
+.v2-commission .commission-scroll-link{font-size:10px;letter-spacing:.17em;border-bottom:1px solid #633a3a;padding-bottom:12px;margin-top:25px;display:flex;gap:35px;align-items:center}
+.v2-commission .commission-intro-image{position:relative;min-height:620px;overflow:hidden}
+.v2-commission .commission-intro-image img{position:absolute;inset:0;height:100%;width:100%;object-fit:cover}
+.v2-commission .commission-intro-image>span{position:absolute;bottom:28px;left:35px;color:white;font-size:10px;letter-spacing:.17em;text-shadow:0 1px 6px #222}
+.v2-commission .commission-builder-v2{padding:clamp(75px,9vw,145px) 6% 125px;scroll-margin-top:110px}
+.v2-commission .commission-builder-heading{text-align:center;max-width:730px;margin:0 auto 75px}
+.v2-commission .commission-builder-heading h2{font-size:clamp(60px,7vw,112px);line-height:1;margin:25px 0}
+.v2-commission .commission-builder-heading p{font-size:14px;color:#6e635a}
+.v2-commission .commission-builder-layout{display:grid;grid-template-columns:minmax(0,46%) minmax(0,54%);gap:clamp(30px,5vw,90px);max-width:1360px;margin:auto;align-items:start}
+.v2-commission .commission-art-panel{min-width:0}
+.v2-commission .commission-art-panel>img{height:clamp(420px,47vw,700px);width:100%;object-fit:cover;background:#d3c9bc}
+.v2-commission .commission-art-caption{display:flex;justify-content:space-between;gap:12px;padding:17px 0;font-size:9px;letter-spacing:.13em}
+.v2-commission .commission-note{border-top:1px solid #cfc5b8;margin-top:42px;padding-top:30px}
+.v2-commission .commission-note p{font-family:'Italiana',Georgia,serif;font-size:clamp(30px,3vw,46px);line-height:1.2;max-width:450px;margin:18px 0}
+.v2-commission .commission-config-panel{min-width:0;background:#e9e0d4;padding:clamp(32px,4.5vw,70px)}
+.v2-commission .commission-config-panel h3{font-size:clamp(45px,5vw,76px);margin:24px 0 15px;line-height:1}
+.v2-commission .commission-config-lede{font-size:13px;color:#685f55;line-height:1.8;margin-bottom:30px}
+.v2-commission .form-fields{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.v2-commission .field{margin-bottom:24px;min-width:0}
+.v2-commission .field label{display:block;font-size:10px;letter-spacing:.13em;font-weight:700;text-transform:uppercase;margin-bottom:10px}
+.v2-commission .field select{width:100%;min-width:0;background:#f7f2ea;border:1px solid #c6b9a9;padding:16px 12px;color:#302923;font-size:13px;border-radius:0;min-height:55px}
+.v2-commission .tick{display:flex;align-items:center;gap:12px;font-size:12px;line-height:1.6;padding:6px 0 18px}
+.v2-commission .tick input{accent-color:#633a3a;width:17px;height:17px;flex-shrink:0}
+.v2-commission .price-display{background:#f6f0e7;border-top:1px solid #bba99b;border-bottom:1px solid #bba99b;padding:26px;margin:20px 0 24px}
+.v2-commission .price-display .eyebrow{font-size:10px}
+.v2-commission .price-value{font-family:'Italiana',Georgia,serif;font-size:clamp(52px,6vw,86px);line-height:1.1;margin:14px 0;color:#633a3a}
+.v2-commission .price-display .small{font-size:11px;color:#71655b;line-height:1.7}
+.v2-commission .commission-proceed{display:flex;justify-content:space-between;align-items:center;width:100%;background:#633a3a;color:#fff;border:0;padding:21px 24px;min-height:64px;letter-spacing:.14em;font-size:11px;font-weight:700;cursor:pointer}
+.v2-commission .commission-proceed:hover{background:#4e2c2e}
+.v2-commission .commission-checkout-note{font-size:11px;line-height:1.8;color:#70645a;margin-top:18px}
+.v2-commission .commission-reassurance{display:grid;grid-template-columns:repeat(3,1fr);gap:35px;padding:65px 6% 115px;background:#e6ded2}
+.v2-commission .commission-reassurance>div{border-top:1px solid #bcae9f;padding-top:25px}
+.v2-commission .commission-reassurance span{font-size:11px;color:#633a3a}
+.v2-commission .commission-reassurance h3{font-size:48px;margin:25px 0 10px}
+.v2-commission .commission-reassurance p{font-size:13px;color:#6e6259;max-width:300px}
+@media(max-width:950px){.v2-commission .commission-intro-v2{grid-template-columns:1fr 1fr}.v2-commission .commission-intro-text{padding:40px}.v2-commission .commission-intro-text h1{font-size:clamp(57px,7vw,80px)}.v2-commission .commission-builder-layout{gap:24px}.v2-commission .commission-config-panel{padding:30px}.v2-commission .form-fields{grid-template-columns:1fr;gap:0}}
+@media(max-width:800px){.v2-commission .commission-intro-v2{grid-template-columns:1fr}.v2-commission .commission-intro-text{padding:70px 7%;min-height:470px}.v2-commission .commission-intro-text h1{font-size:clamp(65px,12vw,100px)}.v2-commission .commission-intro-image{min-height:0;height:clamp(360px,90vw,600px)}.v2-commission .commission-builder-v2{padding:75px 6%}.v2-commission .commission-builder-heading{margin-bottom:45px}.v2-commission .commission-builder-layout{grid-template-columns:1fr;gap:45px}.v2-commission .commission-art-panel>img{height:clamp(350px,85vw,550px)}.v2-commission .commission-note{margin-top:20px}.v2-commission .commission-reassurance{grid-template-columns:1fr;gap:25px;padding:65px 7%}}
+@media(max-width:520px){.v2-commission .commission-intro-text h1{font-size:clamp(57px,14vw,78px)}.v2-commission .commission-builder-heading h2{font-size:clamp(53px,12vw,72px)}.v2-commission .commission-config-panel h3{font-size:55px}.v2-commission .commission-art-caption{display:block;line-height:2}.v2-commission .price-display{padding:22px 18px}.v2-commission .commission-config-panel{padding:28px 20px}.v2-commission .commission-builder-v2{padding-left:4%;padding-right:4%}}
