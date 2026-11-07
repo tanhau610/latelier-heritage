@@ -161,3 +161,20 @@
  .editorial-gallery .editorial-pair .pair-a img{object-position:50% 0%}
  .editorial-gallery .editorial-pair .pair-b img{object-position:50% 38%}
 }
+
+/* ATELIER HAU — restrained icon system; vector-only, no emoji glyphs. */
+.site-header .header-cta span{display:none}
+.site-header .mobile-menu{color:var(--wine);font-family:Arial,sans-serif;font-size:0;width:44px;height:44px;display:none;align-items:center;justify-content:center;padding:0;border:1px solid transparent;border-radius:0}
+.site-header .mobile-menu::before{content:"";display:block;width:20px;height:14px;border-top:2px solid currentColor;border-bottom:2px solid currentColor;background:linear-gradient(currentColor,currentColor) center/100% 2px no-repeat}
+.site-header .mobile-menu[aria-expanded="true"]::before{width:19px;height:19px;border:0;background:linear-gradient(45deg,transparent 46%,currentColor 47%,currentColor 53%,transparent 54%),linear-gradient(-45deg,transparent 46%,currentColor 47%,currentColor 53%,transparent 54%)}
+.round-link b{font-size:0;position:relative;flex:none;width:48px;height:48px;border-color:var(--wine)}
+.round-link b::before,.round-link b::after{content:"";position:absolute;display:block}
+.round-link b::before{width:15px;height:1px;background:currentColor;transform:rotate(-45deg);top:23px;left:17px}
+.round-link b::after{width:8px;height:8px;border-top:1px solid currentColor;border-right:1px solid currentColor;top:15px;left:24px}
+.round-link{gap:18px;line-height:1.5}
+.tiny-star{width:32px;height:32px;margin:35px auto 0;font-size:0;position:relative;color:#a58c6c}
+.tiny-star::before,.tiny-star::after{content:"";position:absolute;top:50%;left:50%;width:24px;height:1px;background:currentColor;transform:translate(-50%,-50%)}
+.tiny-star::after{transform:translate(-50%,-50%) rotate(90deg)}
+.header-cta,.section-line a,.underline-link,.pill-light,.footer-button,.action-main,.commission-proceed{letter-spacing:.11em}
+@media(max-width:800px){.site-header .mobile-menu{display:flex;flex-shrink:0}.site-header .mobile-menu:focus-visible{outline:2px solid var(--wine);outline-offset:3px}.round-link b{width:42px;height:42px}.round-link b::before{top:20px;left:14px}.round-link b::after{top:12px;left:21px}.manifesto .tiny-star{margin-top:28px}}
+@media(max-width:520px){.round-link{font-size:9px;gap:14px;justify-content:flex-start}.round-link b{width:40px;height:40px}.round-link b::before{top:19px;left:13px}.round-link b::after{top:11px;left:20px}.manifesto .tiny-star{width:26px;height:26px}.manifesto .tiny-star::before,.manifesto .tiny-star::after{width:20px}}
