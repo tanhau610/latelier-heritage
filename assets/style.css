@@ -85,3 +85,20 @@
 @media(max-width:800px){.editorial-home{grid-template-columns:1fr;min-height:0}.editorial-home .home-copy{min-height:0;padding:62px 26px 55px}.editorial-home h1{font-size:clamp(62px,13vw,94px);margin:30px 0 15px}.editorial-home .home-visual{min-height:420px;max-height:580px}.hero-actions{gap:20px}.home-closing{padding:85px 0}}
 @media(max-width:420px){.editorial-home h1{font-size:clamp(54px,13.5vw,72px)}.hero-actions{align-items:flex-start;flex-direction:column}.editorial-home .home-visual{min-height:340px}}
 @media(prefers-reduced-motion:reduce){.editorial-home *, .home-closing *{scroll-behavior:auto;transition:none!important}}
+
+
+/* Art-in-your-home editorial module; uses actual gallery artwork and a CSS-only room mockup */
+.art-in-home{background:#eee7dd;padding:clamp(65px,8vw,115px) 0}
+.art-in-home-layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:clamp(30px,6vw,95px);align-items:center}
+.art-in-home-scene{min-width:0}
+.art-in-home-wall{position:relative;min-height:clamp(340px,42vw,550px);overflow:hidden;display:flex;align-items:flex-start;justify-content:center;padding:clamp(36px,5vw,65px) 12% 0;background:linear-gradient(115deg,#f9f4eb 0%,#e9e0d4 67%,#d9cebf 100%);box-shadow:inset -30px 0 55px #77655310}
+.art-in-home-wall:after{content:"";position:absolute;left:0;right:0;bottom:0;height:13%;background:linear-gradient(#b4a596,#d0c0ad);box-shadow:0 -3px 12px #66554414}
+.art-in-home-frame{position:relative;z-index:1;width:min(52%,285px);padding:9px;background:#49372d;border:4px solid #8a6746;box-shadow:2px 12px 24px #2f211f45,0 0 0 1px #38271e}
+.art-in-home-frame img{width:100%;height:auto;aspect-ratio:4/5;object-fit:cover;border:9px solid #f6f1e8}
+.art-in-home-console{position:absolute;bottom:8%;left:16%;width:68%;height:9%;z-index:1;background:linear-gradient(#795744,#4d352b);box-shadow:0 12px 15px #39282033}
+.mockup-disclaimer{display:block;margin-top:12px;font-size:11px;color:#766b60;letter-spacing:.02em}
+.art-in-home-copy h2{font-size:clamp(45px,5vw,76px);margin:16px 0 22px}
+.art-in-home-copy p{max-width:510px;color:#5c534d;font-size:15px}
+.art-in-home-copy .utility-note{font-size:12px;border-left:2px solid #a88a5b;padding-left:13px;margin:25px 0}
+@media(max-width:800px){.art-in-home-layout{grid-template-columns:1fr}.art-in-home-wall{min-height:400px}.art-in-home-copy{padding:10px 0 0}}
+@media(max-width:480px){.art-in-home-wall{min-height:320px}.art-in-home-frame{width:55%}.art-in-home-copy h2{font-size:49px}}
