@@ -6,3 +6,34 @@
 
 /* V2 QA: order flow and responsive overflow */
 [hidden]{display:none!important}html,body{max-width:100%;overflow-x:clip}.site-header{min-width:0}.navigation{min-width:0}.hero-new>*{min-width:0}.hero-title h1,.inner-intro h1,.footer h2{overflow-wrap:normal}.order-stage{background:#f8f4ed;padding:100px 6%;scroll-margin-top:110px}.order-stage-inner{max-width:1100px;margin:auto}.order-stage-heading{max-width:650px}.order-stage-heading h2{font-size:clamp(50px,6vw,90px);line-height:1.05;margin:22px 0}.order-stage-heading p{font-size:14px;color:#675c51}.order-form{display:grid;grid-template-columns:310px minmax(0,1fr);gap:35px 65px;margin-top:55px}.order-summary{padding:28px;border:1px solid #c8baaa;display:flex;flex-direction:column;gap:20px;align-self:start}.order-summary>span{font-size:10px;letter-spacing:.15em}.order-summary strong{font-size:16px;font-weight:500}.order-summary strong:nth-of-type(2){font-family:Italiana,Georgia,serif;font-size:48px;font-weight:400}.text-button{border:0;border-bottom:1px solid var(--ink);background:none;align-self:flex-start;padding:8px 0;font-size:12px}.order-fields{display:grid;grid-template-columns:1fr 1fr;gap:20px}.order-fields label{display:flex;flex-direction:column;gap:10px;font-size:11px;font-weight:600;letter-spacing:.06em}.order-fields label.full{grid-column:1/-1}.order-fields input,.order-fields textarea{min-width:0;width:100%;border:1px solid #c9bbaa;background:#fffdf9;padding:15px;color:var(--ink);font-size:14px;letter-spacing:0}.order-fields input[type=file]{font-size:12px}.order-fields small{font-size:10px;color:#6b6056;font-weight:400}.order-form>.action-main,.order-form>.demo-notice{grid-column:2}.review-panel{max-width:760px;margin:50px auto 0;background:#e9e0d3;padding:45px}.review-panel h3{font-size:46px}.review-panel p{overflow-wrap:anywhere}.action-main{cursor:pointer}.gallery-image{cursor:zoom-in}.lightbox-close{cursor:pointer}.hero-title h1{overflow-wrap:break-word}@media(max-width:1150px){.site-header{gap:12px}.navigation{gap:9px}.navigation a{font-size:8px;letter-spacing:.06em}}@media(max-width:800px){.order-stage{padding:70px 7%}.order-form{grid-template-columns:1fr;gap:25px}.order-form>.action-main,.order-form>.demo-notice{grid-column:1}.order-summary{max-width:none}.hero-title h1{font-size:clamp(58px,11vw,100px)}}@media(max-width:520px){.order-fields{grid-template-columns:1fr}.order-fields label.full{grid-column:1}.order-stage-heading h2{font-size:50px}.inner-intro h1{font-size:clamp(48px,13vw,70px)}.footer h2{font-size:clamp(48px,12vw,68px)}.hero-title h1{font-size:clamp(58px,15vw,82px)}.announcement{padding:0 8px;font-size:7px;gap:7px}.commission-panel h2,.pricing-copy h2,.about-copy h2,.contact-panel h2{font-size:clamp(45px,11vw,65px)}}
+
+
+/* 2026-11-07: Correct V2 hero overlap. Contain artwork in its own grid cell. */
+@media (min-width:801px){
+ .hero-new{height:clamp(690px,calc(100svh - 129px),920px);min-height:0;max-height:none;align-items:stretch;overflow:hidden}
+ .hero-art{height:100%;min-height:0;min-width:0;overflow:hidden;isolation:isolate}
+ .hero-art>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center center}
+ .hero-editorial{min-height:0;min-width:0;overflow:hidden;gap:22px}
+ .hero-title{min-width:0}
+ .hero-title h1{font-size:clamp(66px,6.6vw,114px);line-height:.96;overflow-wrap:normal}
+ .hero-title p{margin-bottom:22px}
+}
+@media (min-width:801px) and (max-height:800px){
+ .hero-new{height:clamp(620px,calc(100svh - 129px),760px)}
+ .hero-editorial{padding-top:28px;padding-bottom:24px}
+ .hero-title h1{font-size:clamp(60px,6vw,99px);margin-bottom:22px}
+ .hero-title p{font-size:13px;line-height:1.6;margin-bottom:18px}
+ .round-link b{width:48px;height:48px}
+}
+@media (max-width:800px){
+ .hero-new{height:auto;max-height:none;min-height:0;overflow:visible}
+ .hero-art{height:clamp(380px,110vw,650px);min-height:0;overflow:hidden}
+ .hero-art>img{width:100%;height:100%;object-fit:cover}
+ .hero-editorial{height:auto;min-height:490px;overflow:visible}
+ .hero-title h1{overflow-wrap:normal}
+}
+@media (max-width:520px){
+ .hero-art{height:clamp(330px,105vw,520px)}
+ .hero-editorial{min-height:480px}
+ .hero-title h1{font-size:clamp(51px,12vw,72px)}
+}
