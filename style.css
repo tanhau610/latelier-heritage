@@ -147,3 +147,7 @@
  .editorial-gallery .editorial-pair .pair-a img,
  .editorial-gallery .editorial-pair .pair-b img{height:auto;aspect-ratio:4/3;max-height:none;object-fit:cover}
 }
+
+
+/* Selected Works: move the two-dog artwork down inside the frame to reveal both bodies. */
+.editorial-gallery .editorial-pair .pair-b img{object-position:center 100%}
