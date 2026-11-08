@@ -300,3 +300,42 @@ body.gallery-modal-open{overflow:hidden}
 
 /* Entrance animation is JS-triggered, so content remains visible without JS. */
 @media(prefers-reduced-motion:reduce){main h1,main h2,main h3,main p{animation:none!important;transition:none!important}}
+
+/* ATELIER HAU — refined gallery navigation, shared across every page */
+.site-header{isolation:isolate;box-shadow:none;transition:height .32s cubic-bezier(.2,.7,.2,1),background .32s ease,box-shadow .32s ease}
+.site-header .logo{position:relative;z-index:2;transition:opacity .22s ease}
+.site-header .logo:hover{opacity:.82}
+.site-header .navigation{gap:clamp(13px,1.6vw,27px)}
+.site-header .navigation a{font-weight:500;letter-spacing:.105em;transition:color .24s ease}
+.site-header .navigation a::after{height:1.5px;bottom:3px;background:var(--wine);transition:right .35s cubic-bezier(.2,.75,.2,1)}
+.site-header .navigation a:hover{color:var(--wine)}
+.site-header .header-cta{position:relative;overflow:hidden;transition:background .28s ease,color .28s ease,transform .28s ease,box-shadow .28s ease}
+.site-header .header-cta:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(80,37,44,.14)}
+.site-header.is-scrolled{box-shadow:0 7px 24px rgba(57,37,42,.055)}
+@media(min-width:901px){
+ .site-header .navigation a.current{font-weight:700}
+ .site-header .navigation a:focus-visible{outline-offset:8px}
+}
+@media(max-width:900px){
+ .site-header .mobile-menu{position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(99,45,52,.32);border-radius:50%;color:var(--wine);background:transparent;transition:border-color .25s,background .25s,transform .25s}
+ .site-header .mobile-menu::before,.site-header .mobile-menu::after{content:"";position:absolute;left:50%;width:19px;height:1.5px;background:currentColor;border-radius:2px;transition:transform .3s cubic-bezier(.2,.7,.2,1),top .3s ease}
+ .site-header .mobile-menu::before{top:calc(50% - 4px);transform:translateX(-50%)}
+ .site-header .mobile-menu::after{top:calc(50% + 4px);transform:translateX(-50%)}
+ .site-header .mobile-menu[aria-expanded="true"]{background:var(--wine);color:#fff;border-color:var(--wine)}
+ .site-header .mobile-menu[aria-expanded="true"]::before{top:50%;transform:translateX(-50%) rotate(45deg)}
+ .site-header .mobile-menu[aria-expanded="true"]::after{top:50%;transform:translateX(-50%) rotate(-45deg)}
+ .site-header .navigation,.site-header .navigation.open{display:flex;visibility:hidden;opacity:0;pointer-events:none;transform:translateY(-12px);transition:opacity .28s ease,transform .34s cubic-bezier(.2,.7,.2,1),visibility .28s;z-index:1}
+ .site-header .navigation.open{visibility:visible;opacity:1;pointer-events:auto;transform:translateY(0)}
+ .site-header .navigation{padding:clamp(20px,5vh,44px) 7% 38px;background:var(--paper);box-shadow:0 24px 40px rgba(49,32,35,.13)}
+ .site-header .navigation a{position:relative;font-size:clamp(29px,6vw,42px);line-height:1.12;min-height:65px;padding:14px 10px 14px 0!important;letter-spacing:-.025em}
+ .site-header .navigation a.current::before{content:"";position:absolute;left:-15px;top:50%;width:6px;height:6px;border-radius:50%;background:var(--wine);transform:translateY(-50%)}
+ .site-header .navigation a:hover{padding-left:7px!important}
+ .site-header .navigation.open::after{letter-spacing:.17em;padding-top:5px}
+ body.menu-open{overflow:hidden}
+}
+@media(max-width:520px){
+ .site-header .navigation{max-height:calc(100dvh - 72px)}
+ .site-header .navigation a{font-size:clamp(28px,8vw,37px);min-height:59px}
+ .site-header .mobile-menu{width:44px;height:44px}
+}
+@media(prefers-reduced-motion:reduce){.site-header .mobile-menu,.site-header .mobile-menu::before,.site-header .mobile-menu::after,.site-header .navigation,.site-header .navigation a,.site-header .logo{transition:none!important}}
