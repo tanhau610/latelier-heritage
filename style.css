@@ -281,3 +281,19 @@ body.gallery-modal-open{overflow:hidden}
 .lightbox button:focus-visible{outline:2px solid #d9b67d;outline-offset:3px}
 @media(max-width:700px){.lightbox-figure{max-width:94vw;max-height:80dvh}.lightbox-figure img{max-height:calc(80dvh - 50px)}.lightbox-prev,.lightbox-next{top:auto;bottom:25px;transform:none;width:43px;height:43px}.lightbox-prev{left:18px}.lightbox-next{right:18px}.lightbox-count{left:50%;right:auto;transform:translateX(-50%);bottom:40px}.lightbox-caption{font-size:9px;max-width:85vw}.lightbox-close{z-index:2}}
 @media(prefers-reduced-motion:reduce){.gallery-item.gallery-reveal{opacity:1;transform:none;transition:none}.gallery-image img,.filters button{transition:none}}
+
+/* Gallery-inspired home slideshow: subtle crossfade, no moving layout */
+.hero-art{position:relative;overflow:hidden}
+.hero-slideshow{position:absolute;inset:0;overflow:hidden}
+.hero-slideshow .hero-slide{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:0;visibility:hidden;transition:opacity 1.4s ease,visibility 1.4s ease}
+.hero-slideshow .hero-slide.is-active{opacity:1;visibility:visible}
+.hero-art-credit{z-index:2}
+.hero-slide-controls{position:absolute;z-index:3;right:22px;bottom:24px;display:flex;align-items:center;gap:9px}
+.hero-slide-controls button{width:24px;height:24px;border:0;background:transparent;padding:8px;display:grid;place-items:center}
+.hero-slide-controls button:before{content:'';display:block;width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.58);border:1px solid rgba(50,34,29,.35);transition:background .25s,transform .25s}
+.hero-slide-controls button.is-active:before{background:#fff;transform:scale(1.35)}
+.hero-slide-controls button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.editorial-reveal{opacity:0;transform:translateY(20px);transition:opacity .85s ease var(--reveal-delay,0ms),transform .85s cubic-bezier(.22,.7,.2,1) var(--reveal-delay,0ms)}
+.editorial-reveal.editorial-in-view{opacity:1;transform:translateY(0)}
+@media(max-width:700px){.hero-slide-controls{right:12px;bottom:15px}.hero-slideshow .hero-slide{object-position:center}}
+@media(prefers-reduced-motion:reduce){.hero-slideshow .hero-slide{transition:none}.hero-slideshow .hero-slide:not(:first-child){display:none}.hero-slide-controls{display:none}.editorial-reveal{opacity:1;transform:none;transition:none}}
