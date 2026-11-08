@@ -9,13 +9,17 @@
   const API=window.Tawk_API=window.Tawk_API||{};
   window.Tawk_LoadStart=new Date();
   let ready=false;
+  const hideNativeLauncher=()=>{
+    hideNativeLauncher();
+  };
   API.onLoad=function(){
     ready=true;
     if(typeof API.hideWidget==='function') API.hideWidget();
   };
   API.onChatMaximized=function(){launcher.setAttribute('aria-expanded','true');};
-  API.onChatMinimized=function(){launcher.setAttribute('aria-expanded','false');};
+  API.onChatMinimized=function(){launcher.setAttribute('aria-expanded','false');hideNativeLauncher();};
   API.onChatHidden=function(){launcher.setAttribute('aria-expanded','false');};
+  API.onChatEnded=function(){launcher.setAttribute('aria-expanded','false');hideNativeLauncher();};
   launcher.setAttribute('aria-expanded','false');
   launcher.addEventListener('click',()=>{
     if(!ready || typeof API.maximize!=='function'){
