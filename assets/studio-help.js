@@ -12,8 +12,9 @@
   let loaded=false, opening=false;
   const hideNative=()=>{if(typeof API.hideWidget==='function')API.hideWidget();};
   const setClosed=()=>{opening=false;launcher.setAttribute('aria-expanded','false');root.classList.remove('is-chat-open');hideNative();};
+  const setOpened=()=>{opening=false;greeting.hidden=true;launcher.setAttribute('aria-expanded','true');root.classList.add('is-chat-open');};
   API.onLoad=function(){loaded=true;hideNative();};
-  API.onChatMaximized=function(){opening=false;launcher.setAttribute('aria-expanded','true');root.classList.add('is-chat-open');};
+  API.onChatMaximized=setOpened;
   API.onChatMinimized=setClosed;
   API.onChatHidden=function(){opening=false;launcher.setAttribute('aria-expanded','false');root.classList.remove('is-chat-open');};
   launcher.addEventListener('click',()=>{
@@ -29,10 +30,10 @@
     greeting.hidden=true;
     if(typeof API.showWidget==='function')API.showWidget();
     API.maximize();
-    launcher.setAttribute('aria-expanded','true');
-    root.classList.add('is-chat-open');
-    setTimeout(()=>{opening=false;},1000);
+    setOpened();
   });
+  // The welcome hint is introductory only; never leave it behind the chat window.
+  setTimeout(()=>{greeting.hidden=true;},8000);
   const script=document.createElement('script');
   script.async=true;
   script.src='https://embed.tawk.to/6af083a868f8173c38bfc5de/1k6to4itt';
