@@ -297,3 +297,6 @@ body.gallery-modal-open{overflow:hidden}
 .editorial-reveal.editorial-in-view{opacity:1;transform:translateY(0)}
 @media(max-width:700px){.hero-slide-controls{right:12px;bottom:15px}.hero-slideshow .hero-slide{object-position:center}}
 @media(prefers-reduced-motion:reduce){.hero-slideshow .hero-slide{transition:none}.hero-slideshow .hero-slide:not(:first-child){display:none}.hero-slide-controls{display:none}.editorial-reveal{opacity:1;transform:none;transition:none}}
+
+/* Entrance animation is JS-triggered, so content remains visible without JS. */
+@media(prefers-reduced-motion:reduce){main h1,main h2,main h3,main p{animation:none!important;transition:none!important}}
