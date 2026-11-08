@@ -1,1 +1,39 @@
-(()=>{if(document.querySelector('#ah-help-launcher'))return;const root=document.createElement('div');root.className='ah-help';root.innerHTML='<button id="ah-help-launcher" class="ah-help-launcher" type="button" aria-expanded="false" aria-controls="ah-help-panel"><span class="ah-help-dot"></span> Ask the studio <span aria-hidden="true">＋</span></button><section id="ah-help-panel" class="ah-help-panel" aria-label="Contact ATELIER HAU" hidden><div class="ah-help-head"><div><strong>ATELIER HAU</strong><small>We’re happy to help with your portrait.</small></div><button class="ah-help-close" type="button" aria-label="Close chat">×</button></div><div class="ah-help-body"><p>Questions about a custom oil portrait, delivery or your photographs?</p><a class="ah-help-action" href="contact.html">Send an enquiry <span aria-hidden="true">→</span></a><a class="ah-help-secondary" href="commission.html">Explore commissioning</a><small>Our studio replies by email. Live messaging will be available after the chat service is connected.</small></div></section>';document.body.append(root);const launcher=root.querySelector('#ah-help-launcher'),panel=root.querySelector('#ah-help-panel');function toggle(open){panel.hidden=!open;launcher.setAttribute('aria-expanded',String(open));launcher.querySelector('[aria-hidden]').textContent=open?'−':'＋'}launcher.addEventListener('click',()=>toggle(panel.hidden));root.querySelector('.ah-help-close').addEventListener('click',()=>toggle(false));document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!panel.hidden){toggle(false);launcher.focus()}});})();
+/* ATELIER HAU — branded launcher for Tawk.to live chat */
+(()=>{
+  if(document.querySelector('#ah-help-launcher')) return;
+  const root=document.createElement('div');
+  root.className='ah-help';
+  root.innerHTML='<button id="ah-help-launcher" class="ah-help-launcher" type="button" aria-label="Chat with ATELIER HAU"><span class="ah-help-dot"></span> Ask the studio <span aria-hidden="true">＋</span></button>';
+  document.body.appendChild(root);
+  const launcher=root.querySelector('#ah-help-launcher');
+  const API=window.Tawk_API=window.Tawk_API||{};
+  window.Tawk_LoadStart=new Date();
+  let ready=false;
+  API.onLoad=function(){
+    ready=true;
+    if(typeof API.hideWidget==='function') API.hideWidget();
+  };
+  API.onChatMaximized=function(){launcher.setAttribute('aria-expanded','true');};
+  API.onChatMinimized=function(){launcher.setAttribute('aria-expanded','false');};
+  API.onChatHidden=function(){launcher.setAttribute('aria-expanded','false');};
+  launcher.setAttribute('aria-expanded','false');
+  launcher.addEventListener('click',()=>{
+    if(!ready || typeof API.maximize!=='function'){
+      launcher.disabled=true;
+      launcher.setAttribute('aria-busy','true');
+      const original=launcher.innerHTML;
+      launcher.textContent='Connecting to the studio…';
+      setTimeout(()=>{launcher.disabled=false;launcher.removeAttribute('aria-busy');launcher.innerHTML=original;},1600);
+      return;
+    }
+    if(typeof API.showWidget==='function') API.showWidget();
+    API.maximize();
+    launcher.setAttribute('aria-expanded','true');
+  });
+  const script=document.createElement('script');
+  script.async=true;
+  script.src='https://embed.tawk.to/6af083a868f8173c38bfc5de/1k6to4itt';
+  script.charset='UTF-8';
+  script.setAttribute('crossorigin','*');
+  document.head.appendChild(script);
+})();
