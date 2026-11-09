@@ -1,3 +1,4 @@
+import {atelierSender} from "../_lib/brand-email.js";
 import {sendSandboxCustomerEmail} from "../_lib/sandbox-customer-email.js";
 // Preview-only one-page checkout. SANDBOX ONLY. Never use this handler for live payments.
 // All customer records and photos are private Cloudflare R2 objects; the browser receives only a bearer token.
@@ -50,7 +51,7 @@ async function notifyStudio(env,subject,lines,id){
       method:"POST",
       headers:{"Authorization":"Bearer "+env.RESEND_API_KEY,"Content-Type":"application/json; charset=utf-8"},
       body:JSON.stringify({
-        from:env.RESEND_FROM||"ATELIER HAU <onboarding@resend.dev>",
+        from:atelierSender(env),
         to:[env.NOTIFICATION_EMAIL],
         subject,text:lines.join("\n")
       })
