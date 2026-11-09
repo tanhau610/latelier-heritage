@@ -168,3 +168,25 @@
 .checkout-header .checkout-brand{display:block!important;flex:0 0 292px;width:292px;height:52px;background:url('atelier-hau-logo-desktop.png') left center/contain no-repeat;font-size:0!important;color:transparent!important;white-space:nowrap;overflow:hidden}
 @media(max-width:850px){.checkout-header .checkout-brand{flex-basis:210px;width:210px;height:48px;background-image:url('atelier-hau-logo-mobile.png')}}
 @media(max-width:540px){.checkout-header .checkout-brand{flex-basis:170px;width:170px;height:40px}}
+
+/* Checkout QA: use the approved site wordmark and keep the purchase flow unobstructed. */
+.checkout-header .checkout-brand{
+ background-image:url('atelier-hau-header-logo.png')!important;
+ background-position:left center;
+ background-size:contain;
+}
+@media(max-width:850px){
+ .checkout-header .checkout-brand{background-image:url('atelier-hau-header-logo.png')!important}
+}
+@media(max-width:600px){
+ /* The live chat launcher otherwise overlaps the fixed step controls on phones. */
+ .checkout-body .ah-help{display:none!important}
+ .checkout-header{gap:12px;padding:15px 16px}
+ .checkout-header .checkout-brand{flex:0 1 190px;width:min(48vw,190px);height:45px}
+ .checkout-header>a:last-child{flex:none;max-width:42vw;text-align:right;line-height:1.4}
+ .checkout-container{width:calc(100% - 28px);padding-bottom:54px}
+ .checkout-card input:not([type=checkbox]):not([type=radio]),
+ .checkout-card select,.checkout-card textarea{font-size:16px}
+ .checkout-stage-footer{padding-bottom:max(14px,env(safe-area-inset-bottom))}
+ .checkout-stage-actions{min-width:0}
+}
