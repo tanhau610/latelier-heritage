@@ -106,7 +106,7 @@ async function start(request,env){
     await put(env.PORTRAIT_UPLOADS,path(id,"payment.json"),{id,quotedAt,totalCents,depositCents,balanceCents,checkoutPlan:plan,sandbox:!live});
     await put(env.PORTRAIT_UPLOADS,path(id,"checkout-access.json"),{id,tokenHash:await digest(token),expiresAt:new Date(Date.now()+90*86400000).toISOString(),createdAt:quotedAt});
     // Register an unpaid checkout for the scheduled Worker; no email is sent at order creation.
-    await put(env.PORTRAIT_UPLOADS,"pending-checkouts/"+id+".json",{id,createdAt:quotedAt,notifyAfter:new Date(Date.now()+10*60*1000).toISOString(),sandbox:!live});
+    if(!live)await put(env.PORTRAIT_UPLOADS,"pending-checkouts/"+id+".json",{id,createdAt:quotedAt,notifyAfter:new Date(Date.now()+10*60*1000).toISOString(),sandbox:true});
   }catch(e){console.error("Sandbox order storage failed",id,e);return fail("Could not save your order securely. Please contact the studio.",503);}
   return json({ok:true,id,token,sandbox:!live});
 }
@@ -221,12 +221,12 @@ async function action(request,env){
   // Duplicate capture requests return above without sending a second email.
   const paidLabel=stage==="deposit"?"ĐÃ THANH TOÁN CỌC 50%":stage==="balance"?"ĐÃ THANH TOÁN PHẦN CÒN LẠI":"ĐÃ THANH TOÁN TOÀN BỘ";
   const outstanding=stage==="deposit"?payment.balanceCents/100:0;
-  await notifyStudio(env,"[SANDBOX] ["+paidLabel+"] Đơn tranh "+id,[
+  await notifyStudio(env,(live?"[LIVE] ":"[SANDBOX] ")+"["+paidLabel+"] Đơn tranh "+id,[
     "ATELIER HAU — XÁC NHẬN THANH TOÁN",
-    "CHẾ ĐỘ THỬ NGHIỆM SANDBOX — KHÔNG CÓ TIỀN THẬT.",
+    live?"GIAO DỊCH PAYPAL LIVE — TIỀN THẬT.":"CHẾ ĐỘ THỬ NGHIỆM SANDBOX — KHÔNG CÓ TIỀN THẬT.",
     "",
     "TRẠNG THÁI: "+paidLabel,
-    "PayPal Sandbox đã xác nhận giao dịch thành công.",
+    live?"PayPal Live đã xác nhận giao dịch thành công.":"PayPal Sandbox đã xác nhận giao dịch thành công.",
     "",
     "Mã đơn: "+id,
     "Khách hàng: "+order.name,
@@ -246,7 +246,7 @@ async function action(request,env){
   // Payment is already securely recorded. Email is best-effort and cannot undo a capture.
   let emailTest="skipped";
   try {
-    const notification=await sendSandboxCustomerEmail({env,bucket,order,payment,event:"payment-"+stage,eventKey:"payment-"+stage});
+    const notification=live?{ok:false,reason:"live-email-not-configured"}:await sendSandboxCustomerEmail({env,bucket,order,payment,event:"payment-"+stage,eventKey:"payment-"+stage});
     emailTest=notification.state;
   } catch(e) {console.error("Payment confirmation email logging failed",id,String(e));emailTest="failed";}
   return json({ok:true,paid:true,stage,sandbox:!live,emailTest});
@@ -254,7 +254,7 @@ async function action(request,env){
 export async function onRequestPost({request,env}){
   // Explicit branch guard: even accidental production deployment cannot use this checkout.
   if(!env.CF_PAGES_BRANCH)return fail("Checkout environment is not configured.",503);
-  if(env.CF_PAGES_BRANCH==="main"&&env.PAYPAL_MODE!=="live")return fail("Live checkout is not enabled.",503);
+  if(env.CF_PAGES_BRANCH==="main"&&(env.PAYPAL_MODE!=="live"||env.PAYPAL_LIVE_READY!=="yes"))return fail("Live checkout is not enabled.",503);
   if(env.CF_PAGES_BRANCH!=="main"&&env.PAYPAL_MODE==="live")return fail("Live payments are prohibited on preview.",403);
   if(!env.PORTRAIT_UPLOADS||!env.PAYPAL_CLIENT_ID||!env.PAYPAL_CLIENT_SECRET||!env.TURNSTILE_SECRET_KEY)return fail("Sandbox checkout is not configured for this preview.",503);
   const origin=request.headers.get("Origin");
