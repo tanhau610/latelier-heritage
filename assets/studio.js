@@ -348,6 +348,23 @@
         button.disabled=false;selectEl.disabled=false;note.disabled=false;
       }
     });
+    // Explicit Sandbox retry is available only on the Preview host. Never email customers.
+    if(location.hostname.endsWith(".pages.dev")&&order.checkoutMode==="sandbox-inline"&&order.status==="Ready for balance"&&!paidInFull(order)){
+      const retry=make("button","btn","Gửi lại email thử thanh toán còn lại");
+      retry.type="button";
+      const retryFeedback=make("p","studio-save-feedback");
+      retry.addEventListener("click",async()=>{
+        retry.disabled=true;retryFeedback.textContent="Đang kiểm tra và gửi email Sandbox…";
+        try{
+          const result=await api("status",{method:"POST",body:{id:order.id,status:order.status,internalNote:order.internalNote||"",sendBalanceTest:true}});
+          const messages={sent:"✓ Resend đã tiếp nhận email thử nghiệm. Kiểm tra hộp thư quản trị.", "already-sent":"Email thử nghiệm đã gửi trước đó; không gửi trùng.",failed:"Không gửi được email thử nghiệm. Kiểm tra cấu hình Resend Preview.",skipped:"Email thử nghiệm chưa được cấu hình.",unchanged:"Không có email nào được gửi."};
+          retryFeedback.textContent=messages[result.emailTest]||"Đã xử lý.";
+          void refreshEmailHistory();
+        }catch(error){retryFeedback.textContent="Lỗi: "+error.message;}
+        finally{retry.disabled=false;}
+      });
+      panel.append(retry,retryFeedback);
+    }
     panel.append(sectionHeading("Lịch sử email tự động"));
     const emailInfo=make("p","studio-footnote","CHẾ ĐỘ THỬ NGHIỆM: Email mẫu chỉ gửi đến hộp thư quản trị đã cấu hình, không gửi đến địa chỉ khách hàng.");
     const emailHistory=make("div","studio-email-history","Đang tải lịch sử email…");
