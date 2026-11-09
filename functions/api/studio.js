@@ -215,8 +215,10 @@ export async function onRequestPost(context){
       if(!tracking?.details?.carrier||!tracking?.details?.number||!tracking?.details?.url)return respond({ok:false,message:"Save tracking details first."},409);
       const payment=await readJson(bucket,paymentKey(id));
       const sandbox=await readJson(bucket,sandboxPaymentKey(id));
-      const paid=order.checkoutMode==="sandbox-inline"&&sandbox?.quotedAt===payment?.quotedAt
-        ?Boolean(sandbox.full||(sandbox.deposit&&sandbox.balance)):Boolean(payment?.deposit&&payment?.balance);
+      const live=verifiedLive(order,payment,await readJson(bucket,livePaymentKey(id)));
+       const paid=order.checkoutMode==="live-inline"?fullyCaptured(live)
+         :order.checkoutMode==="sandbox-inline"?Boolean(sandbox?.quotedAt===payment?.quotedAt&&fullyCaptured(sandbox))
+         :Boolean(payment?.deposit&&payment?.balance);
       if(!paid)return respond({ok:false,message:"Verify full payment before notifying shipment."},409);
       const fingerprint=(await sha256([tracking.details.carrier,tracking.details.number,tracking.details.url].join("|"))).slice(0,32);
       const notification=await sendSandboxCustomerEmail({
@@ -231,7 +233,7 @@ export async function onRequestPost(context){
     try{
       const order=await getDetails(env.PORTRAIT_UPLOADS,id);
       if(!order)return respond({ok:false,message:"Order not found."},404);
-      if(order.checkoutMode==="sandbox-inline")return respond({ok:false,message:"Delivery address was collected at checkout; no shipping link is required."},409);
+      if(["sandbox-inline","live-inline"].includes(order.checkoutMode))return respond({ok:false,message:"Delivery address was collected at checkout; no shipping link is required."},409);
       if(["Shipped","Completed","Cancelled"].includes(order.status))return respond({ok:false,message:"This order cannot request new shipping details."},409);
       const token=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,"0")).join("");
       const expiresAt=new Date(Date.now()+14*24*60*60*1000).toISOString();
@@ -309,7 +311,7 @@ export async function onRequestPost(context){
     // Only genuine status transitions trigger a customer-facing email preview.
     // The customer is NEVER the recipient while running on Preview/Sandbox.
     let emailTest="unchanged";
-    if(status!==previousStatus&&status!=="New"){
+    if(previewOnly(env)&&status!==previousStatus&&status!=="New"){
       let checkoutLink=null;
       try{
         if(status==="Ready for balance"&&data.checkoutMode==="sandbox-inline"&&depositVerified&&!fullyVerified){
