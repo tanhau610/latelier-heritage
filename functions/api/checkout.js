@@ -133,7 +133,7 @@ async function action(request,env){
   const hashedToken=await digest(token);
   const activeAccess=[access,emailAccess].find(a=>a?.id===id&&Date.parse(a.expiresAt)>Date.now()&&same(hashedToken,a.tokenHash));
   if(!activeAccess)return fail("Checkout access expired or invalid.",403);
-  if(!order||order.id!==id||order.checkoutMode!==(live?"live-inline":"sandbox-inline")||payment.sandbox===live||!payment||payment.id!==id||payment.checkoutPlan!==order.checkoutPlan)return fail("Order not found.",404);
+  if(!order||order.id!==id||order.checkoutMode!==(live?"live-inline":"sandbox-inline")||!payment||payment.sandbox===live||payment.id!==id||payment.checkoutPlan!==order.checkoutPlan)return fail("Order not found.",404);
   const state=due(order,payment,ledger);
   // A capture may have succeeded even if the customer's network lost the response.
   // Return the existing verified result for the exact same PayPal order, without charging again.
@@ -206,14 +206,14 @@ async function action(request,env){
   catch(e){if(e.status!==422)throw e;result=await paypal(env,"/v2/checkout/orders/"+encodeURIComponent(input.orderID));}
   const captures=result.purchase_units?.flatMap(u=>u.payments?.captures||[])||[];
   const matched=captures.find(c=>c.status==="COMPLETED"&&c.amount?.currency_code==="AUD"&&c.amount?.value===amount);
-  if(result.status!=="COMPLETED"||!matched||result.purchase_units?.[0]?.custom_id!==reference)throw Error("Sandbox capture could not be verified.");
-  const current=await read(bucket,path(id,"paypal-sandbox-payments.json"));
+  if(result.status!=="COMPLETED"||!matched||result.purchase_units?.[0]?.custom_id!==reference)throw Error("PayPal capture could not be verified.");
+  const current=await read(bucket,path(id,ledgerFile));
   if(current?.quotedAt===payment.quotedAt&&current[stage])return json({ok:true,paid:true,stage,sandbox:!live});
   const latest=await read(bucket,path(id,"payment.json"));
   if(latest?.quotedAt!==payment.quotedAt)return fail("Order changed during payment. Contact the studio.",409);
   const next=current?.quotedAt===payment.quotedAt?current:{id,quotedAt:payment.quotedAt};
-  next[stage]={reference:matched.id,paypalOrderId:result.id,amountCents:state.amountCents,verifiedAt:new Date().toISOString(),verification:"paypal-sandbox-capture",sandbox:true};
-  await put(bucket,path(id,"paypal-sandbox-payments.json"),next);
+  next[stage]={reference:matched.id,paypalOrderId:result.id,amountCents:state.amountCents,verifiedAt:new Date().toISOString(),verification:live?"paypal-live-capture":"paypal-sandbox-capture",sandbox:!live};
+  await put(bucket,path(id,ledgerFile),next);
   // A verified capture cancels the delayed unpaid email. The Worker independently re-checks this ledger.
   try{await bucket.delete("pending-checkouts/"+id+".json");}
   catch(error){console.error("Could not clear unpaid notification marker",id,error);}
