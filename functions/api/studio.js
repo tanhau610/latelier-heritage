@@ -264,7 +264,7 @@ export async function onRequestPost(context){
       const bucket=env.PORTRAIT_UPLOADS;
       const order=await getDetails(bucket,id);
       if(!order)return respond({ok:false,message:"Order not found."},404);
-      if(["sandbox-inline","live-inline"].includes(order.checkoutMode))return respond({ok:false,message:"Online checkout orders cannot be manually repriced or recorded.",409});
+      if(["sandbox-inline","live-inline"].includes(order.checkoutMode))return respond({ok:false,message:"Online checkout orders cannot be manually repriced or recorded."},409);
       if(["Cancelled","Shipped","Completed"].includes(order.status))return respond({ok:false,message:"This order cannot be updated for payment."},409);
       const key=paymentKey(id);
       const current=await readJson(bucket,key);
