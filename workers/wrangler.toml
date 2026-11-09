@@ -1,0 +1,20 @@
+name = "atelier-live-balance-reminders"
+main = "live-balance-reminders.js"
+compatibility_date = "2026-11-01"
+
+# Safe by default: no customer email until explicitly enabled in Cloudflare.
+[vars]
+LIVE_BALANCE_REMINDERS = "disabled"
+PAYPAL_MODE = "live"
+PAYPAL_LIVE_READY = "yes"
+RESEND_FROM = "ATELIER HAU <orders@atelierhau.com>"
+
+[[r2_buckets]]
+binding = "PORTRAIT_UPLOADS"
+bucket_name = "latelier-heritage-enquiries"
+
+[triggers]
+crons = ["0 3 * * *"]
+
+# Configure RESEND_API_KEY as a Cloudflare Worker secret, never in this file.
+# Do not change LIVE_BALANCE_REMINDERS to enabled before QA and payment reconciliation.
