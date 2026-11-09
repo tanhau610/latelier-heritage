@@ -210,7 +210,7 @@
         });
         const field=make("textarea","studio-link-field");field.readOnly=true;field.rows=3;field.value=result.url;
         const mail=make("a","studio-email","Soạn email gửi khách");
-        mail.href="mailto:"+encodeURIComponent(order.email||"")+"?subject="+encodeURIComponent("Delivery details for your L’Atelier Heritage portrait "+order.id)+"&body="+encodeURIComponent("Hello "+order.name+",\n\nPlease use this secure link to confirm the delivery address for your portrait:\n"+result.url+"\n\nThis link expires in 14 days.\n\nKind regards,\nL’Atelier Heritage");
+        mail.href="mailto:"+encodeURIComponent(order.email||"")+"?subject="+encodeURIComponent("Delivery details for your ATELIER HAU portrait "+order.id)+"&body="+encodeURIComponent("Hello "+order.name+",\n\nPlease use this secure link to confirm the delivery address for your portrait:\n"+result.url+"\n\nThis link expires in 14 days.\n\nKind regards,\nATELIER HAU");
         linkResult.append(label,copy,field,mail);
       }catch(e){showMessage(e.message);}
       finally{linkButton.disabled=false;linkButton.textContent="Tạo liên kết nhập địa chỉ";}
