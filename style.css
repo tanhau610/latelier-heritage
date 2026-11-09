@@ -231,7 +231,7 @@ body,.site-header{background:var(--paper)}
 /* Editorial Navigation v3 — accessible, responsive, art-first */
 .site-header{height:88px;padding-inline:clamp(22px,4.3vw,78px);gap:clamp(22px,3vw,48px);background:rgba(245,240,231,.97);border-bottom:1px solid rgba(99,45,52,.13);transition:height .28s ease,box-shadow .28s ease,background .28s ease}
 .site-header.is-scrolled{height:74px;box-shadow:0 9px 30px rgba(57,37,42,.07);background:rgba(250,247,240,.985)}
-.site-header .logo{width:clamp(154px,13vw,198px);flex:none}
+.site-header .logo{width:clamp(205px,17vw,235px);flex:none}
 .site-header .logo img{width:100%!important;height:auto;max-width:100%;object-fit:contain}
 .site-header .navigation{gap:clamp(14px,1.9vw,32px);justify-content:center}
 .site-header .navigation a{position:relative;display:inline-flex;align-items:center;min-height:44px;padding:5px 0;border:0!important;font-size:10px;font-weight:600;letter-spacing:.115em;color:#655750;transition:color .2s ease}
