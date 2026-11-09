@@ -51,7 +51,8 @@ async function processOrder(env,id,sender){
     const checkoutLink="https://atelierhau.com/checkout#"+new URLSearchParams({id,token}).toString();
     await b.put(p+"checkout-email-access-"+day+"d.json",JSON.stringify({id,tokenHash:await sha256(token),expiresAt,createdAt:new Date().toISOString()}),{httpMetadata:{contentType:"application/json"}});
     const record={id,event:"live-balance-reminder",day,eventKey,state:"pending",createdAt:new Date().toISOString()};
-    await b.put(key,JSON.stringify(record),{httpMetadata:{contentType:"application/json"}});
+    const claimed=await b.put(key,JSON.stringify(record),{onlyIf:{etagDoesNotMatch:"*"},httpMetadata:{contentType:"application/json"}});
+    if(!claimed)continue; // another Worker claimed this reminder
     const subject="A gentle reminder about your portrait · "+id;
     const body="Hello "+(order.name||"there")+",\n\nYour hand-painted portrait is ready. The remaining balance is A$"+(payment.balanceCents/100).toFixed(2)+". Pay the remaining balance securely here: "+checkoutLink+"\n\nOrder: "+id+"\n\nATELIER HAU";
     const html="<div style='font-family:Arial,sans-serif;max-width:580px;margin:auto'><h1 style='color:#743f48;font-family:Georgia,serif'>ATELIER HAU</h1><p>Hello "+esc(order.name||"there")+",</p><p>Your hand-painted portrait is ready. The remaining balance is <strong>A$"+(payment.balanceCents/100).toFixed(2)+"</strong>.</p><p><a href='"+esc(checkoutLink)+"' style='background:#743f48;color:white;padding:14px 22px;text-decoration:none'>Pay remaining balance</a></p><p>Order: "+esc(id)+"</p></div>";
