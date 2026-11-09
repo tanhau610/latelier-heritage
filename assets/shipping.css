@@ -31,3 +31,8 @@
 .shipping-edit-button{margin-top:16px;background:#683b40;color:white;border:0;padding:16px 25px;letter-spacing:.09em;text-transform:uppercase;font:600 11px Arial,sans-serif;cursor:pointer}
 .shipping-edit-button:hover,.shipping-button:hover{background:#4c2d32}
 .shipping-success:focus{outline:none}
+
+/* Approved logo trial for secure shipping and payment pages. */
+.shipping-header .shipping-brand{display:block!important;flex:0 0 292px;width:292px;height:52px;background:url('atelier-hau-logo-desktop.png') left center/contain no-repeat;font-size:0!important;color:transparent!important;white-space:nowrap;overflow:hidden}
+@media(max-width:700px){.shipping-header .shipping-brand{flex-basis:200px;width:200px;height:45px;background-image:url('atelier-hau-logo-mobile.png')}}
+@media(max-width:390px){.shipping-header .shipping-brand{flex-basis:170px;width:170px;height:40px}}

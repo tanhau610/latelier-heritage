@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><script>if(location.hostname==="atelierhau.com"||location.hostname==="www.atelierhau.com"){location.replace("/commission.html");}</script><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive"><meta name="referrer" content="no-referrer">
+<meta http-equiv="Cache-Control" content="no-store">
+<title>Secure Sandbox Payment | ATELIER HAU</title>
+<link rel="stylesheet" href="assets/style.css"><link rel="stylesheet" href="assets/shipping.css">
+<style>
+.payment-panel{border:1px solid #e7ddd2;background:#faf7f3;padding:32px 24px;margin:24px 0;text-align:center}
+.payment-panel h2{font-family:Georgia,serif;font-size:32px;line-height:1.2;margin:10px 0;color:#392f2a}
+.payment-panel .amount{font-size:34px;font-weight:600;color:#63383e;margin:12px 0}
+.payment-panel p{line-height:1.7}
+.payment-panel .sandbox{background:#fff0ce;color:#75510a;padding:12px;margin:14px 0;font-size:14px;font-weight:700}
+#paypal-buttons{max-width:420px;margin:24px auto 0}
+#payment-message{margin:18px 0;line-height:1.7;color:#63383e}
+</style>
+</head>
+<body class="shipping-page">
+<header class="shipping-header"><a href="index.html" class="shipping-brand">ATELIER HAU</a><span>PRIVATE PAYMENT LINK</span></header>
+<main class="shipping-main"><section class="shipping-card">
+<span class="shipping-eyebrow">Made by hand, held close to heart</span>
+<h1>Your portrait payment.</h1>
+<p class="shipping-intro">Please review the amount before proceeding. This private link is specific to your commission.</p>
+<section class="payment-panel" aria-live="polite">
+<div class="sandbox">SANDBOX TEST — NO REAL MONEY WILL BE CHARGED</div>
+<p id="payment-reference">Checking your secure link…</p>
+<h2 id="payment-stage"></h2>
+<div class="amount" id="payment-amount"></div>
+<p id="payment-message" role="status"></p>
+<div id="paypal-buttons"></div>
+</section>
+<p class="shipping-footer">Do not share your private payment link. For questions, reply to your email conversation with ATELIER HAU.</p>
+</section></main>
+<script defer src="assets/payment.js"></script>
+</body></html>

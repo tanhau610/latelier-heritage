@@ -1,0 +1,192 @@
+.checkout-body{background:#f8f5ef;color:#352e29}.checkout-header{display:flex;align-items:center;gap:22px;justify-content:space-between;padding:22px max(5vw,20px);background:#f2ece4;border-bottom:1px solid #ded5cb}.checkout-header a{font-size:12px;color:#5f4141}.checkout-header .checkout-brand{font:500 31px Georgia,serif;color:#54363c}.checkout-header span{font-size:10px;letter-spacing:.15em;color:#765b50}.checkout-container{width:min(1200px,calc(100% - 40px));margin:0 auto;padding:52px 0 90px}.checkout-intro{max-width:720px;margin-bottom:25px}.checkout-intro h1{font-size:clamp(49px,6vw,80px);margin:12px 0 20px}.checkout-intro p{font-size:15px;color:#6d625c}.checkout-sandbox{border:1px solid #c6a35e;background:#fff5dc;color:#76510c;padding:14px 18px;margin:22px 0 32px;font-size:12px;line-height:1.6}.checkout-grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(290px,.9fr);gap:28px;align-items:start}.checkout-main{display:grid;gap:22px}.checkout-card{background:#fff;border:1px solid #e3dcd4;padding:34px;box-shadow:0 12px 30px #4d36290a}.checkout-card h2{font-size:42px;margin:12px 0 26px}.checkout-step{color:#7b474c;font-size:11px;letter-spacing:.17em;font-weight:700}.checkout-card label:not(.checkout-choice):not(.checkout-check){display:block;font-size:12px;font-weight:600;margin:0 0 18px}.checkout-card input:not([type=checkbox]):not([type=radio]),.checkout-card select,.checkout-card textarea{display:block;width:100%;border:1px solid #d8d0c8;background:#fff;padding:13px 12px;min-height:46px;font-size:13px;color:#352e29;margin-top:8px;border-radius:0}.checkout-card textarea{resize:vertical}.checkout-card input[type=file]{padding:10px!important}.checkout-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}.checkout-hint{font-size:12px;color:#756a61;line-height:1.65}.checkout-preview{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin:12px 0}.checkout-preview img{height:85px;object-fit:cover}.checkout-check{display:flex;align-items:flex-start;gap:11px;font-size:12px;line-height:1.7;margin:17px 0}.checkout-check input{accent-color:#713f43;flex:none;margin-top:4px}.checkout-check a{text-decoration:underline;color:#713f43}.checkout-choice{display:flex;align-items:center;gap:14px;border:1px solid #ded5cd;padding:20px;margin:12px 0;cursor:pointer}.checkout-choice:has(input:checked){border-color:#713f43;background:#fbf7f4}.checkout-choice input{accent-color:#713f43;flex:none}.checkout-choice span{display:grid;gap:5px;flex:1}.checkout-choice strong{font-size:14px}.checkout-choice small{font-size:12px;color:#70645c;line-height:1.5}.checkout-choice b{font-size:16px;white-space:nowrap}.checkout-submit{width:100%;margin-top:16px}.checkout-submit:disabled{opacity:.6;cursor:wait}.checkout-message{font-size:13px;line-height:1.6;color:#713f43;margin:15px 0 0}.checkout-hidden{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden}.checkout-summary{position:sticky;top:22px;background:#f1ebe3;border:1px solid #e1d6c9}.checkout-summary img{height:230px;object-fit:cover}.checkout-summary-inner{padding:25px}.checkout-summary h3{font-size:32px;margin:12px 0}.checkout-summary p{font-size:12px;color:#70645c}.checkout-line{display:flex;justify-content:space-between;align-items:baseline;gap:14px;border-bottom:1px solid #d8cdc2;padding:14px 0;font-size:12px}.checkout-line strong{font-size:13px;white-space:nowrap}.checkout-total{font-weight:700;font-size:15px}.checkout-total strong{font-size:19px}.checkout-due{color:#713f43;font-weight:700}.checkout-due strong{font-size:24px}.checkout-pay-panel{max-width:700px;margin:0 auto;text-align:center}.checkout-pay-panel h2{margin-bottom:18px}.checkout-pay-amount{font:500 48px Georgia,serif;color:#713f43;margin:20px 0}.checkout-pay-panel #paypal-buttons{max-width:450px;margin:25px auto}.checkout-pay-panel #payment-message{font-size:14px;line-height:1.6;color:#6a4b4f}.checkout-footer{text-align:center;background:#30291d;color:#e6dbcf;font-size:12px;padding:27px 20px}@media(max-width:850px){.checkout-grid{grid-template-columns:1fr}.checkout-summary{position:static;grid-row:1}.checkout-summary img{height:170px}.checkout-header span{display:none}.checkout-container{padding-top:30px}}@media(max-width:540px){.checkout-fields{grid-template-columns:1fr;gap:0}.checkout-card{padding:23px 18px}.checkout-choice{padding:15px 11px;gap:9px}.checkout-choice b{font-size:14px}.checkout-header .checkout-brand{font-size:23px}.checkout-header a{font-size:10px}.checkout-preview{grid-template-columns:repeat(3,1fr)}.checkout-intro h1{font-size:52px}}
+/* Guided three-step checkout: one focused form section at a time. */
+.checkout-progress{display:flex;align-items:center;gap:12px;margin:0 0 28px;padding:19px 23px;background:#fff;border:1px solid #e3dcd4}
+.checkout-progress-item{display:flex;align-items:center;gap:11px;min-width:0;flex:1;opacity:.52;color:#5b4b44}
+.checkout-progress-item strong{display:block;font-size:13px;letter-spacing:.01em;line-height:1.35}
+.checkout-progress-item small{display:block;font-size:11px;color:#7c716b;margin-top:3px}
+.checkout-progress-number{width:35px;height:35px;flex:none;border:1px solid #c9b9ae;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700}
+.checkout-progress-item.is-active,.checkout-progress-item.is-complete{opacity:1}
+.checkout-progress-item.is-active .checkout-progress-number{background:#713f43;color:#fff;border-color:#713f43}
+.checkout-progress-item.is-complete .checkout-progress-number{background:#f0e7df;border-color:#713f43;color:#713f43}
+.checkout-progress-rule{height:1px;background:#d8ccc3;flex:0 0 25px}
+.checkout-stage-actions{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:24px}
+.checkout-stage-actions .btn{width:auto;min-width:210px;margin:0;text-align:center}
+.checkout-stage-actions .checkout-next:only-child{margin-left:auto}
+.checkout-back{border:0;background:transparent;color:#713f43;cursor:pointer;font-size:13px;font-weight:700;padding:14px 6px}
+.checkout-back:hover{text-decoration:underline}
+.checkout-stage-error{color:#8a4141;font-size:12px;line-height:1.5;margin:6px 0}
+.checkout-pay-panel{width:100%;max-width:none;margin:0;text-align:center}
+.checkout-pay-panel h2{font-size:38px}
+.checkout-stage[hidden],.checkout-pay-panel[hidden]{display:none!important}
+@media(max-width:850px){.checkout-progress{margin-bottom:20px}}
+@media(max-width:540px){
+.checkout-progress{gap:5px;padding:13px 10px}
+.checkout-progress-item{gap:5px;flex-direction:column;text-align:center}
+.checkout-progress-number{width:29px;height:29px}
+.checkout-progress-item strong{font-size:10px}
+.checkout-progress-item small{font-size:9px}
+.checkout-progress-rule{flex:0 0 8px}
+.checkout-stage-actions{gap:10px}
+.checkout-stage-actions .btn{min-width:0;flex:1;padding:13px 10px;font-size:11px}
+.checkout-back{font-size:12px;white-space:nowrap}
+.checkout-pay-panel h2{font-size:30px}
+}
+
+.checkout-body.is-paying .checkout-summary .checkout-line:not(.checkout-total):not(.checkout-due){display:none}
+
+/* Returning to Delivery from a saved, unpaid Sandbox order. */
+.checkout-edit-link{display:inline-flex;align-items:center;justify-content:center;margin:12px auto 20px;padding:11px 15px;border:1px solid #d6c4ba;border-radius:3px}
+.checkout-edit-link:hover{background:#f5eee9}
+.checkout-body.is-editing-delivery [data-checkout-step="2"] [data-back],
+.checkout-body.is-editing-delivery [data-checkout-step="2"] [data-next]{display:none!important}
+.checkout-body.is-editing-delivery .checkout-edit-only:not([hidden]){display:inline-flex;align-items:center;justify-content:center}
+.checkout-body.is-editing-delivery #save-delivery-edit{min-width:245px}
+@media(max-width:540px){.checkout-body.is-editing-delivery #save-delivery-edit{min-width:0;font-size:10px}}
+
+.checkout-edit-link[hidden],.checkout-edit-only[hidden]{display:none!important}
+
+/* Consistent checkout viewport: every step, including PayPal, uses the same
+   outer dimensions. Long forms scroll inside the card rather than growing
+   the entire page. Keep a scrollbar gutter to prevent horizontal jumps. */
+.checkout-main{min-width:0;min-height:0}
+.checkout-main>.checkout-stage,
+.checkout-main>.checkout-pay-panel{
+  box-sizing:border-box;
+  width:100%;
+  height:clamp(460px,68dvh,610px);
+  min-height:0;
+  max-height:none;
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior-y:contain;
+  scrollbar-gutter:stable;
+  scrollbar-width:thin;
+  scrollbar-color:#b9a69a #f7f2ed;
+  -webkit-overflow-scrolling:touch;
+}
+.checkout-main>.checkout-stage::-webkit-scrollbar,
+.checkout-main>.checkout-pay-panel::-webkit-scrollbar{width:8px}
+.checkout-main>.checkout-stage::-webkit-scrollbar-track,
+.checkout-main>.checkout-pay-panel::-webkit-scrollbar-track{background:#f7f2ed}
+.checkout-main>.checkout-stage::-webkit-scrollbar-thumb,
+.checkout-main>.checkout-pay-panel::-webkit-scrollbar-thumb{background:#b9a69a;border-radius:8px}
+@media(max-width:540px){
+  .checkout-main>.checkout-stage,
+  .checkout-main>.checkout-pay-panel{height:clamp(440px,65dvh,580px)}
+}
+
+/* Etsy-inspired checkout: the body of each step scrolls, while progress
+   and Back / Continue stay visible in a dedicated, non-scrolling footer. */
+.checkout-main>.checkout-stage,
+.checkout-main>.checkout-pay-panel{
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  padding:0;
+  scrollbar-gutter:auto;
+}
+.checkout-stage-content,
+.checkout-pay-content{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior-y:contain;
+  scrollbar-gutter:stable;
+  scrollbar-width:thin;
+  scrollbar-color:#b9a69a #f7f2ed;
+  -webkit-overflow-scrolling:touch;
+  padding:30px 34px 18px;
+}
+.checkout-stage-content::-webkit-scrollbar,
+.checkout-pay-content::-webkit-scrollbar{width:7px}
+.checkout-stage-content::-webkit-scrollbar-thumb,
+.checkout-pay-content::-webkit-scrollbar-thumb{background:#b9a69a;border-radius:8px}
+.checkout-stage-footer{
+  flex:0 0 auto;
+  background:#fff;
+  border-top:1px solid #e6ded7;
+  padding:0 34px 18px;
+  box-shadow:0 -6px 14px rgba(70,48,41,.025);
+}
+.checkout-stage-track{display:flex;gap:4px;height:4px;margin:0 -34px 14px;background:#eee8e3}
+.checkout-stage-track span{flex:1;background:#e8e0d9}
+[data-checkout-step="1"] .checkout-stage-track span:nth-child(-n+1),
+[data-checkout-step="2"] .checkout-stage-track span:nth-child(-n+2),
+[data-checkout-step="3"] .checkout-stage-track span:nth-child(-n+3),
+.checkout-pay-panel .checkout-stage-track span{background:#713f43}
+.checkout-stage-footer .checkout-stage-actions{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-top:0;
+  gap:12px;
+}
+.checkout-stage-footer .checkout-back{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:none;
+  border:1px solid #e9e3dd;
+  border-radius:99px;
+  background:#f7f4f1;
+  padding:12px 24px;
+  font-size:13px;
+  text-decoration:none;
+  line-height:1.25;
+}
+.checkout-stage-footer .checkout-back:hover{background:#eee7e1;text-decoration:none}
+.checkout-stage-footer .checkout-stage-actions .btn{
+  flex:0 0 auto;
+  min-width:124px;
+  border-radius:99px;
+  padding:13px 27px;
+  font-size:12px;
+  line-height:1.3;
+}
+.checkout-pay-footer .checkout-edit-link{margin:0}
+.checkout-pay-footer-note{font-size:12px;line-height:1.5;color:#77665c;text-align:right;margin-left:auto}
+.checkout-summary img{
+  display:block;
+  width:100%;
+  height:230px;
+  object-fit:cover;
+  object-position:center 42%;
+  background:#e8e1d8;
+}
+@media(max-width:540px){
+  .checkout-stage-content,.checkout-pay-content{padding:24px 18px 14px}
+  .checkout-stage-footer{padding:0 18px 14px}
+  .checkout-stage-track{margin:0 -18px 12px}
+  .checkout-stage-footer .checkout-back{padding:11px 19px}
+  .checkout-stage-footer .checkout-stage-actions .btn{min-width:114px;padding:12px 20px;font-size:12px}
+  .checkout-pay-footer-note{font-size:10px}
+  .checkout-summary img{height:170px}
+}
+
+/* Approved logo trial for private checkout. */
+.checkout-header .checkout-brand{display:block!important;flex:0 0 292px;width:292px;height:52px;background:url('atelier-hau-logo-desktop.png') left center/contain no-repeat;font-size:0!important;color:transparent!important;white-space:nowrap;overflow:hidden}
+@media(max-width:850px){.checkout-header .checkout-brand{flex-basis:210px;width:210px;height:48px;background-image:url('atelier-hau-logo-mobile.png')}}
+@media(max-width:540px){.checkout-header .checkout-brand{flex-basis:170px;width:170px;height:40px}}
+
+/* Checkout QA: use the approved site wordmark and keep the purchase flow unobstructed. */
+.checkout-header .checkout-brand{
+ background-image:url('atelier-hau-header-logo.png')!important;
+ background-position:left center;
+ background-size:contain;
+}
+@media(max-width:850px){
+ .checkout-header .checkout-brand{background-image:url('atelier-hau-header-logo.png')!important}
+}
+@media(max-width:600px){
+ /* The live chat launcher otherwise overlaps the fixed step controls on phones. */
+ .checkout-body .ah-help{display:none!important}
+ .checkout-header{gap:12px;padding:15px 16px}
+ .checkout-header .checkout-brand{flex:0 1 190px;width:min(48vw,190px);height:45px}
+ .checkout-header>a:last-child{flex:none;max-width:42vw;text-align:right;line-height:1.4}
+ .checkout-container{width:calc(100% - 28px);padding-bottom:54px}
+ .checkout-card input:not([type=checkbox]):not([type=radio]),
+ .checkout-card select,.checkout-card textarea{font-size:16px}
+ .checkout-stage-footer{padding-bottom:max(14px,env(safe-area-inset-bottom))}
+ .checkout-stage-actions{min-width:0}
+}

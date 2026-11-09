@@ -1,0 +1,65 @@
+(()=>{const menu=document.querySelector('.mobile-menu'),nav=document.querySelector('.navigation');menu?.addEventListener('click',()=>{const open=nav.classList.toggle('open');menu.setAttribute('aria-expanded',String(open));menu.setAttribute('aria-label',open?'Close navigation':'Open navigation');document.body.classList.toggle('menu-open',open)});const header=document.querySelector('.site-header');const setScroll=()=>header?.classList.toggle('is-scrolled',window.scrollY>36);setScroll();window.addEventListener('scroll',setScroll,{passive:true});const closeNav=()=>{nav?.classList.remove('open');document.body.classList.remove('menu-open');menu?.setAttribute('aria-expanded','false');menu?.setAttribute('aria-label','Open navigation')};document.addEventListener('keydown',e=>{if(e.key==='Escape')closeNav()});document.addEventListener('click',e=>{if(nav?.classList.contains('open')&&!e.target.closest('.site-header'))closeNav()});nav?.querySelectorAll('a').forEach(a=>a.addEventListener('click',closeNav));window.addEventListener('resize',()=>{if(window.innerWidth>900)closeNav()});
+// Quiet editorial motion; all content remains readable when animation is disabled.
+const motionQuery=window.matchMedia('(prefers-reduced-motion: reduce)');
+const slides=[...document.querySelectorAll('.hero-slideshow .hero-slide')],slideDots=[...document.querySelectorAll('.hero-slide-controls button')];
+if(slides.length>1){
+ let slideIndex=0,slideTimer=null;
+ const heroArt=document.querySelector('.hero-art');
+ const showSlide=n=>{
+  slideIndex=(n+slides.length)%slides.length;
+  slides.forEach((slide,i)=>{slide.classList.toggle('is-active',i===slideIndex);slide.setAttribute('aria-hidden',String(i!==slideIndex))});
+  slideDots.forEach((dot,i)=>{dot.classList.toggle('is-active',i===slideIndex);if(i===slideIndex)dot.setAttribute('aria-current','true');else dot.removeAttribute('aria-current')});
+ };
+ const stopSlide=()=>{if(slideTimer!==null){clearInterval(slideTimer);slideTimer=null}};
+ const startSlide=()=>{stopSlide();if(!motionQuery.matches&&!document.hidden)slideTimer=setInterval(()=>showSlide(slideIndex+1),3000)};
+ const navigateTo=n=>{showSlide(n);startSlide()};
+ slideDots.forEach((dot,i)=>dot.addEventListener('click',()=>navigateTo(i)));
+ heroArt?.querySelector('.hero-slide-prev')?.addEventListener('click',()=>navigateTo(slideIndex-1));
+ heroArt?.querySelector('.hero-slide-next')?.addEventListener('click',()=>navigateTo(slideIndex+1));
+ let touchStartX=null;
+ heroArt?.addEventListener('touchstart',event=>{if(event.touches.length===1)touchStartX=event.touches[0].clientX},{passive:true});
+ heroArt?.addEventListener('touchend',event=>{if(touchStartX===null)return;const dx=event.changedTouches[0].clientX-touchStartX;touchStartX=null;if(Math.abs(dx)>45)navigateTo(slideIndex+(dx<0?1:-1))},{passive:true});
+ document.addEventListener('visibilitychange',()=>document.hidden?stopSlide():startSlide());
+ motionQuery.addEventListener?.('change',startSlide);
+ showSlide(0);startSlide();
+}
+
+// Consistent editorial entrance motion across all public pages.
+// Use Web Animations API so content is never hidden if JavaScript fails or is delayed.
+if(!motionQuery.matches&&'IntersectionObserver'in window&&typeof Element.prototype.animate==='function'){
+ const main=document.querySelector('main');
+ if(main){
+  const selectors=[
+   '.hero-top .eyebrow','.hero-top .hero-index','.hero-title h1','.hero-title p','.hero-title .round-link',
+   '.inner-intro .eyebrow','.inner-intro h1','.inner-intro p',
+   '.split-hero .eyebrow','.split-hero h1','.split-hero p',
+   '.manifesto .eyebrow','.manifesto p',
+   '.section-line','.quote-block .eyebrow','.quote-block h2','.quote-block p',
+   '.image-story-copy .eyebrow','.image-story-copy h2','.image-story-copy p',
+   '.steps-preview .steps-row > div',
+   '.process-list > div','.process-list h2','.process-list p',
+   '.gallery-header h1','.gallery-header p','.gallery-intro h1','.gallery-intro p',
+   '.gallery-wrap .filter-row','.gallery-item','.editorial-pair > a',
+   '.commission-form h1','.commission-form h2','.commission-form p',
+   '.pricing-table','.pricing-grid','.contact-form h2','.contact-form p',
+   'main .eyebrow','main h1','main h2','main h3','main p',
+   'main .art-meta','main .underline-link','main .pill-light'
+  ];
+  const candidates=[...new Set(selectors.flatMap(s=>[...main.querySelectorAll(s)]))];
+  // Avoid animating both a parent and its text descendants at the same time.
+  const selected=candidates.filter(el=>!candidates.some(parent=>parent!==el&&parent.contains(el)&&(
+   parent.matches('.process-list > div,.steps-preview .steps-row > div,.gallery-item,.editorial-pair > a,.section-line,.pricing-table,.pricing-grid')
+  )));
+  const headerBottom=document.querySelector('.site-header')?.getBoundingClientRect().bottom||0;
+  const topThreshold=Math.max(headerBottom+120,window.innerHeight*.70);
+  const isTop=el=>el.getBoundingClientRect().top<topThreshold;
+  const animateIn=(el,delay)=>{if(el.dataset.editorialAnimated)return;el.dataset.editorialAnimated='true';el.animate([{opacity:0,transform:'translate3d(0,18px,0)'},{opacity:1,transform:'translate3d(0,0,0)'}],{duration:820,delay,easing:'cubic-bezier(.22,.7,.2,1)',fill:'both'})};
+  const topItems=selected.filter(isTop);
+  topItems.forEach((el,i)=>animateIn(el,Math.min(i,5)*85));
+  const observer=new IntersectionObserver((entries,obs)=>{entries.forEach(entry=>{if(entry.isIntersecting){obs.unobserve(entry.target);animateIn(entry.target,0)}})},{threshold:.08,rootMargin:'0px 0px -32px 0px'});
+  selected.filter(el=>!isTop(el)).forEach(el=>observer.observe(el));
+ }
+}
+const filterBtns=[...document.querySelectorAll('[data-filter]')];filterBtns.forEach(b=>b.addEventListener('click',()=>{filterBtns.forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('[data-category]').forEach(item=>item.hidden=b.dataset.filter!=='all'&&!item.dataset.category.split(' ').includes(b.dataset.filter))}));const lb=document.querySelector('.lightbox'),artButtons=[...document.querySelectorAll('.gallery-image')];let activeArtwork=0,previousFocus=null;const visibleArt=()=>artButtons.filter(b=>!b.closest('.gallery-item')?.hidden);function showArt(index){const all=visibleArt();if(!all.length)return;activeArtwork=(index+all.length)%all.length;const item=all[activeArtwork],pic=item.querySelector('img'),caption=item.closest('.gallery-item')?.querySelector('.art-meta span');const display=lb?.querySelector('img');if(!display)return;display.src=pic.currentSrc||pic.src;display.alt=pic.alt;const cap=lb.querySelector('.lightbox-caption');if(cap)cap.textContent=caption?.textContent||pic.alt;const count=lb.querySelector('.lightbox-count');if(count)count.textContent=(activeArtwork+1)+' / '+all.length}function openArt(button){if(!lb)return;previousFocus=document.activeElement;const all=visibleArt();showArt(all.indexOf(button));lb.classList.add('open');lb.setAttribute('aria-hidden','false');document.body.classList.add('gallery-modal-open');lb.querySelector('.lightbox-close')?.focus()}function closeArt(){if(!lb?.classList.contains('open'))return;lb.classList.remove('open');lb.setAttribute('aria-hidden','true');document.body.classList.remove('gallery-modal-open');previousFocus?.focus?.()}artButtons.forEach(b=>b.addEventListener('click',()=>openArt(b)));lb?.querySelector('.lightbox-close')?.addEventListener('click',closeArt);lb?.querySelector('.lightbox-prev')?.addEventListener('click',()=>showArt(activeArtwork-1));lb?.querySelector('.lightbox-next')?.addEventListener('click',()=>showArt(activeArtwork+1));lb?.addEventListener('click',e=>{if(e.target===lb)closeArt()});document.addEventListener('keydown',e=>{if(!lb?.classList.contains('open'))return;if(e.key==='Escape'){e.preventDefault();closeArt()}else if(e.key==='ArrowRight'){e.preventDefault();showArt(activeArtwork+1)}else if(e.key==='ArrowLeft'){e.preventDefault();showArt(activeArtwork-1)}else if(e.key==='Tab'){const controls=[...lb.querySelectorAll('button')];const idx=controls.indexOf(document.activeElement);if(e.shiftKey&&idx===0){e.preventDefault();controls[controls.length-1].focus()}else if(!e.shiftKey&&idx===controls.length-1){e.preventDefault();controls[0].focus()}}});if('IntersectionObserver'in window){const reveal=new IntersectionObserver((entries,observer)=>{entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('is-visible');observer.unobserve(entry.target)}})},{threshold:.08,rootMargin:'0px 0px 45px 0px'});document.querySelectorAll('.gallery-item').forEach(item=>{item.classList.add('gallery-reveal');reveal.observe(item)})}else document.querySelectorAll('.gallery-item').forEach(item=>item.classList.add('is-visible'));const prices={'20x25':[229,299],'30x40':[379,469],'40x50':[499,599],'50x70':[699,829]};const size=document.querySelector('#size'),pets=document.querySelector('#pets'),card=document.querySelector('#card');function update(){if(!size)return;const n=Number(pets.value),p=prices[size.value][n===1?0:1]+Math.max(0,n-2)*(size.value==='50x70'?100:80)+(card.checked?15:0);document.querySelector('#price').textContent='A$'+p.toLocaleString('en-AU')}[size,pets,card].forEach(x=>x?.addEventListener('change',update));update();const proceed=document.querySelector('#proceed-order'),stage=document.querySelector('#order-stage');proceed?.addEventListener('click',()=>{const n=Number(pets.value),names={'20x25':'20 × 25 cm','30x40':'30 × 40 cm','40x50':'40 × 50 cm','50x70':'50 × 70 cm'};document.querySelector('#order-summary-text').textContent=names[size.value]+' · '+n+(n===1?' companion':' companions')+(card.checked?' · Gift note':'');document.querySelector('#order-summary-price').textContent=document.querySelector('#price').textContent;stage.hidden=false;stage.scrollIntoView({behavior:'smooth',block:'start'});});document.querySelector('#edit-selection')?.addEventListener('click',()=>{stage.hidden=true;document.querySelector('.commission-panel').scrollIntoView({behavior:'smooth'})});document.querySelector('#order-form')?.addEventListener('submit',e=>{e.preventDefault();const form=e.currentTarget;if(!form.reportValidity())return;const data=new FormData(form),photo=data.get('photo');const review=document.querySelector('#review-panel');review.innerHTML='<span class="eyebrow">ORDER REVIEW / DEMO</span><h3>Ready to create something lasting.</h3><p><b>Name:</b> '+escapeText(data.get('name'))+'</p><p><b>Email:</b> '+escapeText(data.get('email'))+'</p><p><b>Companion:</b> '+escapeText(data.get('petname'))+'</p><p><b>Reference image:</b> '+escapeText(photo?.name||'Not selected')+'</p><p><b>Selection:</b> '+escapeText(document.querySelector('#order-summary-text').textContent)+'</p><p><b>Estimate:</b> '+escapeText(document.querySelector('#order-summary-price').textContent)+'</p><p class="demo-notice">DEMO COMPLETE. NO ORDER HAS BEEN SENT OR PAYMENT COLLECTED.</p>';review.hidden=false;review.scrollIntoView({behavior:'smooth'});});function escapeText(v){return String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}document.querySelector('#demo-contact')?.addEventListener('submit',e=>{e.preventDefault();document.querySelector('#form-note').textContent='This is a visual demo. No message has been sent.'})})();
+// Public-domain safety: the inline PayPal flow is Sandbox-only and must not be offered on the live storefront.
+(function(){const host=location.hostname;if(host!=="atelierhau.com"&&host!=="www.atelierhau.com")return;const form=document.querySelector('#commission-form[action="checkout.html"]');if(!form)return;form.addEventListener('submit',function(e){e.preventDefault();const size=form.querySelector('[name="size"]')?.value||"";const pets=form.querySelector('[name="pets"]')?.value||"";const country=form.querySelector('[name="country"]')?.value||"";const card=form.querySelector('[name="card"]')?.checked?"yes":"no";const query=new URLSearchParams({size,pets,country,card});location.href="contact.html?"+query.toString();});const button=form.querySelector('button[type="submit"]');if(button)button.innerHTML='ENQUIRE ABOUT YOUR PORTRAIT <span aria-hidden="true">→</span>';const note=document.querySelector('.commission-checkout-note');if(note)note.textContent='Next: contact our studio to discuss your portrait, reference photos and payment arrangements. No payment is collected on this page.';})();

@@ -1,0 +1,30 @@
+/* ATELIER HAU discreet studio contact widget */
+.ah-help{position:fixed;right:clamp(16px,3vw,40px);bottom:clamp(16px,3vw,32px);z-index:1000;font-family:'DM Sans',Arial,sans-serif}.ah-help-launcher{display:flex;align-items:center;gap:12px;background:#65383d;color:#fff;border:1px solid #65383d;border-radius:100px;padding:14px 18px;box-shadow:0 9px 32px #30291d25;cursor:pointer;font-size:12px;letter-spacing:.045em}.ah-help-launcher:hover{background:#4f2b30}.ah-help-dot{width:7px;height:7px;border-radius:50%;background:#e2c6a1}.ah-help-panel{position:absolute;right:0;bottom:calc(100% + 14px);width:min(360px,calc(100vw - 32px));background:#faf8f3;border:1px solid #d9d0c3;box-shadow:0 20px 55px #30291d25;border-radius:12px;overflow:hidden;color:#30291d}.ah-help-panel[hidden]{display:none}.ah-help-head{background:#65383d;color:#fff;padding:20px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.ah-help-head strong{font-family:Georgia,serif;letter-spacing:.08em;font-weight:400;font-size:18px}.ah-help-head small{display:block;margin-top:7px;line-height:1.5;color:#f3e7df}.ah-help-close{background:none;color:#fff;border:0;font-size:26px;line-height:1;cursor:pointer}.ah-help-body{padding:22px}.ah-help-body p{font-size:13px;line-height:1.7;margin:0 0 20px}.ah-help-action{display:flex;justify-content:space-between;align-items:center;background:#65383d;color:white!important;padding:14px 16px;font-size:12px;letter-spacing:.05em}.ah-help-secondary{display:block;text-align:center;padding:14px 0;color:#65383d!important;text-decoration:underline;text-underline-offset:4px;font-size:12px}.ah-help-body small{display:block;color:#746d62;line-height:1.6;font-size:11px}.ah-faq{padding:90px max(6%,24px);background:#f5f1e9}.ah-faq-inner{max-width:980px;margin:auto}.ah-faq .ah-faq-kicker{font-size:10px;letter-spacing:.2em;font-weight:700;text-transform:uppercase;color:#713f43}.ah-faq h2{font-family:'Cormorant Garamond',Georgia,serif;font-size:clamp(46px,6vw,75px);font-weight:400;margin:14px 0 32px}.ah-faq details{border-top:1px solid #cfc3b7;padding:0}.ah-faq details:last-of-type{border-bottom:1px solid #cfc3b7}.ah-faq summary{list-style:none;cursor:pointer;padding:21px 30px 21px 0;font-size:14px;font-weight:500;position:relative}.ah-faq summary::-webkit-details-marker{display:none}.ah-faq summary:after{content:'+';position:absolute;right:3px;font-size:21px;top:16px;color:#713f43}.ah-faq details[open] summary:after{content:'−'}.ah-faq details p{max-width:750px;font-size:13px;color:#746d62;line-height:1.8;margin:0 0 22px}.ah-faq-more{display:inline-block;margin-top:25px;font-size:11px;text-transform:uppercase;letter-spacing:.12em;border-bottom:1px solid #713f43;padding-bottom:6px}@media(max-width:600px){.ah-help{right:14px;bottom:14px}.ah-help-launcher{padding:12px 14px;font-size:11px}.ah-faq{padding:65px 22px}.ah-faq summary{font-size:13px}}
+
+/* Refined studio chat: a single branded launcher and a quiet, non-blocking welcome. */
+.ah-help{display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+.ah-help-greeting{max-width:min(260px,calc(100vw - 36px));padding:11px 15px;background:#faf8f3;color:#65383d;border:1px solid #d9d0c3;border-radius:12px 12px 3px 12px;box-shadow:0 6px 22px #30291d15;font-size:12px;line-height:1.5;letter-spacing:0;animation:ahGreetingIn .55s ease-out both}
+.ah-help-greeting[hidden],.ah-help.is-chat-open .ah-help-greeting{display:none!important}
+.ah-help-launcher{transition:background .2s ease,transform .2s ease,box-shadow .2s ease}
+.ah-help-launcher:hover{transform:translateY(-2px);box-shadow:0 12px 32px #30291d32}
+.ah-help-launcher:focus-visible{outline:2px solid #b99468;outline-offset:4px}
+.ah-help.is-chat-open .ah-help-launcher{opacity:0;pointer-events:none}
+@keyframes ahGreetingIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:600px){.ah-help-greeting{max-width:220px;font-size:11px;padding:10px 12px}}
+@media(prefers-reduced-motion:reduce){.ah-help-greeting{animation:none}.ah-help-launcher{transition:none}}
+
+/* Compact mobile studio contact: protects artwork, gallery filters and checkout CTAs. */
+@media(max-width:900px){
+ body.menu-open .ah-help{display:none!important}
+}
+@media(max-width:600px){
+ .ah-help{right:12px;bottom:max(12px,env(safe-area-inset-bottom));gap:0}
+ .ah-help-greeting{display:none!important}
+ .ah-help-launcher{
+  min-height:44px;padding:11px 14px;gap:8px;
+  font-size:11px;line-height:1.2;letter-spacing:.01em;
+  border-radius:999px;box-shadow:0 5px 18px rgba(48,41,29,.16);
+ }
+ .ah-help-dot{width:6px;height:6px;flex:none}
+ .ah-help-launcher span[aria-hidden="true"]{font-size:14px;line-height:1}
+}

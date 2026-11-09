@@ -1,3 +1,4 @@
+import {atelierSender} from "../_lib/brand-email.js";
 // Cloudflare Pages Function. Keep credentials in Cloudflare encrypted secrets, never in GitHub.
 const prices = { "20x25":[229,299], "30x40":[379,469], "40x50":[499,599], "50x70":[699,829] };
 const destinations = new Set(["Australia","United States","United Kingdom","Canada"]);
@@ -71,7 +72,7 @@ export async function onRequestPost({request,env}){
   // No automatic customer email is sent. The private Gmail is a recipient only.
   let delivered=false;
   try{
-    const response=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":`Bearer ${env.RESEND_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify({from:env.RESEND_FROM||"L'Atelier Heritage <onboarding@resend.dev>",to:[env.NOTIFICATION_EMAIL],subject:`[L'Atelier Heritage] ${type==="commission"?"New portrait request":"New contact message"} ${id}`,text:lines.join("\n")})});
+    const response=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":`Bearer ${env.RESEND_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify({from:atelierSender(env),to:[env.NOTIFICATION_EMAIL],subject:`[ATELIER HAU] ${type==="commission"?"New portrait request":"New contact message"} ${id}`,text:lines.join("\n")})});
     delivered=response.ok;
     if(!delivered)console.error("Resend delivery rejected",id,response.status);
   }catch(error){console.error("Resend request failed",id,error);}

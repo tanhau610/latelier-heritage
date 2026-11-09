@@ -54,3 +54,314 @@
 .studio-shipping-link:empty{display:none}
 .studio-link-field{width:100%;padding:12px;border:1px solid #d7cbc0;font:12px/1.5 monospace;overflow-wrap:anywhere;resize:vertical}
 .studio-shipping .studio-email{justify-self:start}
+
+.studio-payment{padding:22px;border:1px solid #e7dfd4;background:#faf8f4;display:grid;gap:14px}
+.studio-payment .studio-footnote{margin:0;line-height:1.6}
+.studio-payment-summary{padding:14px 18px;background:#fff;border:1px solid #e8dfd5}
+.studio-payment-summary p{margin:7px 0;font-size:13px;color:#574840}
+.studio-payment-summary p:first-child{font-weight:700;font-size:16px;color:#553438}
+.studio-payment-form{display:grid;gap:12px;border-top:1px solid #e7dfd4;padding-top:16px}
+.studio-payment-form label{display:grid;gap:7px;font-size:12px;font-weight:600;color:#51433b}
+.studio-payment-form input[type=number],.studio-payment-form input[type=text]{min-height:46px;padding:10px 12px;background:#fff;border:1px solid #d8cdc1;color:#30291d;max-width:360px;width:100%}
+.studio-payment-form .btn{justify-self:start}
+.studio-payment-form .studio-payment-verify{display:flex;align-items:flex-start;gap:10px;font-weight:400;line-height:1.5;max-width:480px}
+.studio-payment-verify input{margin-top:3px;flex-shrink:0}
+.studio-payment-due{font-weight:700;color:#6e3e45;margin:0}
+.studio-payment-paid{color:#2f6240;font-weight:600;font-size:13px}
+
+/* Studio 2.0 — premium commerce dashboard, inspired by Shopify's information hierarchy */
+.studio-page{background:#f7f6f3;color:#332b29}
+.studio-page.studio-unlocked .studio-header{display:none}
+.studio-page.studio-unlocked .studio-main{max-width:none;margin:0;padding:0}
+.studio-dashboard[hidden],.studio-view[hidden]{display:none!important}
+.studio-shell{min-height:100vh;display:grid;grid-template-columns:248px minmax(0,1fr);font-family:Inter,'Helvetica Neue',Arial,sans-serif}
+.studio-sidebar{background:#312c2d;color:#f8f1ea;display:flex;flex-direction:column;min-height:100vh;padding:32px 17px 25px;position:sticky;top:0;height:100vh}
+.studio-sidebar-brand{display:flex;align-items:center;gap:12px;padding:2px 10px 49px}
+.studio-monogram{display:grid;place-items:center;flex:0 0 43px;height:43px;border:1px solid #a78978;border-radius:12px;font:600 20px Georgia,serif;color:#f7ede2}
+.studio-sidebar-brand strong{display:block;font:500 23px/1.15 Georgia,serif;letter-spacing:-.035em}
+.studio-sidebar-brand small{display:block;color:#c4ada1;letter-spacing:.15em;font-size:9px;margin-top:6px}
+.studio-nav-label{font-size:10px;letter-spacing:.18em;color:#b29e96;padding:0 15px;margin-bottom:17px;font-weight:700}
+.studio-navigation{display:grid;gap:7px}
+.studio-nav-item{display:flex;align-items:center;gap:13px;width:100%;border:0;border-radius:9px;background:transparent;color:#d3c7c1;font:500 13px Inter,Arial,sans-serif;padding:15px 14px;cursor:pointer;text-align:left}
+.studio-nav-item:hover{background:#494043;color:#fff}
+.studio-nav-item.active{background:#65474c;color:#fff;box-shadow:inset 3px 0 #d9b8a4}
+.studio-nav-icon{display:grid;place-items:center;width:21px;font-size:19px;line-height:1;color:#d2b4a7}
+.studio-nav-count{margin-left:auto;background:#76585b;color:#fff;border-radius:99px;padding:2px 7px;font-size:10px}
+.studio-sidebar-bottom{margin-top:auto;border-top:1px solid #554c4c;padding:23px 10px 0}
+.studio-sidebar-note{font-size:12px;line-height:1.8;color:#e5d9d0}
+.studio-sidebar-note small{padding-left:19px;color:#a99a94;font-size:11px}
+.studio-online-dot{display:inline-block;width:7px;height:7px;background:#8db6a0;border-radius:50%;margin-right:11px}
+.studio-sidebar-site{display:block;color:#f2d5c1!important;margin-top:23px;font-size:12px;text-decoration:none}
+.studio-workspace{min-width:0}
+.studio-topbar{height:76px;border-bottom:1px solid #e9e4dd;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 40px;gap:20px}
+.studio-breadcrumb{font-size:12px;color:#82756e}.studio-breadcrumb span{padding:0 11px;color:#bcb2ab}.studio-breadcrumb b{color:#352c2b;font-weight:600}
+.studio-topbar-right{display:flex;align-items:center;gap:22px}
+.studio-environment{background:#f7efe3;color:#986c41;border:1px solid #ecdfcc;border-radius:20px;padding:8px 11px;font-size:9px;letter-spacing:.09em;font-weight:800}
+.studio-lock{border:0;background:transparent;color:#68464b;cursor:pointer;font:600 12px Inter,Arial,sans-serif}
+.studio-content{padding:36px 40px 65px;max-width:1630px;margin:auto}
+.studio-page-heading{display:flex;justify-content:space-between;align-items:end;gap:20px;margin:0 0 27px}
+.studio-kicker{font-size:10px;color:#8e6666;letter-spacing:.17em;font-weight:800}
+.studio-page-heading h1{font:500 clamp(39px,4.2vw,59px)/1.1 Georgia,serif;letter-spacing:-.05em;margin:10px 0}
+.studio-page-heading p{font-size:13px;color:#81756e;margin:0;line-height:1.7}
+.studio-heading-actions{display:flex;align-items:center;gap:10px}
+.studio-period-label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.studio-heading-actions select{border:1px solid #e4dcd4;border-radius:9px;background:#fff;padding:12px 34px 12px 13px;font-size:12px;color:#443634;min-height:42px}
+.studio-refresh-analytics{width:42px;height:42px;border:1px solid #e4dcd4;background:#fff;border-radius:9px;font-size:24px;cursor:pointer;color:#68464b}
+.studio-analytics-notice{font-size:11px;color:#877870;margin:0 0 15px;min-height:15px}
+.studio-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.studio-kpi{background:#fff;border:1px solid #e9e3dc;border-radius:13px;min-height:159px;padding:23px 22px;box-shadow:0 5px 18px #4a332608}
+.studio-kpi-label{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#786c66;font-weight:600;gap:6px}
+.studio-kpi-label span{font-size:17px;color:#ad8c83}
+.studio-kpi strong{display:block;margin:23px 0 12px;font:600 clamp(25px,2.5vw,35px)/1 Georgia,serif;letter-spacing:-.035em;color:#463338;white-space:nowrap}
+.studio-kpi p{margin:0;font-size:11px;color:#958980;line-height:1.5}
+.studio-analytics-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(290px,1fr);gap:17px;margin-top:18px}
+.studio-bottom-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(310px,1fr);gap:17px;margin-top:18px}
+.studio-insight-card{background:#fff;border:1px solid #e9e3dc;border-radius:13px;padding:25px;min-width:0;box-shadow:0 5px 18px #4a332608}
+.studio-card-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.studio-card-eyebrow{font-size:9px;letter-spacing:.17em;color:#a28c82;font-weight:800}
+.studio-card-heading h2{font:500 26px/1.15 Georgia,serif;letter-spacing:-.025em;margin:9px 0 0;color:#423135}
+.studio-card-tag{border:1px solid #e9e1db;border-radius:20px;padding:8px 12px;font-size:10px;color:#83736b}
+.studio-card-link{border:0;background:transparent;color:#795059;font-size:11px;font-weight:700;cursor:pointer}
+.studio-chart{height:242px;margin:20px 0 8px;display:flex;align-items:stretch}
+.studio-chart svg{width:100%;height:100%;overflow:visible}
+.studio-chart-empty{font-size:12px;color:#988b82;margin:auto}
+.studio-chart-footer{display:flex;justify-content:space-between;gap:12px;border-top:1px solid #f0ebe6;padding-top:15px;font-size:11px;color:#877970}
+.studio-legend-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#7a4b54;margin-right:7px}
+.studio-pipeline{margin:27px 0 14px;display:grid;gap:17px}
+.studio-pipeline-row{display:grid;gap:8px}
+.studio-pipeline-top{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:#64544f}
+.studio-pipeline-top strong{color:#49343a;font-weight:700}
+.studio-pipeline-track{height:7px;background:#f1ebe7;border-radius:20px;overflow:hidden}
+.studio-pipeline-fill{display:block;height:100%;border-radius:20px;background:#8b666b}
+.studio-pipeline-note{font-size:11px;color:#9c8d82;line-height:1.6;margin-top:18px}
+.studio-recent-orders{margin-top:18px}
+.studio-recent-row{width:100%;border:0;border-top:1px solid #f0eae5;background:transparent;display:grid;grid-template-columns:37px minmax(0,1fr) auto;gap:12px;align-items:center;text-align:left;padding:15px 0;cursor:pointer}
+.studio-recent-row:hover{background:#fbf8f5}
+.studio-recent-avatar{width:36px;height:36px;display:grid;place-items:center;background:#f1e9e4;border-radius:10px;color:#7a4b54;font:600 17px Georgia,serif}
+.studio-recent-info strong{display:block;font-size:12px;color:#453638;margin-bottom:5px}
+.studio-recent-info small{display:block;font-size:10px;color:#96877e;overflow-wrap:anywhere}
+.studio-recent-amount{font-size:12px;font-weight:700;color:#513a3f}
+.studio-traffic-card{background:linear-gradient(155deg,#fff 70%,#fbf6f1)}
+.studio-connection-status{border-radius:20px;background:#f5ede4;color:#926a4d;padding:7px 10px;font-size:10px;white-space:nowrap}
+.studio-traffic-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:26px 0 18px}
+.studio-traffic-metrics>div{padding:16px 10px;border:1px solid #ede6df;border-radius:10px}
+.studio-traffic-metrics span{font-size:10px;color:#87766c;display:block;min-height:32px}
+.studio-traffic-metrics strong{display:block;font:500 28px Georgia,serif;color:#68464b;margin-top:7px}
+.studio-traffic-card p{font-size:11px;line-height:1.7;color:#8a7b72;margin:0 0 20px}
+.studio-connect-link{display:inline-flex;border-radius:9px;background:#68464b;color:#fff!important;padding:12px 15px;font-size:11px;font-weight:600;text-decoration:none}
+.studio-sandbox-banner{display:flex;gap:14px;align-items:flex-start;background:#f7f0e8;border:1px solid #e9dbcd;border-radius:12px;padding:17px 20px;margin-top:18px}
+.studio-sandbox-banner>span{font-size:23px;color:#8d654f}.studio-sandbox-banner p{font-size:11px;color:#795e53;line-height:1.7;margin:0}.studio-sandbox-banner strong{color:#5e403d}
+.studio-orders-heading{margin-bottom:18px}
+.studio-orders-heading h1{font-size:clamp(36px,4vw,52px)}
+.studio-orders-heading p{font-size:12px}
+#studio-orders-view .studio-toolbar{margin:20px 0 14px}
+#studio-orders-view .studio-layout{grid-template-columns:minmax(290px,34%) minmax(0,66%);gap:17px}
+#studio-orders-view .studio-list-panel,#studio-orders-view .studio-detail-panel{border-radius:12px;box-shadow:0 5px 18px #4a332608}
+#studio-orders-view .studio-order.selected{border-left-color:#784d53}
+#studio-orders-view .studio-panel-title{border-radius:12px 12px 0 0}
+@media(max-width:1240px){.studio-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.studio-analytics-grid,.studio-bottom-grid{grid-template-columns:1fr}.studio-shell{grid-template-columns:214px minmax(0,1fr)}.studio-content{padding:30px 24px 50px}.studio-topbar{padding:0 24px}}
+@media(max-width:860px){.studio-shell{grid-template-columns:1fr}.studio-sidebar{position:relative;height:auto;min-height:0;padding:15px 18px}.studio-sidebar-brand{padding:0 0 14px}.studio-navigation{display:flex;gap:6px;overflow-x:auto}.studio-nav-item{white-space:nowrap;width:auto;padding:11px 13px}.studio-nav-label,.studio-sidebar-bottom{display:none}.studio-topbar{height:61px}.studio-content{padding:23px 17px 50px}#studio-orders-view .studio-layout{grid-template-columns:1fr}.studio-environment{display:none}}
+@media(max-width:540px){.studio-page-heading{align-items:start;flex-direction:column}.studio-page-heading h1{font-size:42px}.studio-heading-actions{width:100%}.studio-heading-actions select{flex:1}.studio-kpi-grid{gap:10px}.studio-kpi{min-height:136px;padding:16px}.studio-kpi strong{font-size:24px}.studio-kpi-label{font-size:10px}.studio-kpi p{font-size:10px}.studio-insight-card{padding:19px}.studio-card-heading h2{font-size:23px}.studio-traffic-metrics{gap:6px}.studio-traffic-metrics>div{padding:12px 8px}.studio-traffic-metrics span{font-size:9px}.studio-topbar-right{gap:8px}.studio-breadcrumb{font-size:10px}.studio-sidebar-brand strong{font-size:20px}}
+
+/* Biểu đồ kinh doanh: chọn giữa số đơn và doanh thu đã xác minh */
+.studio-chart-switch{display:inline-flex;align-items:center;gap:3px;padding:4px;border:1px solid #e9e1db;background:#f7f3ef;border-radius:10px;flex-shrink:0}
+.studio-chart-choice{appearance:none;border:0;background:transparent;color:#7e716a;border-radius:7px;padding:9px 13px;font:600 11px/1.25 Inter,'Helvetica Neue',Arial,sans-serif;cursor:pointer;white-space:nowrap;transition:background .18s,color .18s,box-shadow .18s}
+.studio-chart-choice:hover{color:#5e3c43;background:#ede4df}
+.studio-chart-choice.active{background:#744b54;color:#fff;box-shadow:0 2px 7px #49303a21}
+.studio-chart-choice:focus-visible{outline:2px solid #744b54;outline-offset:3px}
+.studio-chart svg{overflow:visible}
+.studio-chart svg rect,.studio-chart svg circle{transition:opacity .15s}
+.studio-chart svg rect:hover,.studio-chart svg circle:hover{opacity:.72}
+.studio-page[lang=vi],.studio-dashboard{font-family:Inter,'Segoe UI',Arial,sans-serif}
+.studio-card-heading{flex-wrap:wrap}
+.studio-kpi-label{line-height:1.45}
+@media(max-width:540px){.studio-chart-switch{width:100%;justify-content:stretch}.studio-chart-choice{flex:1}.studio-chart{height:205px}.studio-chart-card .studio-card-heading{gap:15px}}
+
+.studio-chart-note{font-size:10px;color:#93847a;line-height:1.65;margin:12px 0 0}
+@media(max-width:540px){.studio-chart-choice{font-size:10px;padding:9px 6px}.studio-chart-switch{gap:2px}}
+
+/* Studio 2.1 — Vietnamese typography and responsive text audit.
+   Noto Serif and Be Vietnam Pro contain complete Vietnamese glyphs.
+   The site's English-language storefront keeps its original typography. */
+.studio-page{
+  --studio-serif:"Noto Serif","Times New Roman",serif;
+  --studio-sans:"Be Vietnam Pro","Segoe UI",Arial,sans-serif;
+  font-family:var(--studio-sans);
+  text-rendering:optimizeLegibility;
+}
+.studio-page button,
+.studio-page input,
+.studio-page select,
+.studio-page textarea{
+  font-family:var(--studio-sans);
+}
+.studio-page .studio-shell,
+.studio-page .studio-dashboard,
+.studio-page .studio-nav-item,
+.studio-page .studio-lock,
+.studio-page .studio-chart-choice{
+  font-family:var(--studio-sans);
+}
+.studio-page h1,
+.studio-page h2,
+.studio-page h3,
+.studio-page .studio-subheading,
+.studio-page .studio-order-top strong,
+.studio-page .studio-sidebar-brand strong,
+.studio-page .studio-kpi strong,
+.studio-page .studio-traffic-metrics strong{
+  font-family:var(--studio-serif);
+  font-kerning:normal;
+  letter-spacing:0;
+  word-break:normal;
+  overflow-wrap:break-word;
+  hyphens:none;
+}
+.studio-page .studio-page-heading h1{
+  font:500 clamp(36px,3.7vw,55px)/1.3 var(--studio-serif);
+  letter-spacing:-.012em;
+  margin:8px 0 12px;
+}
+.studio-page .studio-card-heading h2{
+  font:500 clamp(21px,2vw,26px)/1.35 var(--studio-serif);
+  letter-spacing:0;
+  margin:7px 0 0;
+}
+.studio-page .studio-login h1{
+  font:500 clamp(40px,5vw,72px)/1.26 var(--studio-serif);
+  letter-spacing:-.01em;
+}
+.studio-page .studio-detail-head h2{
+  font:500 clamp(30px,3vw,49px)/1.3 var(--studio-serif);
+}
+.studio-page .studio-subheading{
+  font:500 27px/1.4 var(--studio-serif);
+}
+.studio-page .studio-order-top strong{
+  font:500 23px/1.35 var(--studio-serif);
+  min-width:0;
+}
+.studio-page .studio-sidebar-brand strong{
+  font:500 20px/1.4 var(--studio-serif);
+  letter-spacing:0;
+}
+.studio-page .studio-kpi strong{
+  font:600 clamp(24px,2.4vw,33px)/1.3 var(--studio-serif);
+  letter-spacing:0;
+  margin:17px 0 9px;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  font-variant-numeric:lining-nums tabular-nums;
+}
+.studio-page .studio-traffic-metrics strong{
+  font:600 25px/1.3 var(--studio-serif);
+}
+.studio-page .studio-kicker,
+.studio-page .studio-card-eyebrow,
+.studio-page .studio-nav-label,
+.studio-page .studio-panel-title,
+.studio-page .studio-detail-row dt{
+  letter-spacing:.08em;
+  line-height:1.6;
+}
+.studio-page .studio-sidebar-brand small{letter-spacing:.08em;line-height:1.5}
+.studio-page .studio-kpi-label,
+.studio-page .studio-pipeline-top,
+.studio-page .studio-recent-info strong,
+.studio-page .studio-recent-info small{
+  line-height:1.6;
+}
+.studio-page .studio-order-top{min-width:0;align-items:flex-start}
+.studio-page .studio-status{
+  white-space:normal;
+  flex:0 1 auto;
+  max-width:175px;
+  text-align:center;
+  line-height:1.5;
+}
+.studio-page .studio-chart-switch{
+  max-width:100%;
+  overflow-x:auto;
+  scrollbar-width:thin;
+  -webkit-overflow-scrolling:touch;
+}
+.studio-page .studio-chart-choice{line-height:1.4}
+.studio-page .studio-card-heading{align-items:flex-start}
+.studio-page .studio-card-heading>div{min-width:0;flex:1 1 180px}
+.studio-page .studio-card-link{line-height:1.5;text-align:right}
+.studio-page .studio-recent-info{min-width:0}
+.studio-page .studio-recent-info strong{overflow-wrap:anywhere}
+.studio-page .studio-recent-amount{white-space:nowrap}
+.studio-page .studio-heading-actions{flex-shrink:0}
+@media(max-width:1240px){
+  .studio-page .studio-page-heading h1{font-size:clamp(34px,4vw,48px)}
+}
+@media(max-width:860px){
+  .studio-page .studio-topbar{height:auto;min-height:61px;padding-top:11px;padding-bottom:11px;flex-wrap:wrap}
+  .studio-page .studio-topbar-right{margin-left:auto}
+}
+@media(max-width:600px){
+  .studio-page .studio-page-heading h1{font-size:clamp(32px,8vw,42px);line-height:1.32}
+  .studio-page .studio-card-heading h2{font-size:22px;line-height:1.38}
+  .studio-page .studio-order-top strong{font-size:20px}
+  .studio-page .studio-kpi strong{font-size:clamp(21px,5.5vw,26px)}
+  .studio-page .studio-chart-switch{width:100%;flex:1 1 100%}
+  .studio-page .studio-chart-choice{min-width:0;flex:1 1 auto;white-space:normal;font-size:10px;padding:9px 6px}
+  .studio-page .studio-card-heading{gap:12px}
+  .studio-page .studio-card-heading>div{flex-basis:100%}
+  .studio-page .studio-detail-head h2{font-size:32px}
+  .studio-page .studio-traffic-metrics strong{font-size:21px}
+}
+@media(max-width:390px){
+  .studio-page .studio-topbar{gap:7px}
+  .studio-page .studio-breadcrumb{font-size:9px}
+  .studio-page .studio-kpi{padding:13px}
+  .studio-page .studio-kpi strong{font-size:21px}
+  .studio-page .studio-traffic-metrics{grid-template-columns:1fr}
+  .studio-page .studio-traffic-metrics span{min-height:0}
+}
+
+/* Confirmation stays beside the save button, even when the page is scrolled. */
+.studio-save-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:8px}
+.studio-save-feedback{margin:0;min-height:20px;font-size:13px;line-height:1.5;color:#75685f}
+.studio-save-feedback.is-success{color:#276044;font-weight:600}
+.studio-save-feedback.is-error{color:#a33e3e;font-weight:600}
+.studio-save-feedback.is-pending{color:#796453}
+.studio-update optgroup{font-weight:700;color:#55463e}
+.studio-update option{font-weight:400;color:#30291d}
+@media(max-width:520px){.studio-save-actions{align-items:stretch;flex-direction:column}.studio-save-actions .btn{align-self:flex-start}}
+
+/* Preview email sign-in: preserve native hidden semantics despite form flex rules. */
+.studio-login [hidden]{display:none!important}
+.studio-login-switch{display:inline-flex;align-items:center;justify-content:flex-start;margin-top:17px;padding:7px 0;border:0;border-bottom:1px solid #88565a;background:transparent;color:#713f43;font-size:13px;font-weight:600;line-height:1.6;text-align:left;cursor:pointer}
+.studio-login-switch:hover{color:#9a5d62}
+.studio-login #otp-request-form,.studio-login #otp-verify-form{margin-top:24px;padding-top:20px;border-top:1px solid #e9e1d9}
+.studio-login #otp-code{font-size:23px;letter-spacing:.24em;font-variant-numeric:tabular-nums}
+.studio-login #otp-request-again{justify-self:start;margin-top:0}
+@media(max-width:600px){.studio-login-switch{font-size:12px}.studio-login #otp-code{font-size:20px}}
+
+
+/* Carrier-agnostic shipment tracking, Preview-only. */
+.studio-tracking{background:#f8f5f0;border:1px solid #e7dfd4;padding:22px;display:grid;gap:14px;margin-bottom:14px}
+.studio-tracking label{display:grid;gap:8px;font-size:12px;font-weight:600;color:#51433b}
+.studio-tracking input,.studio-tracking select{box-sizing:border-box;min-height:46px;width:100%;padding:10px 12px;background:#fff;border:1px solid #d8cdc1;color:#30291d;font:inherit;font-size:13px}
+.studio-tracking input:focus-visible,.studio-tracking select:focus-visible{outline:2px solid #784d53;outline-offset:2px}
+.studio-tracking .studio-footnote{margin:0;line-height:1.6}
+.studio-tracking .studio-email{justify-self:start;overflow-wrap:anywhere;margin:0}
+.studio-tracking .btn:disabled{opacity:.65;cursor:wait}
+.studio-tracking [hidden],.studio-save-actions[hidden]{display:none!important}
+@media(max-width:600px){.studio-tracking{padding:18px}.studio-tracking .studio-save-actions{flex-direction:column;align-items:stretch}.studio-tracking .btn{align-self:start}}
+
+/* Approved ATELIER HAU brand wordmark in studio header */
+.studio-brand .studio-logo{display:block;width:clamp(180px,19vw,245px);height:auto;max-height:68px;object-fit:contain;object-position:left center}
+@media(max-width:650px){.studio-brand .studio-logo{width:clamp(145px,45vw,205px);max-height:54px}}
+
+/* Studio brand: use the exact approved storefront logo on both login and dashboard. */
+.studio-page .studio-brand{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:5px}
+.studio-page .studio-brand .studio-logo{display:block;width:clamp(205px,17vw,235px);height:auto;max-height:none;object-fit:contain;object-position:left center}
+.studio-page .studio-brand .descriptor{display:block;font-size:9px;letter-spacing:.24em;line-height:1.4}
+.studio-page .studio-sidebar-brand{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:2px 8px 38px}
+.studio-page .studio-sidebar-logo{display:block;width:100%;max-width:185px;height:auto;object-fit:contain;object-position:left center;background:#f6f0e8;border-radius:3px;padding:9px 10px}
+.studio-page .studio-sidebar-brand>small{display:block;color:#c4ada1;letter-spacing:.18em;font-size:9px;line-height:1.5}
+@media(max-width:860px){.studio-page .studio-sidebar-brand{padding:0 0 12px}.studio-page .studio-sidebar-logo{max-width:165px}}
+@media(max-width:600px){.studio-page .studio-brand .studio-logo{width:min(205px,55vw)}}
