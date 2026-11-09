@@ -1,4 +1,5 @@
 import {sendSandboxCustomerEmail} from "../_lib/sandbox-customer-email.js";
+import {sendLiveBalanceRequest} from "../_lib/live-balance-request.js";
 import {verifyStudioSession} from "../_lib/studio-otp-auth.js";
 import {onRequestPost as onStudioOtpRequest} from "./studio-auth.js";
 // Private studio dashboard API. The admin key must be a 32+ character Cloudflare secret.
@@ -15,6 +16,9 @@ const accessKey = id => `enquiries/${id}/shipping-access.json`;
 const paymentKey = id => `enquiries/${id}/payment.json`;
 const paymentAccessKey = id => `enquiries/${id}/payment-access.json`;
 const sandboxPaymentKey = id => `enquiries/${id}/paypal-sandbox-payments.json`;
+const livePaymentKey = id => `enquiries/${id}/paypal-live-payments.json`;
+const verifiedLive = (order,payment,ledger) => order?.checkoutMode==="live-inline" && payment?.sandbox===false && ledger?.quotedAt===payment?.quotedAt ? ledger : null;
+const fullyCaptured = ledger => Boolean(ledger?.full || (ledger?.deposit && ledger?.balance));
 const moneyCents = aud => Math.round(aud * 100);
 const validAmount = value => Number.isInteger(value) && value >= 50 && value <= 100000;
 async function readJson(bucket,key){const obj=await bucket.get(key);if(!obj)return null;try{return await obj.json();}catch{return null;}}
@@ -60,7 +64,8 @@ export async function onRequestGet(context){
         const [shipping,tracking]=await Promise.all([readJson(bucket,shippingKey(id)),readJson(bucket,trackingKey(id))]);
         const payment=await readJson(bucket,paymentKey(id));
         const sandboxPayment=await readJson(bucket,sandboxPaymentKey(id));
-        return {checkoutMode:data.checkoutMode||null,checkoutPlan:data.checkoutPlan||null,sandboxPayment:sandboxPayment?.quotedAt===payment?.quotedAt?sandboxPayment:null,payment:payment||null,shipping:shipping?.details||null,shippingUpdatedAt:shipping?.updatedAt||null,tracking:tracking?.details||null,trackingUpdatedAt:tracking?.updatedAt||null,id:data.id,receivedAt:data.receivedAt,name:data.name,email:data.email,petName:data.petName||"",size:data.size,pets:data.pets,country:data.country,card:!!data.card,story:data.story||"",estimatedPriceAUD:data.estimatedPriceAUD,status:statuses.has(data.status)?data.status:"New",internalNote:data.internalNote||"",updatedAt:data.updatedAt||null,photos:(data.photos||[]).map((p,i)=>({index:i,name:p.originalName||`Photo ${i+1}`}))};
+        const livePayment=verifiedLive(data,payment,await readJson(bucket,livePaymentKey(id)));
+        return {checkoutMode:data.checkoutMode||null,checkoutPlan:data.checkoutPlan||null,sandboxPayment:sandboxPayment?.quotedAt===payment?.quotedAt?sandboxPayment:null,livePayment,payment:payment||null,shipping:shipping?.details||null,shippingUpdatedAt:shipping?.updatedAt||null,tracking:tracking?.details||null,trackingUpdatedAt:tracking?.updatedAt||null,id:data.id,receivedAt:data.receivedAt,name:data.name,email:data.email,petName:data.petName||"",size:data.size,pets:data.pets,country:data.country,card:!!data.card,story:data.story||"",estimatedPriceAUD:data.estimatedPriceAUD,status:statuses.has(data.status)?data.status:"New",internalNote:data.internalNote||"",updatedAt:data.updatedAt||null,photos:(data.photos||[]).map((p,i)=>({index:i,name:p.originalName||`Photo ${i+1}`}))};
       }))).filter(Boolean);
       orders.sort((a,b)=>String(b.receivedAt).localeCompare(String(a.receivedAt)));
       return respond({ok:true,orders,nextCursor:page.truncated?page.cursor||null:null});
@@ -84,17 +89,18 @@ export async function onRequestGet(context){
             const day=new Date(data.receivedAt).toISOString().slice(0,10);
             const payment=await readJson(bucket,paymentKey(id));
             const sandbox=await readJson(bucket,sandboxPaymentKey(id));
-            return {data,day,payment,sandbox};
+            const live=verifiedLive(data,payment,await readJson(bucket,livePaymentKey(id)));
+            return {data,day,payment,sandbox,live};
           }));
           for(const row of chunk){
             if(!row)continue;
-            const {data,day,payment,sandbox}=row,point=daily.get(day);
+            const {data,day,payment,sandbox,live}=row,point=daily.get(day);
             const inPeriod=Boolean(point);
             if(inPeriod){totals.orders++;point.orders++;}
             const status=statuses.has(data.status)?data.status:"New";
             // A verified final payment ends the waiting-for-balance phase, but does not mean the artwork was shipped.
             const sandboxFullyPaid=sandbox?.quotedAt===payment?.quotedAt&&Boolean(sandbox?.full||(sandbox?.deposit&&sandbox?.balance));
-            const fullyPaid=data.checkoutMode==="sandbox-inline"?sandboxFullyPaid:Boolean(payment?.deposit&&payment?.balance);
+            const fullyPaid=data.checkoutMode==="sandbox-inline"?sandboxFullyPaid:data.checkoutMode==="live-inline"?fullyCaptured(live):Boolean(payment?.deposit&&payment?.balance);
             const paidAwaitingDispatch=status==="Ready for balance"&&fullyPaid;
             if(inPeriod)statusCounts[paidAwaitingDispatch?"Paid awaiting dispatch":status]++;
             const totalCents=Number.isInteger(payment?.totalCents)?payment.totalCents:Math.round(Number(data.estimatedPriceAUD||0)*100);
@@ -118,7 +124,7 @@ export async function onRequestGet(context){
             if(data.checkoutMode!=="sandbox-inline"){
               // Recognise revenue on the verified payment date, not on the order creation date.
               // This also includes payments made this period for older orders.
-              for(const instalment of [payment?.deposit,payment?.balance]){
+              for(const instalment of (data.checkoutMode==="live-inline"?(live?.full?[live.full]:[live?.deposit,live?.balance]):[payment?.deposit,payment?.balance])){
                 const verifiedAt=instalment?.verifiedAt;
                 const amount=Number(instalment?.amountCents);
                 if(typeof verifiedAt!=="string"||!Number.isFinite(Date.parse(verifiedAt))||!Number.isInteger(amount)||amount<=0)continue;
@@ -126,14 +132,14 @@ export async function onRequestGet(context){
                 const revenuePoint=daily.get(paymentDay);
                 if(revenuePoint){revenuePoint.revenueCents+=amount;totals.revenueCents+=amount;}
               }
-              if(inPeriod&&!payment?.deposit&&status!=="Cancelled")totals.awaitingDeposit++;
+              if(inPeriod&&!(data.checkoutMode==="live-inline"?Boolean(live?.deposit||live?.full):Boolean(payment?.deposit))&&status!=="Cancelled")totals.awaitingDeposit++;
             }
           }
         }
         scanned+=ids.length;pages++;
         more=!!page.truncated;cursor=page.cursor;
       }while(more&&cursor&&pages<20);
-      return respond({ok:true,days,totals,statusCounts,daily:Array.from(daily.values()),partial:more,scanned,asOf:new Date().toISOString(),revenueNote:"Only verified manual payments, attributed by verification date (UTC). PayPal Sandbox excluded.",trafficConnected:false});
+      return respond({ok:true,days,totals,statusCounts,daily:Array.from(daily.values()),partial:more,scanned,asOf:new Date().toISOString(),revenueNote:"Verified manual and PayPal Live captures by UTC payment date. PayPal Sandbox excluded.",trafficConnected:false});
     }
     if(action==="email-history"){
       const id=url.searchParams.get("id");
@@ -210,8 +216,10 @@ export async function onRequestPost(context){
       if(!tracking?.details?.carrier||!tracking?.details?.number||!tracking?.details?.url)return respond({ok:false,message:"Save tracking details first."},409);
       const payment=await readJson(bucket,paymentKey(id));
       const sandbox=await readJson(bucket,sandboxPaymentKey(id));
-      const paid=order.checkoutMode==="sandbox-inline"&&sandbox?.quotedAt===payment?.quotedAt
-        ?Boolean(sandbox.full||(sandbox.deposit&&sandbox.balance)):Boolean(payment?.deposit&&payment?.balance);
+      const live=verifiedLive(order,payment,await readJson(bucket,livePaymentKey(id)));
+       const paid=order.checkoutMode==="live-inline"?fullyCaptured(live)
+         :order.checkoutMode==="sandbox-inline"?Boolean(sandbox?.quotedAt===payment?.quotedAt&&fullyCaptured(sandbox))
+         :Boolean(payment?.deposit&&payment?.balance);
       if(!paid)return respond({ok:false,message:"Verify full payment before notifying shipment."},409);
       const fingerprint=(await sha256([tracking.details.carrier,tracking.details.number,tracking.details.url].join("|"))).slice(0,32);
       const notification=await sendSandboxCustomerEmail({
@@ -226,7 +234,7 @@ export async function onRequestPost(context){
     try{
       const order=await getDetails(env.PORTRAIT_UPLOADS,id);
       if(!order)return respond({ok:false,message:"Order not found."},404);
-      if(order.checkoutMode==="sandbox-inline")return respond({ok:false,message:"Delivery address was collected at checkout; no shipping link is required."},409);
+      if(["sandbox-inline","live-inline"].includes(order.checkoutMode))return respond({ok:false,message:"Delivery address was collected at checkout; no shipping link is required."},409);
       if(["Shipped","Completed","Cancelled"].includes(order.status))return respond({ok:false,message:"This order cannot request new shipping details."},409);
       const token=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,"0")).join("");
       const expiresAt=new Date(Date.now()+14*24*60*60*1000).toISOString();
@@ -242,7 +250,7 @@ export async function onRequestPost(context){
     try{
       const bucket=env.PORTRAIT_UPLOADS;
       const [order,payment,sandbox]=await Promise.all([getDetails(bucket,id),readJson(bucket,paymentKey(id)),readJson(bucket,sandboxPaymentKey(id))]);
-      if(!order||!payment||order.checkoutMode==="sandbox-inline"||["Cancelled","Shipped","Completed"].includes(order.status))return respond({ok:false,message:"Order cannot request a legacy payment link."},409);
+      if(!order||!payment||["sandbox-inline","live-inline"].includes(order.checkoutMode)||["Cancelled","Shipped","Completed"].includes(order.status))return respond({ok:false,message:"Order cannot request a legacy payment link."},409);
       if(sandbox?.quotedAt===payment.quotedAt&&sandbox[payload.stage])return respond({ok:false,message:"This Sandbox instalment has already been recorded."},409);
       if(payload.stage==="balance"&&!(sandbox?.quotedAt===payment.quotedAt&&sandbox.deposit))return respond({ok:false,message:"Complete the Sandbox deposit test first."},409);
       const token=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,"0")).join("");
@@ -259,7 +267,7 @@ export async function onRequestPost(context){
       const bucket=env.PORTRAIT_UPLOADS;
       const order=await getDetails(bucket,id);
       if(!order)return respond({ok:false,message:"Order not found."},404);
-      if(order.checkoutMode==="sandbox-inline")return respond({ok:false,message:"Sandbox checkout orders cannot be manually repriced or recorded."},409);
+      if(["sandbox-inline","live-inline"].includes(order.checkoutMode))return respond({ok:false,message:"Online checkout orders cannot be manually repriced or recorded."},409);
       if(["Cancelled","Shipped","Completed"].includes(order.status))return respond({ok:false,message:"This order cannot be updated for payment."},409);
       const key=paymentKey(id);
       const current=await readJson(bucket,key);
@@ -293,8 +301,9 @@ export async function onRequestPost(context){
     const payment=await readJson(env.PORTRAIT_UPLOADS,paymentKey(id));
     const sandbox=await readJson(env.PORTRAIT_UPLOADS,sandboxPaymentKey(id));
     const checkoutPaid=data.checkoutMode==="sandbox-inline"&&sandbox?.quotedAt===payment?.quotedAt;
-    const depositVerified=checkoutPaid?Boolean(sandbox.deposit||sandbox.full):Boolean(payment?.deposit);
-    const fullyVerified=checkoutPaid?Boolean(sandbox.full||(sandbox.deposit&&sandbox.balance)):Boolean(payment?.deposit&&payment?.balance);
+    const live=verifiedLive(data,payment,await readJson(env.PORTRAIT_UPLOADS,livePaymentKey(id)));
+    const depositVerified=data.checkoutMode==="live-inline"?Boolean(live?.deposit||live?.full):checkoutPaid?Boolean(sandbox.deposit||sandbox.full):Boolean(payment?.deposit);
+    const fullyVerified=data.checkoutMode==="live-inline"?fullyCaptured(live):checkoutPaid?fullyCaptured(sandbox):Boolean(payment?.deposit&&payment?.balance);
     if(status!==data.status&&["Painting","Ready for balance"].includes(status)&&!depositVerified)return respond({ok:false,message:"Verify the deposit or full payment before starting production."},409);
     if(status!==data.status&&["Shipped","Completed"].includes(status)&&!fullyVerified)return respond({ok:false,message:"Verify full payment before shipping or completing the order."},409);
     const previousStatus=data.status;
@@ -303,7 +312,7 @@ export async function onRequestPost(context){
     // Only genuine status transitions trigger a customer-facing email preview.
     // The customer is NEVER the recipient while running on Preview/Sandbox.
     let emailTest="unchanged";
-    if(status!==previousStatus&&status!=="New"){
+    if(previewOnly(env)&&status!=="New"&&(status!==previousStatus||(payload.sendBalanceTest===true&&status==="Ready for balance"&&data.checkoutMode==="sandbox-inline"&&depositVerified&&!fullyVerified))){
       let checkoutLink=null;
       try{
         if(status==="Ready for balance"&&data.checkoutMode==="sandbox-inline"&&depositVerified&&!fullyVerified){
@@ -321,6 +330,21 @@ export async function onRequestPost(context){
         });
         emailTest=notification.state;
       }catch(e){emailTest="failed";console.error("Status email preview failed",id,String(e));}
+    }
+    // Production Live: only a verified deposit and a genuine transition can request the balance.
+    // Never send customer emails from Preview or for Sandbox orders.
+    if(!previewOnly(env)&&env.CF_PAGES_BRANCH==="main"&&env.PAYPAL_MODE==="live"&&env.PAYPAL_LIVE_READY==="yes"&&status==="Ready for balance"&&status!==previousStatus&&data.checkoutMode==="live-inline"&&data.checkoutPlan!=="full"&&depositVerified&&!fullyVerified){
+      try{
+        const token=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,"0")).join("");
+        const expiresAt=new Date(Date.now()+30*86400000).toISOString();
+        const link=new URL("/checkout",request.url);
+        if(link.hostname!=="atelierhau.com"||link.protocol!=="https:")throw Error("Canonical HTTPS domain required");
+        link.hash=new URLSearchParams({id,token}).toString();
+        // Persist the bearer-token hash before emailing; never include the token in logs.
+        await env.PORTRAIT_UPLOADS.put("enquiries/"+id+"/checkout-email-access.json",JSON.stringify({id,tokenHash:await sha256(token),expiresAt,createdAt:data.updatedAt}),{httpMetadata:{contentType:"application/json"}});
+        const result=await sendLiveBalanceRequest({env,bucket:env.PORTRAIT_UPLOADS,order:data,payment,ledger:live,checkoutLink:link.toString()});
+        emailTest=result.state;
+      }catch(e){emailTest="failed";console.error("Live balance request failed",id,String(e));}
     }
     return respond({ok:true,id,status,updatedAt:data.updatedAt,emailTest});
   }catch(e){console.error("Studio update failed",e);return respond({ok:false,message:"Could not update order."},500);}
