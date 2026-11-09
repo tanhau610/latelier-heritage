@@ -106,7 +106,7 @@ export async function onRequestGet(context){
             const status=statuses.has(data.status)?data.status:"New";
             // A verified final payment ends the waiting-for-balance phase, but does not mean the artwork was shipped.
             const sandboxFullyPaid=sandbox?.quotedAt===payment?.quotedAt&&Boolean(sandbox?.full||(sandbox?.deposit&&sandbox?.balance));
-            const fullyPaid=data.checkoutMode==="sandbox-inline"?sandboxFullyPaid:data.checkoutMode==="live-inline"?fullyCaptured(live):Boolean(payment?.deposit&&payment?.balance);
+            const fullyPaid=data.checkoutMode==="sandbox-inline"?sandboxFullyPaid:data.checkoutMode==="live-inline"?livePaidInFull(live,payment):Boolean(payment?.deposit&&payment?.balance);
             const paidAwaitingDispatch=status==="Ready for balance"&&fullyPaid;
             if(inPeriod)statusCounts[paidAwaitingDispatch?"Paid awaiting dispatch":status]++;
             const totalCents=Number.isInteger(payment?.totalCents)?payment.totalCents:Math.round(Number(data.estimatedPriceAUD||0)*100);
