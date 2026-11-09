@@ -311,7 +311,7 @@ export async function onRequestPost(context){
     // Only genuine status transitions trigger a customer-facing email preview.
     // The customer is NEVER the recipient while running on Preview/Sandbox.
     let emailTest="unchanged";
-    if(previewOnly(env)&&status!==previousStatus&&status!=="New"){
+    if(previewOnly(env)&&status!=="New"&&(status!==previousStatus||(payload.sendBalanceTest===true&&status==="Ready for balance"&&data.checkoutMode==="sandbox-inline"&&depositVerified&&!fullyVerified))){
       let checkoutLink=null;
       try{
         if(status==="Ready for balance"&&data.checkoutMode==="sandbox-inline"&&depositVerified&&!fullyVerified){
