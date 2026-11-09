@@ -1,5 +1,6 @@
 import {sendSandboxCustomerEmail} from "../_lib/sandbox-customer-email.js";
 import {sendLiveBalanceRequest} from "../_lib/live-balance-request.js";
+import {sendLiveTrackingEmail} from "../_lib/live-tracking-email.js";
 import {verifyStudioSession} from "../_lib/studio-otp-auth.js";
 import {onRequestPost as onStudioOtpRequest} from "./studio-auth.js";
 // Private studio dashboard API. The admin key must be a 32+ character Cloudflare secret.
@@ -179,14 +180,16 @@ export async function onRequestPost(context){
   let payload;try{payload=await request.json();}catch{return respond({ok:false,message:"Invalid request."},400);}
   const {id,status}=payload||{};
   if(action==="tracking-save"||action==="tracking-notify"){
-    // New tracking workflows remain Preview-only, including R2 writes and email.
-    if(!previewOnly(env))return respond({ok:false,message:"Tracking management is only available on Preview."},403);
+    // Live tracking is allowed only for verified, fully paid Live checkout orders.
+    const isProductionLive=!previewOnly(env)&&env.CF_PAGES_BRANCH==="main"&&env.PAYPAL_MODE==="live"&&env.PAYPAL_LIVE_READY==="yes";
+    if(!previewOnly(env)&&!isProductionLive)return respond({ok:false,message:"Tracking management unavailable in this environment."},403);
     if(!validId(id))return respond({ok:false,message:"Invalid order."},400);
     try{
       const bucket=env.PORTRAIT_UPLOADS;
       const order=await getDetails(bucket,id);
       if(!order)return respond({ok:false,message:"Order not found."},404);
       if(order.status==="Cancelled")return respond({ok:false,message:"Cannot update tracking for a cancelled order."},409);
+      if(isProductionLive&&order.checkoutMode!=="live-inline")return respond({ok:false,message:"Only verified Live checkout orders are supported here."},403);
       if(action==="tracking-save"){
         const raw=payload.tracking;
         if(!raw||typeof raw!=="object"||Array.isArray(raw))return respond({ok:false,message:"Invalid tracking details."},400);
@@ -222,10 +225,12 @@ export async function onRequestPost(context){
          :Boolean(payment?.deposit&&payment?.balance);
       if(!paid)return respond({ok:false,message:"Verify full payment before notifying shipment."},409);
       const fingerprint=(await sha256([tracking.details.carrier,tracking.details.number,tracking.details.url].join("|"))).slice(0,32);
-      const notification=await sendSandboxCustomerEmail({
-        env,bucket,order,payment:payment||{totalCents:Math.round(Number(order.estimatedPriceAUD||0)*100)},
-        event:"shipping-tracking",eventKey:"tracking-"+fingerprint,tracking:tracking.details,paidInFull:true
-      });
+      const notification=isProductionLive
+        ? await sendLiveTrackingEmail({env,bucket,order,payment,ledger:live,tracking:tracking.details,fingerprint})
+        : await sendSandboxCustomerEmail({
+            env,bucket,order,payment:payment||{totalCents:Math.round(Number(order.estimatedPriceAUD||0)*100)},
+            event:"shipping-tracking",eventKey:"tracking-"+fingerprint,tracking:tracking.details,paidInFull:true
+          });
       return respond({ok:true,emailTest:notification.state});
     }catch(e){console.error("Studio tracking failed",id,e);return respond({ok:false,message:"Could not save or send tracking information."},500);}
   }
