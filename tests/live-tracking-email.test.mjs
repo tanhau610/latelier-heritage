@@ -33,3 +33,47 @@ test("already recorded email does not resend",async()=>{
  const result=await sendLiveTrackingEmail({...f,bucket});
  assert.equal(result.state,"already-recorded");assert.equal(writes,0);
 });
+
+test("sends one Live tracking email and records successful delivery",async()=>{
+ const f=fixture();const records=new Map();let deliveries=0;
+ const bucket={
+   get:async key=>records.has(key)?{json:async()=>JSON.parse(records.get(key))}:null,
+   put:async(key,value,options)=>{
+     if(options?.onlyIf?.etagDoesNotMatch==="*"&&records.has(key))return null;
+     records.set(key,value);return {key};
+   }
+ };
+ const originalFetch=globalThis.fetch;
+ globalThis.fetch=async(url,opts)=>{
+   deliveries++;
+   assert.equal(url,"https://api.resend.com/emails");
+   const payload=JSON.parse(opts.body);
+   assert.equal(payload.to[0],f.order.email);
+   assert.match(payload.html,/12345/);
+   return {ok:true,status:200,json:async()=>({id:"resend-123"})};
+ };
+ try{
+   assert.equal((await sendLiveTrackingEmail({...f,bucket})).state,"sent");
+   assert.equal((await sendLiveTrackingEmail({...f,bucket})).state,"already-recorded");
+   assert.equal(deliveries,1);
+   const key=[...records.keys()][0];
+   assert.equal(JSON.parse(records.get(key)).state,"sent");
+ }finally{globalThis.fetch=originalFetch}
+});
+test("conditional claim prevents duplicate sends during concurrent requests",async()=>{
+ const f=fixture();const records=new Map();let deliveries=0;
+ const bucket={
+   get:async()=>null,
+   put:async(key,value,opts)=>{
+     if(opts?.onlyIf?.etagDoesNotMatch==="*"&&records.has(key))return null;
+     records.set(key,value);return {key};
+   }
+ };
+ const originalFetch=globalThis.fetch;
+ globalThis.fetch=async()=>{deliveries++;return {ok:true,status:200,json:async()=>({id:"resend-123"})}};
+ try{
+   const result=await Promise.all([sendLiveTrackingEmail({...f,bucket}),sendLiveTrackingEmail({...f,bucket})]);
+   assert.deepEqual(result.map(x=>x.state).sort(),["already-recorded","sent"]);
+   assert.equal(deliveries,1);
+ }finally{globalThis.fetch=originalFetch}
+});
