@@ -22,6 +22,7 @@ async function paypal(env,path,method="GET",body=null,requestId=null){
   return result;
 }
 export async function onRequestPost({request,env}){
+  if(!env.CF_PAGES_BRANCH||env.CF_PAGES_BRANCH==="main")return json({ok:false,message:"Sandbox payment is only available on a preview branch."},403);
   if(!env.PORTRAIT_UPLOADS||!env.PAYPAL_CLIENT_ID||!env.PAYPAL_CLIENT_SECRET)return json({ok:false,message:"Sandbox checkout is not configured."},503);
   const origin=request.headers.get("Origin");
   if(origin&&origin!==new URL(request.url).origin)return json({ok:false,message:"Invalid request origin."},403);
