@@ -12,3 +12,19 @@
 @keyframes ahGreetingIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:600px){.ah-help-greeting{max-width:220px;font-size:11px;padding:10px 12px}}
 @media(prefers-reduced-motion:reduce){.ah-help-greeting{animation:none}.ah-help-launcher{transition:none}}
+
+/* Compact mobile studio contact: protects artwork, gallery filters and checkout CTAs. */
+@media(max-width:900px){
+ body.menu-open .ah-help{display:none!important}
+}
+@media(max-width:600px){
+ .ah-help{right:12px;bottom:max(12px,env(safe-area-inset-bottom));gap:0}
+ .ah-help-greeting{display:none!important}
+ .ah-help-launcher{
+  min-height:44px;padding:11px 14px;gap:8px;
+  font-size:11px;line-height:1.2;letter-spacing:.01em;
+  border-radius:999px;box-shadow:0 5px 18px rgba(48,41,29,.16);
+ }
+ .ah-help-dot{width:6px;height:6px;flex:none}
+ .ah-help-launcher span[aria-hidden="true"]{font-size:14px;line-height:1}
+}
