@@ -16,7 +16,8 @@ export async function sendLiveTrackingEmail({env,bucket,order,payment,ledger,tra
   const prev=await bucket.get(key);
   if(prev)return {state:"already-recorded"};
   const record={id:order.id,event:"live-tracking",eventKey,state:"pending",createdAt:new Date().toISOString()};
-  await bucket.put(key,JSON.stringify(record),{httpMetadata:{contentType:"application/json"}});
+  const claimed=await bucket.put(key,JSON.stringify(record),{onlyIf:{etagDoesNotMatch:"*"},httpMetadata:{contentType:"application/json"}});
+  if(!claimed)return {state:"already-recorded"};
   const subject="Your portrait has shipped · "+order.id;
   const lines=["Hello "+(order.name||"there")+",","Your original oil portrait is on its way.","Order: "+order.id,"Carrier: "+tracking.carrier,"Tracking number: "+tracking.number,"Track your parcel: "+url.toString(),"Thank you for choosing ATELIER HAU."];
   const html="<div style='font-family:Arial,sans-serif;max-width:580px;margin:auto;padding:30px'><h1 style='font-family:Georgia,serif;color:#743f48'>ATELIER HAU</h1><h2>Your portrait is on its way</h2><p>Hello "+esc(order.name||"there")+",</p><p>Your original oil portrait has shipped.</p><p><strong>Order:</strong> "+esc(order.id)+"</p><p><strong>Carrier:</strong> "+esc(tracking.carrier)+"</p><p><strong>Tracking number:</strong> "+esc(tracking.number)+"</p><p><a href='"+esc(url.toString())+"'>Track your parcel</a></p></div>";
