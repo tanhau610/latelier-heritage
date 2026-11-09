@@ -5,7 +5,8 @@ const form=$("checkout-form"),message=$("checkout-message"),button=$("submit-ord
 const prices={"20x25":[229,299],"30x40":[379,469],"40x50":[499,599],"50x70":[699,829]};
 const money=n=>"A$"+Number(n).toLocaleString("en-AU",{minimumFractionDigits:2,maximumFractionDigits:2});
 const params=new URLSearchParams(location.hash.slice(1));
-let id=params.get("id"),token=params.get("token"),sdk=null,turnstileStarted=false;
+let id=params.get("id"),token=params.get("token"),sdk=null,turnstileStarted=false,liveMode=false;
+const modeText=(sandboxText,liveText)=>liveMode?liveText:sandboxText;
 const stages=[...document.querySelectorAll("[data-checkout-step]")];
 function goTo(step,{scroll=true}={}){
   stages.forEach(el=>{
@@ -92,7 +93,7 @@ $("photos").addEventListener("change",()=>{
 async function api(action,extra={}){
   const response=await fetch("/api/checkout",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:JSON.stringify({id,action,...extra}),credentials:"omit",cache:"no-store",referrerPolicy:"no-referrer"});
   const result=await response.json().catch(()=>({ok:false,message:"Unexpected server response."}));
-  if(!response.ok||!result.ok)throw Error(result.message||"Sandbox checkout request failed.");
+  if(!response.ok||!result.ok)throw Error(result.message||"Checkout request failed.");
   return result;
 }
 async function loadSDK(clientId){
@@ -102,7 +103,7 @@ async function loadSDK(clientId){
     script.src="https://www.paypal.com/sdk/js?client-id="+encodeURIComponent(clientId)+"&currency=AUD&intent=capture";
     script.async=true;
     script.onload=()=>resolve(window.paypal);
-    script.onerror=()=>reject(Error("PayPal Sandbox checkout could not load."));
+    script.onerror=()=>reject(Error("PayPal checkout could not load."));
     document.head.append(script);
   });
   return sdk;
@@ -155,50 +156,53 @@ async function showPayment(){
   });
   document.querySelector(".checkout-progress").scrollIntoView({behavior:"smooth",block:"start"});
   const msg=$("payment-message"),buttons=$("paypal-buttons");buttons.replaceChildren();
-  msg.textContent="Loading your secure Sandbox checkout…";
+  msg.textContent=modeText("Loading your secure Sandbox checkout…","Loading your secure payment…");
   try{
     const data=await api("view");
+    liveMode=data.sandbox===false;
+    const notice=document.querySelector(".checkout-sandbox");
+    if(notice)notice.textContent=liveMode?"LIVE PAYPAL CHECKOUT — REAL PAYMENT. Please review your total before approving.":"PAYPAL SANDBOX TEST — NO REAL MONEY. Use a Sandbox buyer account only.";
     restoreDelivery(data);
     $("payment-edit-delivery").hidden=!data.canEditDelivery;
-    $("payment-footer-note").textContent=data.stage==="waiting"?"Deposit received. The remaining balance will be payable when the artwork is ready.":data.stage==="complete"?"Sandbox payment verified. No further payment is due.":"Choose PayPal or card above to complete payment.";
+    $("payment-footer-note").textContent=data.stage==="waiting"?"Deposit received. The remaining balance will be payable when the artwork is ready.":data.stage==="complete"?modeText("Sandbox payment verified. No further payment is due.","Payment verified. No further payment is due."):"Choose PayPal or card above to complete payment.";
     $("summary-details").textContent="Saved order "+data.id+" · "+data.petName;
     $("summary-total").textContent=money(data.total);
     $("summary-due").textContent=money(data.amount);
     $("payment-reference").textContent="Order "+data.id+" · "+data.petName;
     $("payment-amount").textContent=money(data.amount);
-    const stages={deposit:"50% deposit",full:"Full payment (100%)",balance:"Remaining 50% balance",waiting:"Deposit received",complete:"Sandbox payment complete"};
+    const stages={deposit:"50% deposit",full:"Full payment (100%)",balance:"Remaining 50% balance",waiting:"Deposit received",complete:modeText("Sandbox payment complete","Payment complete")};
     $("payment-stage").textContent=stages[data.stage]||"Order payment";
     if(data.stage==="waiting"){
       $("payment-amount").textContent="A$0.00 due today";
-      msg.textContent="✓ Your 50% Sandbox deposit was verified. We will notify you when your portrait is ready; the remaining "+money(data.remaining)+" can then be paid here.";
+      msg.textContent=modeText("✓ Your 50% Sandbox deposit was verified. We will notify you when your portrait is ready; the remaining "+money(data.remaining)+" can then be paid here.","✓ Your 50% deposit was received. We will notify you when your portrait is ready; the remaining "+money(data.remaining)+" can then be paid here.");
       return;
     }
     if(data.stage==="complete"){
-      $("payment-amount").textContent="✓ Test payment verified";
-      msg.textContent="Thank you. This Sandbox order is marked paid for testing only. No real money was transferred.";
+      $("payment-amount").textContent=modeText("✓ Test payment verified","✓ Payment confirmed");
+      msg.textContent=modeText("Thank you. This Sandbox order is marked paid for testing only. No real money was transferred.","Thank you. Your payment has been confirmed.");
       return;
     }
     if(!["deposit","balance","full"].includes(data.stage))throw Error("This order is not ready for payment.");
-    msg.textContent="This is a PayPal Sandbox test. Sign in with a Sandbox buyer account. No real money will move.";
+    msg.textContent=modeText("This is a PayPal Sandbox test. Sign in with a Sandbox buyer account. No real money will move.","Secure PayPal payment. Real money will be charged when you approve.");
     const paypal=await loadSDK(data.clientId);
     if(!paypal?.Buttons)throw Error("PayPal Buttons are unavailable.");
     await paypal.Buttons({
       createOrder:async()=>{
-        msg.textContent="Creating a secure Sandbox payment…";
+        msg.textContent=modeText("Creating a secure Sandbox payment…","Creating your secure payment…");
         const result=await api("create");
-        msg.textContent="Please approve your test payment in PayPal.";
+        msg.textContent=modeText("Please approve your test payment in PayPal.","Please review and approve your payment in PayPal.");
         return result.orderID;
       },
       onApprove:async result=>{
-        msg.textContent="Verifying your Sandbox payment with PayPal…";
+        msg.textContent=modeText("Verifying your Sandbox payment with PayPal…","Verifying your payment with PayPal…");
         try{
           await api("capture",{orderID:result.orderID});
-          msg.textContent="✓ Sandbox payment verified.";
+          msg.textContent=modeText("✓ Sandbox payment verified.","✓ Payment confirmed.");
           await showPayment();
         }catch(e){msg.textContent=e.message+" If you approved a payment, contact the studio before trying again.";}
       },
-      onCancel:()=>{msg.textContent="Sandbox checkout cancelled. Your order is saved; you can retry here.";},
-      onError:()=>{msg.textContent="PayPal Sandbox checkout could not complete. Please retry or contact the studio.";}
+      onCancel:()=>{msg.textContent=modeText("Sandbox checkout cancelled. Your order is saved; you can retry here.","Payment cancelled. Your order is saved; you can retry here.");},
+      onError:()=>{msg.textContent=modeText("PayPal Sandbox checkout could not complete. Please retry or contact the studio.","PayPal payment could not complete. Please contact the studio if you approved a charge.");}
     }).render("#paypal-buttons");
   }catch(e){msg.textContent=e.message;}
 }
