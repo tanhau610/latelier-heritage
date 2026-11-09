@@ -347,3 +347,26 @@ body.gallery-modal-open{overflow:hidden}
  .site-header .mobile-menu{width:44px;height:44px}
 }
 @media(prefers-reduced-motion:reduce){.site-header .mobile-menu,.site-header .mobile-menu::before,.site-header .mobile-menu::after,.site-header .navigation,.site-header .navigation a,.site-header .logo{transition:none!important}}
+
+/* Mobile navigation: viewport-contained overlay, independent from page scroll. */
+@media(max-width:900px){
+ body.menu-open{overflow:hidden;touch-action:pan-y}
+ body.menu-open .site-header{z-index:100}
+ .site-header .navigation,.site-header .navigation.open{
+  position:fixed;top:76px;bottom:0;left:0;right:0;
+  width:100%;height:calc(100dvh - 76px);max-height:none;
+  overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  padding:18px max(24px,7vw) 44px;
+  align-content:start;justify-content:flex-start;
+ }
+ .site-header .navigation a{
+  font-family:'Italiana',Georgia,serif;
+  font-size:clamp(27px,6.8vw,34px);line-height:1.18;
+  min-height:56px;padding:12px 6px 12px 0!important;
+ }
+ .site-header .navigation.open::after{margin-top:16px}
+}
+@media(max-width:520px){
+ .site-header .navigation,.site-header .navigation.open{max-height:none;height:calc(100dvh - 76px)}
+ .site-header .navigation a{font-size:clamp(26px,7vw,32px);min-height:54px}
+}
