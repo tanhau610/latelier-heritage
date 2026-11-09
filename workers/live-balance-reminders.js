@@ -26,7 +26,7 @@ async function run(env){
     pages++;
   }while(cursor&&pages<20);
 }
-async function processOrder(env,id,sender){
+export async function processOrder(env,id,sender){
   const b=env.PORTRAIT_UPLOADS,p=prefix(id);
   const [order,payment,ledger]=await Promise.all([read(b,p+"details.json"),read(b,p+"payment.json"),read(b,p+"paypal-live-payments.json")]);
   if(!order||!payment||!ledger||order.id!==id)return;
