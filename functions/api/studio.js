@@ -20,6 +20,11 @@ const sandboxPaymentKey = id => `enquiries/${id}/paypal-sandbox-payments.json`;
 const livePaymentKey = id => `enquiries/${id}/paypal-live-payments.json`;
 const verifiedLive = (order,payment,ledger) => order?.checkoutMode==="live-inline" && payment?.sandbox===false && ledger?.quotedAt===payment?.quotedAt ? ledger : null;
 const fullyCaptured = ledger => Boolean(ledger?.full || (ledger?.deposit && ledger?.balance));
+const verifiedLiveCapture = (entry,amount) => entry?.verification==="paypal-live-capture" && entry?.sandbox===false && Number.isInteger(amount) && amount>0 && entry.amountCents===amount && /^[A-Za-z0-9-]{8,100}$/.test(entry.reference||"");
+const livePaidInFull = (ledger,payment) => Boolean(payment?.sandbox===false && ledger?.quotedAt===payment?.quotedAt && (
+  verifiedLiveCapture(ledger?.full,payment.totalCents) ||
+  (verifiedLiveCapture(ledger?.deposit,payment.depositCents) && verifiedLiveCapture(ledger?.balance,payment.balanceCents))
+));
 const moneyCents = aud => Math.round(aud * 100);
 const validAmount = value => Number.isInteger(value) && value >= 50 && value <= 100000;
 async function readJson(bucket,key){const obj=await bucket.get(key);if(!obj)return null;try{return await obj.json();}catch{return null;}}
@@ -220,7 +225,7 @@ export async function onRequestPost(context){
       const payment=await readJson(bucket,paymentKey(id));
       const sandbox=await readJson(bucket,sandboxPaymentKey(id));
       const live=verifiedLive(order,payment,await readJson(bucket,livePaymentKey(id)));
-       const paid=order.checkoutMode==="live-inline"?fullyCaptured(live)
+       const paid=order.checkoutMode==="live-inline"?livePaidInFull(live,payment)
          :order.checkoutMode==="sandbox-inline"?Boolean(sandbox?.quotedAt===payment?.quotedAt&&fullyCaptured(sandbox))
          :Boolean(payment?.deposit&&payment?.balance);
       if(!paid)return respond({ok:false,message:"Verify full payment before notifying shipment."},409);
@@ -307,8 +312,8 @@ export async function onRequestPost(context){
     const sandbox=await readJson(env.PORTRAIT_UPLOADS,sandboxPaymentKey(id));
     const checkoutPaid=data.checkoutMode==="sandbox-inline"&&sandbox?.quotedAt===payment?.quotedAt;
     const live=verifiedLive(data,payment,await readJson(env.PORTRAIT_UPLOADS,livePaymentKey(id)));
-    const depositVerified=data.checkoutMode==="live-inline"?Boolean(live?.deposit||live?.full):checkoutPaid?Boolean(sandbox.deposit||sandbox.full):Boolean(payment?.deposit);
-    const fullyVerified=data.checkoutMode==="live-inline"?fullyCaptured(live):checkoutPaid?fullyCaptured(sandbox):Boolean(payment?.deposit&&payment?.balance);
+    const depositVerified=data.checkoutMode==="live-inline"?Boolean(verifiedLiveCapture(live?.deposit,payment?.depositCents)||verifiedLiveCapture(live?.full,payment?.totalCents)):checkoutPaid?Boolean(sandbox.deposit||sandbox.full):Boolean(payment?.deposit);
+    const fullyVerified=data.checkoutMode==="live-inline"?livePaidInFull(live,payment):checkoutPaid?fullyCaptured(sandbox):Boolean(payment?.deposit&&payment?.balance);
     if(status!==data.status&&["Painting","Ready for balance"].includes(status)&&!depositVerified)return respond({ok:false,message:"Verify the deposit or full payment before starting production."},409);
     if(status!==data.status&&["Shipped","Completed"].includes(status)&&!fullyVerified)return respond({ok:false,message:"Verify full payment before shipping or completing the order."},409);
     const previousStatus=data.status;
