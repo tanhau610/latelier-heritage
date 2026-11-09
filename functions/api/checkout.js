@@ -1,6 +1,6 @@
 import {atelierSender} from "../_lib/brand-email.js";
 import {sendSandboxCustomerEmail} from "../_lib/sandbox-customer-email.js";
-// Preview-only one-page checkout. SANDBOX ONLY. Never use this handler for live payments.
+// PayPal checkout with strict server-side environment separation. Live requires explicit PAYPAL_MODE=live on main.
 // All customer records and photos are private Cloudflare R2 objects; the browser receives only a bearer token.
 const prices={"20x25":[229,299],"30x40":[379,469],"40x50":[499,599],"50x70":[699,829]};
 const countries=new Set(["Australia","United States","United Kingdom","Canada"]);
@@ -31,13 +31,15 @@ async function validImage(file){
   if(file.type==="image/webp")return String.fromCharCode(...b.slice(0,4))==="RIFF"&&String.fromCharCode(...b.slice(8,12))==="WEBP";
   return false;
 }
+function checkoutMode(env){const live=env.CF_PAGES_BRANCH==="main"&&env.PAYPAL_MODE==="live";return live?"live":"sandbox";}
+function paypalBase(env){return checkoutMode(env)==="live"?"https://api-m.paypal.com":"https://api-m.sandbox.paypal.com";}
 async function paypal(env,endpoint,method="GET",body=null,requestId=null){
-  const auth=await fetch("https://api-m.sandbox.paypal.com/v1/oauth2/token",{method:"POST",headers:{"Authorization":"Basic "+btoa(env.PAYPAL_CLIENT_ID+":"+env.PAYPAL_CLIENT_SECRET),"Content-Type":"application/x-www-form-urlencoded"},body:"grant_type=client_credentials"});
+  const auth=await fetch(paypalBase(env)+"/v1/oauth2/token",{method:"POST",headers:{"Authorization":"Basic "+btoa(env.PAYPAL_CLIENT_ID+":"+env.PAYPAL_CLIENT_SECRET),"Content-Type":"application/x-www-form-urlencoded"},body:"grant_type=client_credentials"});
   if(!auth.ok)throw Error("Sandbox authentication failed");
   const oauth=await auth.json();
   const headers={"Authorization":"Bearer "+oauth.access_token,"Content-Type":"application/json","Prefer":"return=representation"};
   if(requestId)headers["PayPal-Request-Id"]=requestId;
-  const r=await fetch("https://api-m.sandbox.paypal.com"+endpoint,{method,headers,body:body?JSON.stringify(body):undefined});
+  const r=await fetch(paypalBase(env)+endpoint,{method,headers,body:body?JSON.stringify(body):undefined});
   const data=await r.json().catch(()=>({}));
   if(!r.ok){const e=Error("PayPal Sandbox error ("+r.status+")");e.status=r.status;throw e;}
   return data;
@@ -90,7 +92,8 @@ async function start(request,env){
   const id="LH-"+new Date().toISOString().slice(0,10).replace(/-/g,"")+"-"+crypto.randomUUID().slice(0,8).toUpperCase();
   const token=randomToken(),quotedAt=new Date().toISOString(),totalCents=priceFor(size,pets,card)*100;
   const depositCents=Math.ceil(totalCents/2),balanceCents=totalCents-depositCents;
-  const details={id,type:"commission",checkoutMode:"sandbox-inline",checkoutPlan:plan,receivedAt:quotedAt,name,email,size,pets,country,card,petName,story,estimatedPriceAUD:totalCents/100,photos:[],status:"New"};
+  const live=checkoutMode(env)==="live";
+  const details={id,type:"commission",checkoutMode:live?"live-inline":"sandbox-inline",checkoutPlan:plan,receivedAt:quotedAt,name,email,size,pets,country,card,petName,story,estimatedPriceAUD:totalCents/100,photos:[],status:"New"};
   try{
     for(let i=0;i<photos.length;i++){
       const file=photos[i],ext={"image/jpeg":"jpg","image/png":"png","image/webp":"webp"}[file.type];
@@ -100,12 +103,12 @@ async function start(request,env){
     }
     await put(env.PORTRAIT_UPLOADS,path(id,"details.json"),details);
     await put(env.PORTRAIT_UPLOADS,path(id,"shipping.json"),{id,details:shipping,updatedAt:quotedAt});
-    await put(env.PORTRAIT_UPLOADS,path(id,"payment.json"),{id,quotedAt,totalCents,depositCents,balanceCents,checkoutPlan:plan,sandbox:true});
+    await put(env.PORTRAIT_UPLOADS,path(id,"payment.json"),{id,quotedAt,totalCents,depositCents,balanceCents,checkoutPlan:plan,sandbox:!live});
     await put(env.PORTRAIT_UPLOADS,path(id,"checkout-access.json"),{id,tokenHash:await digest(token),expiresAt:new Date(Date.now()+90*86400000).toISOString(),createdAt:quotedAt});
     // Register an unpaid checkout for the scheduled Worker; no email is sent at order creation.
-    await put(env.PORTRAIT_UPLOADS,"pending-checkouts/"+id+".json",{id,createdAt:quotedAt,notifyAfter:new Date(Date.now()+10*60*1000).toISOString(),sandbox:true});
+    await put(env.PORTRAIT_UPLOADS,"pending-checkouts/"+id+".json",{id,createdAt:quotedAt,notifyAfter:new Date(Date.now()+10*60*1000).toISOString(),sandbox:!live});
   }catch(e){console.error("Sandbox order storage failed",id,e);return fail("Could not save your order securely. Please contact the studio.",503);}
-  return json({ok:true,id,token,sandbox:true});
+  return json({ok:true,id,token,sandbox:!live});
 }
 function due(order,payment,ledger){
   if(ledger?.quotedAt!==payment.quotedAt)ledger=null;
@@ -124,21 +127,23 @@ async function action(request,env){
   const token=auth.startsWith("Bearer ")?auth.slice(7):"";
   if(!/^[a-f0-9]{64}$/.test(token))return fail("Invalid checkout access.",403);
   const bucket=env.PORTRAIT_UPLOADS;
-  const [access,emailAccess,order,payment,ledger]=await Promise.all(["checkout-access.json","checkout-email-access.json","details.json","payment.json","paypal-sandbox-payments.json"].map(f=>read(bucket,path(id,f))));
+  const live=checkoutMode(env)==="live";
+  const ledgerFile=live?"paypal-live-payments.json":"paypal-sandbox-payments.json";
+  const [access,emailAccess,order,payment,ledger]=await Promise.all(["checkout-access.json","checkout-email-access.json","details.json","payment.json",ledgerFile].map(f=>read(bucket,path(id,f))));
   const hashedToken=await digest(token);
   const activeAccess=[access,emailAccess].find(a=>a?.id===id&&Date.parse(a.expiresAt)>Date.now()&&same(hashedToken,a.tokenHash));
   if(!activeAccess)return fail("Checkout access expired or invalid.",403);
-  if(!order||order.id!==id||order.checkoutMode!=="sandbox-inline"||!payment||payment.id!==id||payment.checkoutPlan!==order.checkoutPlan)return fail("Order not found.",404);
+  if(!order||order.id!==id||order.checkoutMode!==(live?"live-inline":"sandbox-inline")||payment.sandbox===live||!payment||payment.id!==id||payment.checkoutPlan!==order.checkoutPlan)return fail("Order not found.",404);
   const state=due(order,payment,ledger);
   // A capture may have succeeded even if the customer's network lost the response.
   // Return the existing verified result for the exact same PayPal order, without charging again.
   if(action==="capture"&&typeof input.orderID==="string"&&ledger?.quotedAt===payment.quotedAt){
     const recordedStage=["deposit","balance","full"].find(s=>ledger[s]?.paypalOrderId===input.orderID);
-    if(recordedStage)return json({ok:true,paid:true,stage:recordedStage,alreadyRecorded:true,sandbox:true});
+    if(recordedStage)return json({ok:true,paid:true,stage:recordedStage,alreadyRecorded:true,sandbox:!live});
   }
   if(action==="view"){
     const savedShipping=await read(bucket,path(id,"shipping.json"));
-    return json({ok:true,id,petName:order.petName||"Pet portrait",plan:order.checkoutPlan,stage:state.stage,amount:(state.amountCents/100).toFixed(2),total:(payment.totalCents/100).toFixed(2),remaining:(payment.balanceCents/100).toFixed(2),status:order.status||"New",clientId:env.PAYPAL_CLIENT_ID,sandbox:true,customerName:order.name,customerEmail:order.email,shipping:savedShipping?.details||null,canEditDelivery:["deposit","full"].includes(state.stage)&&order.status==="New"});
+    return json({ok:true,id,petName:order.petName||"Pet portrait",plan:order.checkoutPlan,stage:state.stage,amount:(state.amountCents/100).toFixed(2),total:(payment.totalCents/100).toFixed(2),remaining:(payment.balanceCents/100).toFixed(2),status:order.status||"New",clientId:env.PAYPAL_CLIENT_ID,sandbox:!live,customerName:order.name,customerEmail:order.email,shipping:savedShipping?.details||null,canEditDelivery:["deposit","full"].includes(state.stage)&&order.status==="New"});
   }
   if(action==="updateDelivery"){
     // Only allow edits before the first captured payment. Never create a second order.
@@ -160,26 +165,26 @@ async function action(request,env){
     if(!countries.has(data.country))return fail("Please choose a supported delivery country.");
     shipping.country=data.country;
     // Re-check the ledger before writing in case a payment was captured in another tab.
-    const latestLedger=await read(bucket,path(id,"paypal-sandbox-payments.json"));
+    const latestLedger=await read(bucket,path(id,ledgerFile));
     if(latestLedger?.quotedAt===payment.quotedAt&&(latestLedger.deposit||latestLedger.full))return fail("Payment has already been made. Please contact the studio to change the delivery address.",409);
     const updatedAt=new Date().toISOString();
     await put(bucket,path(id,"shipping.json"),{id,details:shipping,updatedAt});
     await put(bucket,path(id,"details.json"),{...order,name,email,country:shipping.country});
-    return json({ok:true,id,updatedAt,sandbox:true});
+    return json({ok:true,id,updatedAt,sandbox:!live});
   }
   if(["Cancelled","Shipped","Completed"].includes(order.status))return fail("This order is no longer payable.",409);
   if(!["deposit","balance","full"].includes(state.stage))return fail("No payment is currently due.",409);
   const stage=state.stage,amount=(state.amountCents/100).toFixed(2),reference=id+"-"+stage;
   if(action==="create"){
-    const pending=await read(bucket,path(id,"checkout-paypal-order.json"));
-    if(pending?.stage===stage&&pending?.quotedAt===payment.quotedAt&&pending?.tokenHash===activeAccess.tokenHash&&pending?.paypalOrderId&&Date.parse(pending.createdAt)>Date.now()-3600000)return json({ok:true,orderID:pending.paypalOrderId,sandbox:true});
+    const pending=await read(bucket,path(id,live?"checkout-paypal-live-order.json":"checkout-paypal-order.json"));
+    if(pending?.stage===stage&&pending?.quotedAt===payment.quotedAt&&pending?.tokenHash===activeAccess.tokenHash&&pending?.paypalOrderId&&Date.parse(pending.createdAt)>Date.now()-3600000)return json({ok:true,orderID:pending.paypalOrderId,sandbox:!live});
     const orderResult=await paypal(env,"/v2/checkout/orders","POST",{
       intent:"CAPTURE",
       purchase_units:[{reference_id:reference,custom_id:reference,description:"Custom hand-painted pet portrait - "+stage,amount:{currency_code:"AUD",value:amount}}],
       application_context:{shipping_preference:"NO_SHIPPING",user_action:"PAY_NOW"}
     },"checkout-create-"+reference+"-"+payment.quotedAt.replace(/[^0-9]/g,"").slice(0,14)+"-"+Math.floor(Date.now()/3600000));
     if(!orderResult.id||orderResult.status!=="CREATED")throw Error("PayPal did not create the Sandbox order.");
-    await put(bucket,path(id,"checkout-paypal-order.json"),{id,stage,quotedAt:payment.quotedAt,tokenHash:activeAccess.tokenHash,paypalOrderId:orderResult.id,createdAt:new Date().toISOString()});
+    await put(bucket,path(id,live?"checkout-paypal-live-order.json":"checkout-paypal-order.json"),{id,stage,quotedAt:payment.quotedAt,tokenHash:activeAccess.tokenHash,paypalOrderId:orderResult.id,createdAt:new Date().toISOString()});
     // Give the buyer a full ten-minute window from opening the PayPal payment flow.
     try{
       const key="pending-checkouts/"+id+".json";
@@ -191,9 +196,9 @@ async function action(request,env){
     }catch(error){console.error("Could not extend unpaid notification window",id,error);}
 
 
-    return json({ok:true,orderID:orderResult.id,sandbox:true});
+    return json({ok:true,orderID:orderResult.id,sandbox:!live});
   }
-  const pending=await read(bucket,path(id,"checkout-paypal-order.json"));
+  const pending=await read(bucket,path(id,live?"checkout-paypal-live-order.json":"checkout-paypal-order.json"));
   if(!pending||pending.stage!==stage||pending.quotedAt!==payment.quotedAt||pending.tokenHash!==activeAccess.tokenHash||pending.paypalOrderId!==input.orderID)return fail("Payment session mismatch. Refresh checkout.",409);
   if(!/^[A-Za-z0-9]{8,50}$/.test(input.orderID||""))return fail("Invalid PayPal order ID.");
   let result;
@@ -203,7 +208,7 @@ async function action(request,env){
   const matched=captures.find(c=>c.status==="COMPLETED"&&c.amount?.currency_code==="AUD"&&c.amount?.value===amount);
   if(result.status!=="COMPLETED"||!matched||result.purchase_units?.[0]?.custom_id!==reference)throw Error("Sandbox capture could not be verified.");
   const current=await read(bucket,path(id,"paypal-sandbox-payments.json"));
-  if(current?.quotedAt===payment.quotedAt&&current[stage])return json({ok:true,paid:true,stage,sandbox:true});
+  if(current?.quotedAt===payment.quotedAt&&current[stage])return json({ok:true,paid:true,stage,sandbox:!live});
   const latest=await read(bucket,path(id,"payment.json"));
   if(latest?.quotedAt!==payment.quotedAt)return fail("Order changed during payment. Contact the studio.",409);
   const next=current?.quotedAt===payment.quotedAt?current:{id,quotedAt:payment.quotedAt};
@@ -244,11 +249,13 @@ async function action(request,env){
     const notification=await sendSandboxCustomerEmail({env,bucket,order,payment,event:"payment-"+stage,eventKey:"payment-"+stage});
     emailTest=notification.state;
   } catch(e) {console.error("Payment confirmation email logging failed",id,String(e));emailTest="failed";}
-  return json({ok:true,paid:true,stage,sandbox:true,emailTest});
+  return json({ok:true,paid:true,stage,sandbox:!live,emailTest});
 }
 export async function onRequestPost({request,env}){
   // Explicit branch guard: even accidental production deployment cannot use this checkout.
-  if(!env.CF_PAGES_BRANCH||env.CF_PAGES_BRANCH==="main")return fail("Sandbox checkout is only available on a preview branch.",403);
+  if(!env.CF_PAGES_BRANCH)return fail("Checkout environment is not configured.",503);
+  if(env.CF_PAGES_BRANCH==="main"&&env.PAYPAL_MODE!=="live")return fail("Live checkout is not enabled.",503);
+  if(env.CF_PAGES_BRANCH!=="main"&&env.PAYPAL_MODE==="live")return fail("Live payments are prohibited on preview.",403);
   if(!env.PORTRAIT_UPLOADS||!env.PAYPAL_CLIENT_ID||!env.PAYPAL_CLIENT_SECRET||!env.TURNSTILE_SECRET_KEY)return fail("Sandbox checkout is not configured for this preview.",503);
   const origin=request.headers.get("Origin");
   if(origin&&origin!==new URL(request.url).origin)return fail("Origin not allowed.",403);
