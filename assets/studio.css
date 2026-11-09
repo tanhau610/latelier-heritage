@@ -351,3 +351,7 @@
 .studio-tracking .btn:disabled{opacity:.65;cursor:wait}
 .studio-tracking [hidden],.studio-save-actions[hidden]{display:none!important}
 @media(max-width:600px){.studio-tracking{padding:18px}.studio-tracking .studio-save-actions{flex-direction:column;align-items:stretch}.studio-tracking .btn{align-self:start}}
+
+/* Approved ATELIER HAU brand wordmark in studio header */
+.studio-brand .studio-logo{display:block;width:clamp(180px,19vw,245px);height:auto;max-height:68px;object-fit:contain;object-position:left center}
+@media(max-width:650px){.studio-brand .studio-logo{width:clamp(145px,45vw,205px);max-height:54px}}
