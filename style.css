@@ -505,3 +505,24 @@ main h1,main h2,main h3{letter-spacing:-.035em;text-wrap:balance}
  .order-stage-heading h2{font-size:clamp(40px,9.5vw,52px)}
  .section-line{font-size:9px;letter-spacing:.1em}
 }
+
+
+/* ATELIER HAU — mobile navigation typography trial (Preview only).
+   Keep the approved wordmark and editorial display headings unchanged. */
+@media (max-width:900px){
+ .site-header .navigation a,
+ .site-header .navigation.open a{
+  font-family:'DM Sans',Arial,sans-serif;
+  font-size:clamp(18px,2.5vw,20px);
+  font-weight:500;
+  line-height:1.4;
+  letter-spacing:.005em;
+  min-height:54px;
+  padding:14px 6px 14px 0!important;
+ }
+ .site-header .navigation a.current{font-weight:600}
+}
+@media (max-width:520px){
+ .site-header .navigation a,
+ .site-header .navigation.open a{font-size:19px;min-height:54px}
+}
