@@ -130,9 +130,9 @@ async function action(request,env){
   const bucket=env.PORTRAIT_UPLOADS;
   const live=checkoutMode(env)==="live";
   const ledgerFile=live?"paypal-live-payments.json":"paypal-sandbox-payments.json";
-  const [access,emailAccess,order,payment,ledger]=await Promise.all(["checkout-access.json","checkout-email-access.json","details.json","payment.json",ledgerFile].map(f=>read(bucket,path(id,f))));
+  const [access,emailAccess,reminder3,reminder7,order,payment,ledger]=await Promise.all(["checkout-access.json","checkout-email-access.json","checkout-email-access-3d.json","checkout-email-access-7d.json","details.json","payment.json",ledgerFile].map(f=>read(bucket,path(id,f))));
   const hashedToken=await digest(token);
-  const activeAccess=[access,emailAccess].find(a=>a?.id===id&&Date.parse(a.expiresAt)>Date.now()&&same(hashedToken,a.tokenHash));
+  const activeAccess=[access,emailAccess,reminder3,reminder7].find(a=>a?.id===id&&Date.parse(a.expiresAt)>Date.now()&&same(hashedToken,a.tokenHash));
   if(!activeAccess)return fail("Checkout access expired or invalid.",403);
   if(!order||order.id!==id||order.checkoutMode!==(live?"live-inline":"sandbox-inline")||!payment||payment.sandbox===live||payment.id!==id||payment.checkoutPlan!==order.checkoutPlan)return fail("Order not found.",404);
   const state=due(order,payment,ledger);
