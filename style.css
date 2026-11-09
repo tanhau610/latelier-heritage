@@ -288,12 +288,14 @@ body.gallery-modal-open{overflow:hidden}
 .hero-slideshow .hero-slide{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:0;visibility:hidden;transition:opacity 1.4s ease,visibility 1.4s ease}
 .hero-slideshow .hero-slide.is-active{opacity:1;visibility:visible}
 .hero-art-credit{z-index:2}
-.hero-slide-arrow{position:absolute;z-index:4;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:42px;height:48px;border:1px solid rgba(255,255,255,.65);border-radius:2px;background:rgba(40,29,27,.28);color:#fff;cursor:pointer;opacity:.72;transition:opacity .2s ease,background .2s ease}
-.hero-slide-arrow span{font-family:Georgia,serif;font-size:34px;line-height:1;transform:translateY(-2px)}
-.hero-slide-prev{left:16px}.hero-slide-next{right:16px}
-.hero-slide-arrow:hover,.hero-slide-arrow:focus-visible{opacity:1;background:rgba(40,29,27,.6)}
+.hero-slide-arrow{position:absolute;z-index:4;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid rgba(255,255,255,.82);border-radius:50%;background:rgba(35,27,25,.19);color:#fff;cursor:pointer;opacity:.85;box-shadow:0 1px 12px rgba(0,0,0,.1);transition:opacity .25s ease,background .25s ease,border-color .25s ease,transform .25s ease}
+.hero-slide-arrow span{font-size:0;line-height:0;display:block;width:11px;height:11px;border-top:1.7px solid currentColor;border-right:1.7px solid currentColor}
+.hero-slide-prev span{transform:translateX(2px) rotate(-135deg)}
+.hero-slide-next span{transform:translateX(-2px) rotate(45deg)}
+.hero-slide-prev{left:20px}.hero-slide-next{right:20px}
+.hero-slide-arrow:hover,.hero-slide-arrow:focus-visible{opacity:1;background:rgba(35,27,25,.55);border-color:#fff}
 .hero-slide-arrow:focus-visible{outline:2px solid #fff;outline-offset:3px}
-@media(max-width:700px){.hero-slide-arrow{width:34px;height:42px;opacity:.8}.hero-slide-prev{left:8px}.hero-slide-next{right:8px}}
+@media(max-width:700px){.hero-slide-arrow{width:38px;height:38px;opacity:.9}.hero-slide-prev{left:10px}.hero-slide-next{right:10px}}
 .hero-slide-controls{position:absolute;z-index:3;right:22px;bottom:24px;display:flex;align-items:center;gap:9px}
 .hero-slide-controls button{width:24px;height:24px;border:0;background:transparent;padding:8px;display:grid;place-items:center}
 .hero-slide-controls button:before{content:'';display:block;width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.58);border:1px solid rgba(50,34,29,.35);transition:background .25s,transform .25s}
