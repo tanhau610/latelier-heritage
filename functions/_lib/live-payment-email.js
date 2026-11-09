@@ -5,7 +5,9 @@ const money=c=>"A$"+(Number(c)/100).toFixed(2);
 export async function sendLivePaymentEmail({env,bucket,order,payment,stage,captureId}){
   if(env.CF_PAGES_BRANCH!=="main"||env.PAYPAL_MODE!=="live"||env.PAYPAL_LIVE_READY!=="yes")throw Error("Live email environment not authorized");
   const sender=atelierSender(env);
-  if(sender.includes("onboarding@resend.dev"))throw Error("Verified sending domain required for live customer email");
+  if(!/^ATELIER HAU <[a-z0-9._%+-]+@atelierhau\.com>$/i.test(sender))throw Error("Verified atelierhau.com sender required for live customer email");
+  if(!["deposit","balance","full"].includes(stage)||typeof captureId!=="string"||!/^[A-Za-z0-9-]{8,100}$/.test(captureId))throw Error("Invalid verified payment email event");
+  if(!order?.id||payment?.id!==order.id||!Number.isInteger(payment.totalCents)||payment.totalCents<=0||!Number.isInteger(payment.depositCents)||!Number.isInteger(payment.balanceCents)||payment.depositCents+payment.balanceCents!==payment.totalCents)throw Error("Invalid verified payment record");
   if(!env.RESEND_API_KEY||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(order.email||""))throw Error("Live email configuration invalid");
   const key="enquiries/"+order.id+"/email-events/live-payment-"+stage+".json";
   const prev=await bucket.get(key);
