@@ -7,7 +7,7 @@ const labels = {
   Painting: ["Your portrait is being painted", "Our artist has started hand-painting your portrait with care."],
   "Ready for balance": ["Your portrait is ready", "Your portrait is ready. If you paid a deposit, the remaining balance is now due before dispatch."],
   Shipped: ["Your portrait has been dispatched", "Your finished portrait has been dispatched. We'll share tracking details separately when available."],
-  Completed: ["Thank you for your order", "Your portrait order is complete. Thank you for trusting L'Atelier Heritage."],
+  Completed: ["Thank you for your order", "Your portrait order is complete. Thank you for trusting ATELIER HAU."],
   Cancelled: ["Update on your portrait order", "Your portrait order has been marked cancelled. Please contact us if this is unexpected."]
 };
 function copyFor(event, order, payment, link, paidInFull, tracking) {
@@ -67,12 +67,12 @@ export async function sendSandboxCustomerEmail({env,bucket,order,payment,event,e
     const intro="SANDBOX EMAIL PREVIEW — NO REAL PAYMENT. This email is sent only to the studio test inbox, not the customer.";
     const detailHtml=copy.details.map(line=>"<li style=\"padding:4px 0\">"+escapeHtml(line)+"</li>").join("");
     const actionHtml=copy.link?"<p style=\"margin:28px 0\"><a href=\""+escapeHtml(copy.link)+"\" style=\"background:#743f48;color:#fff;text-decoration:none;padding:14px 22px;border-radius:5px\">"+escapeHtml(copy.linkLabel||"Pay remaining balance (Sandbox)")+"</a></p>":"";
-    const html="<div style=\"background:#f7f3ef;padding:28px 14px;font-family:Arial,sans-serif;color:#332b29\"><div style=\"max-width:580px;margin:auto;background:#fff;border:1px solid #e6ddd5;padding:32px\"><div style=\"font-family:Georgia,serif;font-size:26px;color:#743f48\">L’Atelier Heritage</div><p style=\"font-size:11px;letter-spacing:1px;color:#9b6757\">"+escapeHtml(intro)+"</p><h1 style=\"font-family:Georgia,serif;font-size:29px;font-weight:normal\">"+escapeHtml(copy.heading)+"</h1><p>Hello "+escapeHtml(order.name||"there")+",</p><p style=\"line-height:1.7\">"+escapeHtml(copy.body)+"</p><ul style=\"padding-left:20px;line-height:1.5\">"+detailHtml+"</ul>"+actionHtml+"<p style=\"font-size:12px;color:#776d68\">Hand-painted with care. This is a test notification, not a real order confirmation.</p></div></div>";
+    const html="<div style=\"background:#f7f3ef;padding:28px 14px;font-family:Arial,sans-serif;color:#332b29\"><div style=\"max-width:580px;margin:auto;background:#fff;border:1px solid #e6ddd5;padding:32px\"><div style=\"font-family:Georgia,serif;font-size:26px;color:#743f48\">ATELIER HAU</div><p style=\"font-size:11px;letter-spacing:1px;color:#9b6757\">"+escapeHtml(intro)+"</p><h1 style=\"font-family:Georgia,serif;font-size:29px;font-weight:normal\">"+escapeHtml(copy.heading)+"</h1><p>Hello "+escapeHtml(order.name||"there")+",</p><p style=\"line-height:1.7\">"+escapeHtml(copy.body)+"</p><ul style=\"padding-left:20px;line-height:1.5\">"+detailHtml+"</ul>"+actionHtml+"<p style=\"font-size:12px;color:#776d68\">Hand-painted with care. This is a test notification, not a real order confirmation.</p></div></div>";
     const text=[intro,"",copy.heading,"Hello "+(order.name||"there")+",",copy.body,...copy.details,copy.link?(copy.linkLabel||"Link")+": "+copy.link:"","This is a test notification."].filter(Boolean).join("\n\n");
     const response=await fetch("https://api.resend.com/emails",{
       method:"POST",
       headers:{"Authorization":"Bearer "+env.RESEND_API_KEY,"Content-Type":"application/json","Idempotency-Key":"lh-sandbox-"+order.id+"-"+eventKey},
-      body:JSON.stringify({from:env.RESEND_FROM||"L'Atelier Heritage <onboarding@resend.dev>",to:[env.NOTIFICATION_EMAIL],subject:"[SANDBOX TEST] "+copy.subject+" · "+order.id,html,text})
+      body:JSON.stringify({from:env.RESEND_FROM||"ATELIER HAU <onboarding@resend.dev>",to:[env.NOTIFICATION_EMAIL],subject:"[SANDBOX TEST] "+copy.subject+" · "+order.id,html,text})
     });
     const result=await response.json().catch(()=>({}));
     if(!response.ok)throw Error("Resend HTTP "+response.status+" "+String(result.message||"").slice(0,100));
