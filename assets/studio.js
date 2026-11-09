@@ -252,7 +252,7 @@
     };
     refreshTrackingLink();
     trackingForm.append(trackingIntro,carrierLabel,otherLabel,numberLabel,urlLabel,trackingHelp,trackingActions,trackingLink);
-    const notifyButton=make("button","btn outline","Gửi email cập nhật mã vận đơn (Sandbox)");
+    const notifyButton=make("button","btn outline",order.checkoutMode==="live-inline"?"Gửi email mã vận đơn cho khách":"Gửi email cập nhật mã vận đơn (Sandbox)");
     notifyButton.type="button";
     const notifyFeedback=make("p","studio-save-feedback");notifyFeedback.setAttribute("role","status");
     const notifyActions=make("div","studio-save-actions");notifyActions.append(notifyButton,notifyFeedback);
@@ -271,12 +271,12 @@
       finally{trackingButton.disabled=false;trackingButton.textContent="Lưu thông tin vận chuyển";}
     });
     notifyButton.addEventListener("click",async()=>{
-      notifyButton.disabled=true;notifyFeedback.textContent="Đang gửi email thử nghiệm…";
+      notifyButton.disabled=true;notifyFeedback.textContent=order.checkoutMode==="live-inline"?"Đang gửi email cho khách…":"Đang gửi email thử nghiệm…";
       try{
         const result=await api("tracking-notify",{method:"POST",body:{id:order.id}});
-        const notices={sent:"✓ Resend đã tiếp nhận email cập nhật tracking (chỉ hộp thư thử nghiệm).","already-sent":"Email cho mã vận đơn này đã được gửi trước đó.",failed:"Không gửi được email thử nghiệm. Mã vận đơn vẫn đã lưu.",skipped:"Chưa cấu hình gửi email thử nghiệm."};
+        const notices=order.checkoutMode==="live-inline"?{sent:"✓ Resend đã tiếp nhận email mã vận đơn gửi cho khách.", "already-recorded":"Thông báo mã vận đơn này đã được ghi nhận trước đó."}:{sent:"✓ Resend đã tiếp nhận email cập nhật tracking (chỉ hộp thư thử nghiệm).","already-sent":"Email cho mã vận đơn này đã được gửi trước đó.",failed:"Không gửi được email thử nghiệm. Mã vận đơn vẫn đã lưu.",skipped:"Chưa cấu hình gửi email thử nghiệm."};
         notifyFeedback.textContent=notices[result.emailTest]||"Đã xử lý yêu cầu.";
-        notifyFeedback.className="studio-save-feedback "+(["sent","already-sent"].includes(result.emailTest)?"is-success":"is-error");
+        notifyFeedback.className="studio-save-feedback "+(["sent","already-sent","already-recorded"].includes(result.emailTest)?"is-success":"is-error");
         void refreshEmailHistory();
       }catch(error){notifyFeedback.textContent=error.message;notifyFeedback.className="studio-save-feedback is-error";}
       finally{notifyButton.disabled=false;}
