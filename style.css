@@ -339,11 +339,3 @@ body.gallery-modal-open{overflow:hidden}
  .site-header .mobile-menu{width:44px;height:44px}
 }
 @media(prefers-reduced-motion:reduce){.site-header .mobile-menu,.site-header .mobile-menu::before,.site-header .mobile-menu::after,.site-header .navigation,.site-header .navigation a,.site-header .logo{transition:none!important}}
-
-
-/* ATELIER HAU Editorial V2 wordmark-only header experiment */
-.site-header a.logo{width:auto;min-width:174px;max-width:230px;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:flex-start;line-height:1;text-decoration:none;white-space:nowrap}
-.site-header a.logo img{display:none!important}
-.site-header a.logo::after{content:"ATELIER HAU";display:block;font-family:'Italiana',Georgia,'Times New Roman',serif;font-weight:400;font-size:clamp(23px,2.1vw,32px);letter-spacing:.012em;line-height:1.15;color:#633a3a}
-@media(max-width:800px){.site-header a.logo{min-width:0;max-width:calc(100% - 70px)}.site-header a.logo::after{font-size:clamp(24px,6vw,29px);letter-spacing:0}}
-@media(max-width:370px){.site-header a.logo::after{font-size:22px}}
