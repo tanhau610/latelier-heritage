@@ -355,3 +355,13 @@
 /* Approved ATELIER HAU brand wordmark in studio header */
 .studio-brand .studio-logo{display:block;width:clamp(180px,19vw,245px);height:auto;max-height:68px;object-fit:contain;object-position:left center}
 @media(max-width:650px){.studio-brand .studio-logo{width:clamp(145px,45vw,205px);max-height:54px}}
+
+/* Studio brand: use the exact approved storefront logo on both login and dashboard. */
+.studio-page .studio-brand{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:5px}
+.studio-page .studio-brand .studio-logo{display:block;width:clamp(205px,17vw,235px);height:auto;max-height:none;object-fit:contain;object-position:left center}
+.studio-page .studio-brand .descriptor{display:block;font-size:9px;letter-spacing:.24em;line-height:1.4}
+.studio-page .studio-sidebar-brand{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:2px 8px 38px}
+.studio-page .studio-sidebar-logo{display:block;width:100%;max-width:185px;height:auto;object-fit:contain;object-position:left center;background:#f6f0e8;border-radius:3px;padding:9px 10px}
+.studio-page .studio-sidebar-brand>small{display:block;color:#c4ada1;letter-spacing:.18em;font-size:9px;line-height:1.5}
+@media(max-width:860px){.studio-page .studio-sidebar-brand{padding:0 0 12px}.studio-page .studio-sidebar-logo{max-width:165px}}
+@media(max-width:600px){.studio-page .studio-brand .studio-logo{width:min(205px,55vw)}}
