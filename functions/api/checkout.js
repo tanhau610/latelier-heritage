@@ -204,12 +204,23 @@ async function action(request,env){
   if(!/^[A-Za-z0-9]{8,50}$/.test(input.orderID||""))return fail("Invalid PayPal order ID.");
   let result;
   try{result=await paypal(env,"/v2/checkout/orders/"+encodeURIComponent(input.orderID)+"/capture","POST",null,"checkout-capture-"+input.orderID);}
-  catch(e){if(e.status!==422)throw e;result=await paypal(env,"/v2/checkout/orders/"+encodeURIComponent(input.orderID));}
-  const captures=result.purchase_units?.flatMap(u=>u.payments?.captures||[])||[];
+  catch(captureError){
+    // A timeout or lost response may occur AFTER PayPal has charged the buyer.
+    // Query the exact order before offering another payment attempt.
+    try{result=await paypal(env,"/v2/checkout/orders/"+encodeURIComponent(input.orderID));}
+    catch(lookupError){console.error("PayPal capture outcome unknown; manual reconciliation required",id,input.orderID);return fail("Payment status is being verified. Please contact the studio before retrying.",503);}
+    if(result.status!=="COMPLETED")return fail("Payment could not be confirmed. Please contact the studio before retrying.",409);
+  }
+  const units=result.purchase_units||[];
+  const captures=units[0]?.payments?.captures||[];
   const matched=captures.find(c=>c.status==="COMPLETED"&&c.amount?.currency_code==="AUD"&&c.amount?.value===amount);
-  if(result.status!=="COMPLETED"||!matched||result.purchase_units?.[0]?.custom_id!==reference)throw Error("PayPal capture could not be verified.");
+  // Reject extra purchase units or captures, even if one capture matches.
+  if(result.id!==input.orderID||result.status!=="COMPLETED"||units.length!==1||captures.length!==1||!matched||units[0].custom_id!==reference||units[0].amount?.currency_code!=="AUD"||units[0].amount?.value!==amount)throw Error("PayPal capture could not be verified.");
   const current=await read(bucket,path(id,ledgerFile));
-  if(current?.quotedAt===payment.quotedAt&&current[stage])return json({ok:true,paid:true,stage,sandbox:!live});
+  if(current?.quotedAt===payment.quotedAt&&current[stage]){
+    if(current[stage].paypalOrderId!==result.id||current[stage].reference!==matched.id)return fail("Payment conflict detected. Contact the studio for reconciliation.",409);
+    return json({ok:true,paid:true,stage,sandbox:!live});
+  }
   const latest=await read(bucket,path(id,"payment.json"));
   if(latest?.quotedAt!==payment.quotedAt)return fail("Order changed during payment. Contact the studio.",409);
   const next=current?.quotedAt===payment.quotedAt?current:{id,quotedAt:payment.quotedAt};
