@@ -1,3 +1,4 @@
+import {atelierSender} from "./brand-email.js";
 // Sandbox-only transactional email previews. Never send to customer addresses from this module.
 // All recipient addresses are forced to NOTIFICATION_EMAIL until a verified sending domain and live rollout are approved.
 const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -72,7 +73,7 @@ export async function sendSandboxCustomerEmail({env,bucket,order,payment,event,e
     const response=await fetch("https://api.resend.com/emails",{
       method:"POST",
       headers:{"Authorization":"Bearer "+env.RESEND_API_KEY,"Content-Type":"application/json","Idempotency-Key":"lh-sandbox-"+order.id+"-"+eventKey},
-      body:JSON.stringify({from:env.RESEND_FROM||"ATELIER HAU <onboarding@resend.dev>",to:[env.NOTIFICATION_EMAIL],subject:"[SANDBOX TEST] "+copy.subject+" · "+order.id,html,text})
+      body:JSON.stringify({from:atelierSender(env),to:[env.NOTIFICATION_EMAIL],subject:"[SANDBOX TEST] "+copy.subject+" · "+order.id,html,text})
     });
     const result=await response.json().catch(()=>({}));
     if(!response.ok)throw Error("Resend HTTP "+response.status+" "+String(result.message||"").slice(0,100));
