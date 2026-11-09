@@ -222,7 +222,7 @@ async function action(request,env){
   // Duplicate capture requests return above without sending a second email.
   const paidLabel=stage==="deposit"?"ĐÃ THANH TOÁN CỌC 50%":stage==="balance"?"ĐÃ THANH TOÁN PHẦN CÒN LẠI":"ĐÃ THANH TOÁN TOÀN BỘ";
   const outstanding=stage==="deposit"?payment.balanceCents/100:0;
-  await notifyStudio(env,(live?"[LIVE] ":"[SANDBOX] ")+"["+paidLabel+"] Đơn tranh "+id,[
+  try { await notifyStudio(env,(live?"[LIVE] ":"[SANDBOX] ")+"["+paidLabel+"] Đơn tranh "+id,[
     "ATELIER HAU — XÁC NHẬN THANH TOÁN",
     live?"GIAO DỊCH PAYPAL LIVE — TIỀN THẬT.":"CHẾ ĐỘ THỬ NGHIỆM SANDBOX — KHÔNG CÓ TIỀN THẬT.",
     "",
@@ -242,7 +242,7 @@ async function action(request,env){
     "",
     stage==="deposit"?"Bước tiếp theo: Kiểm tra ảnh và yêu cầu trước khi bắt đầu vẽ.":"Bước tiếp theo: Kiểm tra trạng thái đơn và tiếp tục xử lý trong Studio.",
     live?"Giao dịch thật. Đối chiếu trong PayPal Business.":"Lưu ý: Đây là thanh toán thử, không phải doanh thu thực tế."
-  ],id);
+  ],id); } catch(error) { console.error("Verified capture recorded but Studio notification failed",id,String(error)); }
 
   // Payment is already securely recorded. Email is best-effort and cannot undo a capture.
   let emailTest="skipped";
