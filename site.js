@@ -2,7 +2,27 @@
 // Quiet editorial motion; all content remains readable when animation is disabled.
 const motionQuery=window.matchMedia('(prefers-reduced-motion: reduce)');
 const slides=[...document.querySelectorAll('.hero-slideshow .hero-slide')],slideDots=[...document.querySelectorAll('.hero-slide-controls button')];
-if(slides.length>1){let slideIndex=0,slideTimer=null;const showSlide=n=>{slideIndex=(n+slides.length)%slides.length;slides.forEach((s,i)=>s.classList.toggle('is-active',i===slideIndex));slideDots.forEach((b,i)=>{b.classList.toggle('is-active',i===slideIndex);if(i===slideIndex)b.setAttribute('aria-current','true');else b.removeAttribute('aria-current')})};const stopSlide=()=>{if(slideTimer){clearInterval(slideTimer);slideTimer=null}};const startSlide=()=>{stopSlide();if(!motionQuery.matches&&!document.hidden)slideTimer=setInterval(()=>showSlide(slideIndex+1),6500)};slideDots.forEach((b,i)=>b.addEventListener('click',()=>{showSlide(i);startSlide()}));document.addEventListener('visibilitychange',()=>document.hidden?stopSlide():startSlide());motionQuery.addEventListener?.('change',()=>{if(motionQuery.matches){stopSlide();showSlide(0)}else startSlide()});startSlide()}
+if(slides.length>1){
+ let slideIndex=0,slideTimer=null;
+ const heroArt=document.querySelector('.hero-art');
+ const showSlide=n=>{
+  slideIndex=(n+slides.length)%slides.length;
+  slides.forEach((slide,i)=>{slide.classList.toggle('is-active',i===slideIndex);slide.setAttribute('aria-hidden',String(i!==slideIndex))});
+  slideDots.forEach((dot,i)=>{dot.classList.toggle('is-active',i===slideIndex);if(i===slideIndex)dot.setAttribute('aria-current','true');else dot.removeAttribute('aria-current')});
+ };
+ const stopSlide=()=>{if(slideTimer!==null){clearInterval(slideTimer);slideTimer=null}};
+ const startSlide=()=>{stopSlide();if(!motionQuery.matches&&!document.hidden)slideTimer=setInterval(()=>showSlide(slideIndex+1),3000)};
+ const navigateTo=n=>{showSlide(n);startSlide()};
+ slideDots.forEach((dot,i)=>dot.addEventListener('click',()=>navigateTo(i)));
+ heroArt?.querySelector('.hero-slide-prev')?.addEventListener('click',()=>navigateTo(slideIndex-1));
+ heroArt?.querySelector('.hero-slide-next')?.addEventListener('click',()=>navigateTo(slideIndex+1));
+ let touchStartX=null;
+ heroArt?.addEventListener('touchstart',event=>{if(event.touches.length===1)touchStartX=event.touches[0].clientX},{passive:true});
+ heroArt?.addEventListener('touchend',event=>{if(touchStartX===null)return;const dx=event.changedTouches[0].clientX-touchStartX;touchStartX=null;if(Math.abs(dx)>45)navigateTo(slideIndex+(dx<0?1:-1))},{passive:true});
+ document.addEventListener('visibilitychange',()=>document.hidden?stopSlide():startSlide());
+ motionQuery.addEventListener?.('change',startSlide);
+ showSlide(0);startSlide();
+}
 
 // Consistent editorial entrance motion across all public pages.
 // Use Web Animations API so content is never hidden if JavaScript fails or is delayed.
