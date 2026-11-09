@@ -288,6 +288,12 @@ body.gallery-modal-open{overflow:hidden}
 .hero-slideshow .hero-slide{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:0;visibility:hidden;transition:opacity 1.4s ease,visibility 1.4s ease}
 .hero-slideshow .hero-slide.is-active{opacity:1;visibility:visible}
 .hero-art-credit{z-index:2}
+.hero-slide-arrow{position:absolute;z-index:4;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:42px;height:48px;border:1px solid rgba(255,255,255,.65);border-radius:2px;background:rgba(40,29,27,.28);color:#fff;cursor:pointer;opacity:.72;transition:opacity .2s ease,background .2s ease}
+.hero-slide-arrow span{font-family:Georgia,serif;font-size:34px;line-height:1;transform:translateY(-2px)}
+.hero-slide-prev{left:16px}.hero-slide-next{right:16px}
+.hero-slide-arrow:hover,.hero-slide-arrow:focus-visible{opacity:1;background:rgba(40,29,27,.6)}
+.hero-slide-arrow:focus-visible{outline:2px solid #fff;outline-offset:3px}
+@media(max-width:700px){.hero-slide-arrow{width:34px;height:42px;opacity:.8}.hero-slide-prev{left:8px}.hero-slide-next{right:8px}}
 .hero-slide-controls{position:absolute;z-index:3;right:22px;bottom:24px;display:flex;align-items:center;gap:9px}
 .hero-slide-controls button{width:24px;height:24px;border:0;background:transparent;padding:8px;display:grid;place-items:center}
 .hero-slide-controls button:before{content:'';display:block;width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.58);border:1px solid rgba(50,34,29,.35);transition:background .25s,transform .25s}
@@ -296,7 +302,7 @@ body.gallery-modal-open{overflow:hidden}
 .editorial-reveal{opacity:0;transform:translateY(20px);transition:opacity .85s ease var(--reveal-delay,0ms),transform .85s cubic-bezier(.22,.7,.2,1) var(--reveal-delay,0ms)}
 .editorial-reveal.editorial-in-view{opacity:1;transform:translateY(0)}
 @media(max-width:700px){.hero-slide-controls{right:12px;bottom:15px}.hero-slideshow .hero-slide{object-position:center}}
-@media(prefers-reduced-motion:reduce){.hero-slideshow .hero-slide{transition:none}.hero-slideshow .hero-slide:not(:first-child){display:none}.hero-slide-controls{display:none}.editorial-reveal{opacity:1;transform:none;transition:none}}
+@media(prefers-reduced-motion:reduce){.hero-slideshow .hero-slide{transition:none}.hero-slide-controls{display:flex}.editorial-reveal{opacity:1;transform:none;transition:none}}
 
 /* Entrance animation is JS-triggered, so content remains visible without JS. */
 @media(prefers-reduced-motion:reduce){main h1,main h2,main h3,main p{animation:none!important;transition:none!important}}
