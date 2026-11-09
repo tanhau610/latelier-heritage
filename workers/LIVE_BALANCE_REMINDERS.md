@@ -14,7 +14,7 @@ Configure a **daily** Cron Trigger in Cloudflare for this Worker only after QA. 
 ## Safety notes / known limitations
 - A fresh 64-character random checkout token is issued for each reminder; only its SHA-256 hash is stored in R2. The customer receives a direct HTTPS checkout link, valid for 14 days. Reminder tokens are stored in separate 3-day and 7-day access records, preserving the original balance-request link until its expiry.
 - An event record is created before calling Resend; any pending/failed event suppresses automated retries to avoid duplicate sends. Manual review is required for failures.
-- This is **not an atomic distributed lock**. Never run overlapping schedules or enable multiple instances without implementing a transactional lease or a queue.
+- The initial email-event claim uses a conditional R2 write to suppress simultaneous duplicate sends. This is not a transactional lock spanning the PayPal payment and Resend delivery; retain manual review of pending/failed events.
 - R2 list scanning is capped at 2,000 order prefixes per run; implement pagination/checkpointing or a dedicated due-index before scaling.
 - A race between a payment and email send remains possible. Production needs payment webhook reconciliation and stronger concurrency controls.
 - Verify the order's email address and sender domain before any live send.
@@ -26,4 +26,4 @@ Configure a **daily** Cron Trigger in Cloudflare for this Worker only after QA. 
 3. Verify Resend failure behavior and duplicate trigger behavior.
 4. Verify the Studio balance-request email was successfully sent before scheduling reminders.
 5. Confirm Live webhook reconciliation and safe rollout plan before turning on the flag.
-\n## Regression tests\nRun with Node.js 22+: `node --test tests/live-balance-reminder.test.mjs tests/live-tracking-email.test.mjs`. These tests must pass before deployment.\n
+\n## Regression tests\nRun with Node.js 22+: `node --test tests/live-balance-reminder.test.mjs tests/live-balance-reminder-worker.test.mjs tests/live-tracking-email.test.mjs`. These tests must pass before deployment.\n
