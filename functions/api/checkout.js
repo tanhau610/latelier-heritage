@@ -1,4 +1,5 @@
 import {atelierSender} from "../_lib/brand-email.js";
+import {sendLivePaymentEmail} from "../_lib/live-payment-email.js";
 import {sendSandboxCustomerEmail} from "../_lib/sandbox-customer-email.js";
 // PayPal checkout with strict server-side environment separation. Live requires explicit PAYPAL_MODE=live on main.
 // All customer records and photos are private Cloudflare R2 objects; the browser receives only a bearer token.
@@ -31,7 +32,7 @@ async function validImage(file){
   if(file.type==="image/webp")return String.fromCharCode(...b.slice(0,4))==="RIFF"&&String.fromCharCode(...b.slice(8,12))==="WEBP";
   return false;
 }
-function checkoutMode(env){const live=env.CF_PAGES_BRANCH==="main"&&env.PAYPAL_MODE==="live";return live?"live":"sandbox";}
+function checkoutMode(env){const live=env.CF_PAGES_BRANCH==="main"&&env.PAYPAL_MODE==="live"&&env.PAYPAL_LIVE_READY==="yes";return live?"live":"sandbox";}
 function paypalBase(env){return checkoutMode(env)==="live"?"https://api-m.paypal.com":"https://api-m.sandbox.paypal.com";}
 async function paypal(env,endpoint,method="GET",body=null,requestId=null){
   const auth=await fetch(paypalBase(env)+"/v1/oauth2/token",{method:"POST",headers:{"Authorization":"Basic "+btoa(env.PAYPAL_CLIENT_ID+":"+env.PAYPAL_CLIENT_SECRET),"Content-Type":"application/x-www-form-urlencoded"},body:"grant_type=client_credentials"});
@@ -240,13 +241,13 @@ async function action(request,env){
     "Mã giao dịch PayPal: "+matched.id,
     "",
     stage==="deposit"?"Bước tiếp theo: Kiểm tra ảnh và yêu cầu trước khi bắt đầu vẽ.":"Bước tiếp theo: Kiểm tra trạng thái đơn và tiếp tục xử lý trong Studio.",
-    "Lưu ý: Đây là thanh toán thử, không phải doanh thu thực tế."
+    live?"Giao dịch thật. Đối chiếu trong PayPal Business.":"Lưu ý: Đây là thanh toán thử, không phải doanh thu thực tế."
   ],id);
 
   // Payment is already securely recorded. Email is best-effort and cannot undo a capture.
   let emailTest="skipped";
   try {
-    const notification=live?{ok:false,reason:"live-email-not-configured"}:await sendSandboxCustomerEmail({env,bucket,order,payment,event:"payment-"+stage,eventKey:"payment-"+stage});
+    const notification=live?await sendLivePaymentEmail({env,bucket,order,payment,stage,captureId:matched.id}):await sendSandboxCustomerEmail({env,bucket,order,payment,event:"payment-"+stage,eventKey:"payment-"+stage});
     emailTest=notification.state;
   } catch(e) {console.error("Payment confirmation email logging failed",id,String(e));emailTest="failed";}
   return json({ok:true,paid:true,stage,sandbox:!live,emailTest});
