@@ -50,7 +50,7 @@ async function notifyStudio(env,subject,lines,id){
       method:"POST",
       headers:{"Authorization":"Bearer "+env.RESEND_API_KEY,"Content-Type":"application/json; charset=utf-8"},
       body:JSON.stringify({
-        from:env.RESEND_FROM||"L'Atelier Heritage <onboarding@resend.dev>",
+        from:env.RESEND_FROM||"ATELIER HAU <onboarding@resend.dev>",
         to:[env.NOTIFICATION_EMAIL],
         subject,text:lines.join("\n")
       })
@@ -216,7 +216,7 @@ async function action(request,env){
   const paidLabel=stage==="deposit"?"ĐÃ THANH TOÁN CỌC 50%":stage==="balance"?"ĐÃ THANH TOÁN PHẦN CÒN LẠI":"ĐÃ THANH TOÁN TOÀN BỘ";
   const outstanding=stage==="deposit"?payment.balanceCents/100:0;
   await notifyStudio(env,"[SANDBOX] ["+paidLabel+"] Đơn tranh "+id,[
-    "L’ATELIER HERITAGE — XÁC NHẬN THANH TOÁN",
+    "ATELIER HAU — XÁC NHẬN THANH TOÁN",
     "CHẾ ĐỘ THỬ NGHIỆM SANDBOX — KHÔNG CÓ TIỀN THẬT.",
     "",
     "TRẠNG THÁI: "+paidLabel,
