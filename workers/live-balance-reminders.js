@@ -49,7 +49,7 @@ async function processOrder(env,id,sender){
     const token=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,"0")).join("");
     const expiresAt=new Date(Date.now()+14*86400000).toISOString();
     const checkoutLink="https://atelierhau.com/checkout#"+new URLSearchParams({id,token}).toString();
-    await b.put(p+"checkout-email-access.json",JSON.stringify({id,tokenHash:await sha256(token),expiresAt,createdAt:new Date().toISOString()}),{httpMetadata:{contentType:"application/json"}});
+    await b.put(p+"checkout-email-access-"+day+"d.json",JSON.stringify({id,tokenHash:await sha256(token),expiresAt,createdAt:new Date().toISOString()}),{httpMetadata:{contentType:"application/json"}});
     const record={id,event:"live-balance-reminder",day,eventKey,state:"pending",createdAt:new Date().toISOString()};
     await b.put(key,JSON.stringify(record),{httpMetadata:{contentType:"application/json"}});
     const subject="A gentle reminder about your portrait · "+id;
