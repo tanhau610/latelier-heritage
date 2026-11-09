@@ -5,6 +5,7 @@ on:
       - 'functions/**'
       - 'workers/**'
       - 'tests/**'
+      - 'assets/studio.js'
       - '.github/workflows/validate-live-emails.yml'
   workflow_dispatch:
 jobs:
@@ -21,6 +22,8 @@ jobs:
         run: |
           node --check functions/api/checkout.js
           node --check functions/api/studio.js
+          node --check assets/studio.js
+          node --check functions/_lib/live-balance-request.js
           node --check functions/_lib/live-tracking-email.js
           node --check workers/live-balance-reminders.js
       - name: Regression tests
