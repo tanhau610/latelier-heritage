@@ -27,4 +27,4 @@ jobs:
           node --check functions/_lib/live-tracking-email.js
           node --check workers/live-balance-reminders.js
       - name: Regression tests
-        run: node --test tests/live-balance-reminder.test.mjs tests/live-tracking-email.test.mjs
+        run: node --test tests/live-balance-reminder.test.mjs tests/live-balance-reminder-worker.test.mjs tests/live-tracking-email.test.mjs
