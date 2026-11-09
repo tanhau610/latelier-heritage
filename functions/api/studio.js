@@ -15,6 +15,9 @@ const accessKey = id => `enquiries/${id}/shipping-access.json`;
 const paymentKey = id => `enquiries/${id}/payment.json`;
 const paymentAccessKey = id => `enquiries/${id}/payment-access.json`;
 const sandboxPaymentKey = id => `enquiries/${id}/paypal-sandbox-payments.json`;
+const livePaymentKey = id => `enquiries/${id}/paypal-live-payments.json`;
+const verifiedLive = (order,payment,ledger) => order?.checkoutMode==="live-inline" && payment?.sandbox===false && ledger?.quotedAt===payment?.quotedAt ? ledger : null;
+const fullyCaptured = ledger => Boolean(ledger?.full || (ledger?.deposit && ledger?.balance));
 const moneyCents = aud => Math.round(aud * 100);
 const validAmount = value => Number.isInteger(value) && value >= 50 && value <= 100000;
 async function readJson(bucket,key){const obj=await bucket.get(key);if(!obj)return null;try{return await obj.json();}catch{return null;}}
@@ -60,7 +63,8 @@ export async function onRequestGet(context){
         const [shipping,tracking]=await Promise.all([readJson(bucket,shippingKey(id)),readJson(bucket,trackingKey(id))]);
         const payment=await readJson(bucket,paymentKey(id));
         const sandboxPayment=await readJson(bucket,sandboxPaymentKey(id));
-        return {checkoutMode:data.checkoutMode||null,checkoutPlan:data.checkoutPlan||null,sandboxPayment:sandboxPayment?.quotedAt===payment?.quotedAt?sandboxPayment:null,payment:payment||null,shipping:shipping?.details||null,shippingUpdatedAt:shipping?.updatedAt||null,tracking:tracking?.details||null,trackingUpdatedAt:tracking?.updatedAt||null,id:data.id,receivedAt:data.receivedAt,name:data.name,email:data.email,petName:data.petName||"",size:data.size,pets:data.pets,country:data.country,card:!!data.card,story:data.story||"",estimatedPriceAUD:data.estimatedPriceAUD,status:statuses.has(data.status)?data.status:"New",internalNote:data.internalNote||"",updatedAt:data.updatedAt||null,photos:(data.photos||[]).map((p,i)=>({index:i,name:p.originalName||`Photo ${i+1}`}))};
+        const livePayment=verifiedLive(data,payment,await readJson(bucket,livePaymentKey(id)));
+        return {checkoutMode:data.checkoutMode||null,checkoutPlan:data.checkoutPlan||null,sandboxPayment:sandboxPayment?.quotedAt===payment?.quotedAt?sandboxPayment:null,livePayment,payment:payment||null,shipping:shipping?.details||null,shippingUpdatedAt:shipping?.updatedAt||null,tracking:tracking?.details||null,trackingUpdatedAt:tracking?.updatedAt||null,id:data.id,receivedAt:data.receivedAt,name:data.name,email:data.email,petName:data.petName||"",size:data.size,pets:data.pets,country:data.country,card:!!data.card,story:data.story||"",estimatedPriceAUD:data.estimatedPriceAUD,status:statuses.has(data.status)?data.status:"New",internalNote:data.internalNote||"",updatedAt:data.updatedAt||null,photos:(data.photos||[]).map((p,i)=>({index:i,name:p.originalName||`Photo ${i+1}`}))};
       }))).filter(Boolean);
       orders.sort((a,b)=>String(b.receivedAt).localeCompare(String(a.receivedAt)));
       return respond({ok:true,orders,nextCursor:page.truncated?page.cursor||null:null});
@@ -84,17 +88,18 @@ export async function onRequestGet(context){
             const day=new Date(data.receivedAt).toISOString().slice(0,10);
             const payment=await readJson(bucket,paymentKey(id));
             const sandbox=await readJson(bucket,sandboxPaymentKey(id));
-            return {data,day,payment,sandbox};
+            const live=verifiedLive(data,payment,await readJson(bucket,livePaymentKey(id)));
+            return {data,day,payment,sandbox,live};
           }));
           for(const row of chunk){
             if(!row)continue;
-            const {data,day,payment,sandbox}=row,point=daily.get(day);
+            const {data,day,payment,sandbox,live}=row,point=daily.get(day);
             const inPeriod=Boolean(point);
             if(inPeriod){totals.orders++;point.orders++;}
             const status=statuses.has(data.status)?data.status:"New";
             // A verified final payment ends the waiting-for-balance phase, but does not mean the artwork was shipped.
             const sandboxFullyPaid=sandbox?.quotedAt===payment?.quotedAt&&Boolean(sandbox?.full||(sandbox?.deposit&&sandbox?.balance));
-            const fullyPaid=data.checkoutMode==="sandbox-inline"?sandboxFullyPaid:Boolean(payment?.deposit&&payment?.balance);
+            const fullyPaid=data.checkoutMode==="sandbox-inline"?sandboxFullyPaid:data.checkoutMode==="live-inline"?fullyCaptured(live):Boolean(payment?.deposit&&payment?.balance);
             const paidAwaitingDispatch=status==="Ready for balance"&&fullyPaid;
             if(inPeriod)statusCounts[paidAwaitingDispatch?"Paid awaiting dispatch":status]++;
             const totalCents=Number.isInteger(payment?.totalCents)?payment.totalCents:Math.round(Number(data.estimatedPriceAUD||0)*100);
@@ -118,7 +123,7 @@ export async function onRequestGet(context){
             if(data.checkoutMode!=="sandbox-inline"){
               // Recognise revenue on the verified payment date, not on the order creation date.
               // This also includes payments made this period for older orders.
-              for(const instalment of [payment?.deposit,payment?.balance]){
+              for(const instalment of (data.checkoutMode==="live-inline"?(live?.full?[live.full]:[live?.deposit,live?.balance]):[payment?.deposit,payment?.balance])){
                 const verifiedAt=instalment?.verifiedAt;
                 const amount=Number(instalment?.amountCents);
                 if(typeof verifiedAt!=="string"||!Number.isFinite(Date.parse(verifiedAt))||!Number.isInteger(amount)||amount<=0)continue;
@@ -126,14 +131,14 @@ export async function onRequestGet(context){
                 const revenuePoint=daily.get(paymentDay);
                 if(revenuePoint){revenuePoint.revenueCents+=amount;totals.revenueCents+=amount;}
               }
-              if(inPeriod&&!payment?.deposit&&status!=="Cancelled")totals.awaitingDeposit++;
+              if(inPeriod&&!(data.checkoutMode==="live-inline"?Boolean(live?.deposit||live?.full):Boolean(payment?.deposit))&&status!=="Cancelled")totals.awaitingDeposit++;
             }
           }
         }
         scanned+=ids.length;pages++;
         more=!!page.truncated;cursor=page.cursor;
       }while(more&&cursor&&pages<20);
-      return respond({ok:true,days,totals,statusCounts,daily:Array.from(daily.values()),partial:more,scanned,asOf:new Date().toISOString(),revenueNote:"Only verified manual payments, attributed by verification date (UTC). PayPal Sandbox excluded.",trafficConnected:false});
+      return respond({ok:true,days,totals,statusCounts,daily:Array.from(daily.values()),partial:more,scanned,asOf:new Date().toISOString(),revenueNote:"Verified manual and PayPal Live captures by UTC payment date. PayPal Sandbox excluded.",trafficConnected:false});
     }
     if(action==="email-history"){
       const id=url.searchParams.get("id");
@@ -242,7 +247,7 @@ export async function onRequestPost(context){
     try{
       const bucket=env.PORTRAIT_UPLOADS;
       const [order,payment,sandbox]=await Promise.all([getDetails(bucket,id),readJson(bucket,paymentKey(id)),readJson(bucket,sandboxPaymentKey(id))]);
-      if(!order||!payment||order.checkoutMode==="sandbox-inline"||["Cancelled","Shipped","Completed"].includes(order.status))return respond({ok:false,message:"Order cannot request a legacy payment link."},409);
+      if(!order||!payment||["sandbox-inline","live-inline"].includes(order.checkoutMode)||["Cancelled","Shipped","Completed"].includes(order.status))return respond({ok:false,message:"Order cannot request a legacy payment link."},409);
       if(sandbox?.quotedAt===payment.quotedAt&&sandbox[payload.stage])return respond({ok:false,message:"This Sandbox instalment has already been recorded."},409);
       if(payload.stage==="balance"&&!(sandbox?.quotedAt===payment.quotedAt&&sandbox.deposit))return respond({ok:false,message:"Complete the Sandbox deposit test first."},409);
       const token=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,"0")).join("");
@@ -259,7 +264,7 @@ export async function onRequestPost(context){
       const bucket=env.PORTRAIT_UPLOADS;
       const order=await getDetails(bucket,id);
       if(!order)return respond({ok:false,message:"Order not found."},404);
-      if(order.checkoutMode==="sandbox-inline")return respond({ok:false,message:"Sandbox checkout orders cannot be manually repriced or recorded."},409);
+      if(["sandbox-inline","live-inline"].includes(order.checkoutMode))return respond({ok:false,message:"Online checkout orders cannot be manually repriced or recorded.",409});
       if(["Cancelled","Shipped","Completed"].includes(order.status))return respond({ok:false,message:"This order cannot be updated for payment."},409);
       const key=paymentKey(id);
       const current=await readJson(bucket,key);
@@ -293,8 +298,9 @@ export async function onRequestPost(context){
     const payment=await readJson(env.PORTRAIT_UPLOADS,paymentKey(id));
     const sandbox=await readJson(env.PORTRAIT_UPLOADS,sandboxPaymentKey(id));
     const checkoutPaid=data.checkoutMode==="sandbox-inline"&&sandbox?.quotedAt===payment?.quotedAt;
-    const depositVerified=checkoutPaid?Boolean(sandbox.deposit||sandbox.full):Boolean(payment?.deposit);
-    const fullyVerified=checkoutPaid?Boolean(sandbox.full||(sandbox.deposit&&sandbox.balance)):Boolean(payment?.deposit&&payment?.balance);
+    const live=verifiedLive(data,payment,await readJson(env.PORTRAIT_UPLOADS,livePaymentKey(id)));
+    const depositVerified=data.checkoutMode==="live-inline"?Boolean(live?.deposit||live?.full):checkoutPaid?Boolean(sandbox.deposit||sandbox.full):Boolean(payment?.deposit);
+    const fullyVerified=data.checkoutMode==="live-inline"?fullyCaptured(live):checkoutPaid?fullyCaptured(sandbox):Boolean(payment?.deposit&&payment?.balance);
     if(status!==data.status&&["Painting","Ready for balance"].includes(status)&&!depositVerified)return respond({ok:false,message:"Verify the deposit or full payment before starting production."},409);
     if(status!==data.status&&["Shipped","Completed"].includes(status)&&!fullyVerified)return respond({ok:false,message:"Verify full payment before shipping or completing the order."},409);
     const previousStatus=data.status;
