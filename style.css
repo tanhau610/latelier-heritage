@@ -422,3 +422,86 @@ body.gallery-modal-open{overflow:hidden}
  .gallery-wrap .filters{gap:9px}
  .gallery-wrap .filters button{padding:10px 16px;font-size:12px;min-height:44px}
 }
+
+
+/* ATELIER HAU — typography system v3: restrained luxury editorial.
+   Scoped to public site; leaves checkout, studio and logo artwork unchanged. */
+:root{--editorial-display:clamp(48px,5.1vw,82px);--editorial-section:clamp(40px,4.2vw,68px)}
+body{font-size:15px;line-height:1.55}
+main p{line-height:1.7}
+main h1,main h2,main h3{letter-spacing:-.035em;text-wrap:balance}
+.eyebrow{font-size:11px;letter-spacing:.18em;line-height:1.55}
+.hero-title h1{font-size:clamp(60px,5.9vw,96px);line-height:1.02;letter-spacing:-.04em}
+.hero-title p{font-size:15px;line-height:1.7;max-width:440px}
+.manifesto{max-width:920px;padding:115px 5% 110px}
+.manifesto p{font-size:clamp(38px,4.35vw,66px);line-height:1.23;letter-spacing:-.03em;max-width:850px;margin:30px auto 40px}
+.quote-block h2{font-size:clamp(51px,5.7vw,88px);line-height:1.06}
+.image-story h2{font-size:clamp(54px,6.2vw,94px);line-height:1.06}
+.image-story p{font-size:15px;line-height:1.7}
+.steps-preview{padding-top:105px;padding-bottom:110px}
+.steps-row h3{font-size:clamp(43px,4.3vw,59px);line-height:1.08}
+.steps-row p{font-size:14px;line-height:1.7}
+.footer h2{font-size:clamp(54px,5.8vw,88px);line-height:1.04}
+.inner-intro h1{font-size:clamp(57px,7vw,108px);line-height:1.02}
+.commission-panel h2,.pricing-copy h2,.about-copy h2,.contact-panel h2{font-size:var(--editorial-section)}
+.process-list h2{font-size:clamp(43px,4.3vw,65px);line-height:1.1}
+.v2-commission .commission-intro-text h1{font-size:clamp(58px,6vw,100px);line-height:1.02}
+.v2-commission .commission-builder-heading h2{font-size:clamp(48px,5.6vw,84px);line-height:1.06}
+.v2-commission .commission-config-panel h3{font-size:clamp(40px,4vw,60px);line-height:1.1}
+.order-stage-heading h2{font-size:clamp(44px,5vw,72px)}
+@media(min-width:901px){
+ .site-header .navigation a{font-size:10px;letter-spacing:.07em}
+}
+@media(max-width:900px){
+ .site-header .navigation a,
+ .site-header .navigation.open a{
+  font-family:'Italiana',Georgia,serif;
+  font-size:clamp(24px,3.4vw,30px);
+  line-height:1.18;letter-spacing:-.015em;
+  min-height:53px;padding:11px 6px 11px 0!important;
+ }
+ .site-header .navigation.open::after{font-size:10px;line-height:1.5}
+}
+@media(max-width:800px){
+ .hero-editorial{min-height:0;padding:45px 7% 42px;gap:42px}
+ .hero-title h1{font-size:clamp(51px,8.5vw,74px);line-height:1.04;margin-bottom:24px}
+ .hero-title p{font-size:15px;line-height:1.7}
+ .manifesto{padding:85px 7% 90px}
+ .manifesto p{font-size:clamp(35px,6vw,52px);line-height:1.24}
+ .quote-block{padding-top:75px;padding-bottom:75px}
+ .quote-block h2{font-size:clamp(43px,7vw,65px)}
+ .image-story h2{font-size:clamp(47px,8vw,73px)}
+ .steps-preview{padding-top:80px;padding-bottom:85px}
+ .steps-row h3{font-size:clamp(42px,6.5vw,54px)}
+ .footer h2{font-size:clamp(48px,7.5vw,72px)}
+ .inner-intro h1{font-size:clamp(49px,8vw,78px)}
+ .v2-commission .commission-intro-text h1{font-size:clamp(51px,8vw,78px)}
+ .v2-commission .commission-builder-heading h2{font-size:clamp(45px,7vw,68px)}
+}
+@media(max-width:520px){
+ body{font-size:14px}
+ .eyebrow{font-size:10px;letter-spacing:.15em}
+ .site-header .navigation a,
+ .site-header .navigation.open a{font-size:clamp(23px,6.1vw,27px);min-height:51px;padding:10px 5px 10px 0!important}
+ .hero-editorial{padding:39px 6.5% 37px;gap:36px}
+ .hero-title h1{font-size:clamp(46px,11.5vw,59px);line-height:1.06;letter-spacing:-.035em}
+ .hero-title p{font-size:14px;line-height:1.7;max-width:34ch}
+ .manifesto{padding:75px 7% 78px}
+ .manifesto p{font-size:clamp(32px,8.1vw,39px);line-height:1.27;margin:24px auto 32px}
+ .quote-block h2{font-size:clamp(40px,10vw,49px);line-height:1.1}
+ .image-story-copy{padding:95px 7% 80px}
+ .image-story h2{font-size:clamp(44px,11.3vw,58px);line-height:1.06}
+ .image-story p{font-size:14px}
+ .steps-row{gap:28px}
+ .steps-row h3{font-size:clamp(40px,10vw,48px);line-height:1.1}
+ .steps-row p{font-size:14px}
+ .footer h2{font-size:clamp(43px,10.5vw,55px);line-height:1.08}
+ .inner-intro h1{font-size:clamp(45px,11.5vw,60px);line-height:1.06}
+ .commission-panel h2,.pricing-copy h2,.about-copy h2,.contact-panel h2{font-size:clamp(42px,10vw,53px);line-height:1.08}
+ .process-list h2{font-size:clamp(40px,10vw,52px)}
+ .v2-commission .commission-intro-text h1{font-size:clamp(46px,11.5vw,60px);line-height:1.06}
+ .v2-commission .commission-builder-heading h2{font-size:clamp(43px,10.5vw,56px);line-height:1.08}
+ .v2-commission .commission-config-panel h3{font-size:clamp(38px,9vw,48px)}
+ .order-stage-heading h2{font-size:clamp(40px,9.5vw,52px)}
+ .section-line{font-size:9px;letter-spacing:.1em}
+}
