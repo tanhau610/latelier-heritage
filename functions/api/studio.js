@@ -1,4 +1,5 @@
 import {sendSandboxCustomerEmail} from "../_lib/sandbox-customer-email.js";
+import {sendLiveBalanceRequest} from "../_lib/live-balance-request.js";
 import {verifyStudioSession} from "../_lib/studio-otp-auth.js";
 import {onRequestPost as onStudioOtpRequest} from "./studio-auth.js";
 // Private studio dashboard API. The admin key must be a 32+ character Cloudflare secret.
@@ -329,6 +330,21 @@ export async function onRequestPost(context){
         });
         emailTest=notification.state;
       }catch(e){emailTest="failed";console.error("Status email preview failed",id,String(e));}
+    }
+    // Production Live: only a verified deposit and a genuine transition can request the balance.
+    // Never send customer emails from Preview or for Sandbox orders.
+    if(!previewOnly(env)&&env.CF_PAGES_BRANCH==="main"&&env.PAYPAL_MODE==="live"&&env.PAYPAL_LIVE_READY==="yes"&&status==="Ready for balance"&&status!==previousStatus&&data.checkoutMode==="live-inline"&&data.checkoutPlan!=="full"&&depositVerified&&!fullyVerified){
+      try{
+        const token=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,"0")).join("");
+        const expiresAt=new Date(Date.now()+30*86400000).toISOString();
+        const link=new URL("/checkout",request.url);
+        if(link.hostname!=="atelierhau.com"||link.protocol!=="https:")throw Error("Canonical HTTPS domain required");
+        link.hash=new URLSearchParams({id,token}).toString();
+        // Persist the bearer-token hash before emailing; never include the token in logs.
+        await env.PORTRAIT_UPLOADS.put("enquiries/"+id+"/checkout-email-access.json",JSON.stringify({id,tokenHash:await sha256(token),expiresAt,createdAt:data.updatedAt}),{httpMetadata:{contentType:"application/json"}});
+        const result=await sendLiveBalanceRequest({env,bucket:env.PORTRAIT_UPLOADS,order:data,payment,ledger:live,checkoutLink:link.toString()});
+        emailTest=result.state;
+      }catch(e){emailTest="failed";console.error("Live balance request failed",id,String(e));}
     }
     return respond({ok:true,id,status,updatedAt:data.updatedAt,emailTest});
   }catch(e){console.error("Studio update failed",e);return respond({ok:false,message:"Could not update order."},500);}
