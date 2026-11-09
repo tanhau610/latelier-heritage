@@ -12,7 +12,7 @@ This is a **separate Cloudflare scheduled Worker**, not a Cloudflare Pages Funct
 Configure a **daily** Cron Trigger in Cloudflare for this Worker only after QA. It scans order records in R2, checks that a verified Live deposit exists, that the Studio has marked the portrait `Ready for balance`, and that the original balance-request email was recorded as sent. It checks day 3 and day 7 after the balance request, not after the initial deposit.
 
 ## Safety notes / known limitations
-- No checkout token is saved in plaintext; reminders therefore ask the buyer to reply for a secure payment link rather than embedding a potentially invalid URL.
+- A fresh 64-character random checkout token is issued for each reminder; only its SHA-256 hash is stored in R2. The customer receives a direct HTTPS checkout link, valid for 14 days. Issuing the new token replaces the prior emailed balance token; this should be improved to support multiple active links before rollout.
 - An event record is created before calling Resend; any pending/failed event suppresses automated retries to avoid duplicate sends. Manual review is required for failures.
 - This is **not an atomic distributed lock**. Never run overlapping schedules or enable multiple instances without implementing a transactional lease or a queue.
 - R2 list scanning is capped at 2,000 order prefixes per run; implement pagination/checkpointing or a dedicated due-index before scaling.
