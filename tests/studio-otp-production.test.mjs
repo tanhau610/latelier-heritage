@@ -9,9 +9,9 @@ test("Production OTP rejects absent R2 binding without email",async()=>{
  const r=await onRequestPost({request:request({action:"request"}),env});
  assert.equal(r.status,503);
 });
-test("Production OTP rejects unverified Live environment",async()=>{
- const r=await onRequestPost({request:request({action:"request"}),env:{...env,PORTRAIT_UPLOADS:{},PAYPAL_LIVE_READY:"no"}});
- assert.equal(r.status,503);
+test("Production OTP works independently of PayPal flags while respecting rate limits",async()=>{
+ const r=await onRequestPost({request:request({action:"request"}),env:{...env,PORTRAIT_UPLOADS:{get:async()=>({json:async()=>({lastSent:Date.now(),windowStart:Date.now(),count:1})})},PAYPAL_LIVE_READY:"no"}});
+ assert.equal(r.status,429);
 });
 test("Production OTP refuses browser-supplied destination and requires fixed admin email",async()=>{
  const r=await onRequestPost({request:request({action:"request",email:"attacker@example.com"}),env:{...env,PORTRAIT_UPLOADS:{},NOTIFICATION_EMAIL:""}});
