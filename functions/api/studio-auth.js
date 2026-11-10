@@ -18,8 +18,9 @@ export async function onRequestPost({request,env}){
   if(!['request','verify'].includes(action))return fail('Unknown action.',404);
   const bucket=env.PORTRAIT_UPLOADS,now=Date.now();
   const production=env.CF_PAGES_BRANCH==='main';
-  const sender=production?'ATELIER HAU <orders@atelierhau.com>':(env.RESEND_FROM||'ATELIER HAU <orders@atelierhau.com>');
-  if(production&&(!/^ATELIER HAU <[a-z0-9._%+-]+@atelierhau\\.com>$/i.test(sender)||env.PAYPAL_MODE!=='live'||env.PAYPAL_LIVE_READY!=='yes'))return fail('Production Studio email login is not configured.',503);
+  // Studio login is independent of PayPal checkout configuration.
+  const sender=String(env.RESEND_FROM||'').trim();
+  if(production&&!/^ATELIER HAU <[a-z0-9._%+-]+@atelierhau[.]com>$/i.test(sender))return fail('Production Studio sender is not configured.',503);
   const adminEmail=String(env.NOTIFICATION_EMAIL||'').trim().toLowerCase();
   if(action==='request'){
     if(!env.RESEND_API_KEY||!adminEmail||!(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adminEmail)))return fail('Email login is not configured. Use your private access key.',503);
