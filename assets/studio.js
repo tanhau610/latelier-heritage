@@ -551,10 +551,10 @@
     try{
       await otpFetch("request");
       $("otp-code").focus();
-      loginMessage.textContent="Đã gửi yêu cầu đến Resend. Kiểm tra email quản trị đang nhận thư Sandbox. Mã hết hạn sau 5 phút.";
+      loginMessage.textContent="Đã gửi yêu cầu mã xác thực đến email quản trị. Mã hết hạn sau 5 phút.";
     }catch(error){
       const errors={
-        "Email login is only enabled on the preview branch.":"Bản Preview này chưa cho phép gửi mã email. Vui lòng kiểm tra cấu hình Cloudflare.",
+        "Production Studio email login is not configured.":"Email quản trị Production chưa được cấu hình đầy đủ.",
         "Studio security is not configured.":"Thiếu cấu hình bảo mật Studio trên Cloudflare Preview.",
         "Email login is not configured. Use your private access key.":"Thiếu cấu hình Resend hoặc email quản trị trong Cloudflare Preview.",
         "Cannot send the login code. Use your private access key or check Resend configuration.":"Resend chưa chấp nhận yêu cầu gửi mã. Kiểm tra cấu hình Resend trên Cloudflare Preview.",
