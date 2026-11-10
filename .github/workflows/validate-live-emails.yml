@@ -1,11 +1,14 @@
 name: Validate Live email flows
 on:
+  push:
+    branches: [main]
   pull_request:
     paths:
       - 'functions/**'
       - 'workers/**'
       - 'tests/**'
       - 'assets/studio.js'
+      - 'functions/_lib/live-payment-email.js'
       - '.github/workflows/validate-live-emails.yml'
   workflow_dispatch:
 jobs:
@@ -24,9 +27,10 @@ jobs:
           node --check functions/api/studio.js
           node --check assets/studio.js
           node --check functions/_lib/live-balance-request.js
+          node --check functions/_lib/live-payment-email.js
           node --check functions/api/studio-auth.js
           node --check functions/_lib/studio-otp-auth.js
           node --check functions/_lib/live-tracking-email.js
           node --check workers/live-balance-reminders.js
       - name: Regression tests
-        run: node --test tests/live-balance-reminder.test.mjs tests/live-balance-reminder-worker.test.mjs tests/live-tracking-email.test.mjs tests/studio-otp-production.test.mjs
+        run: node --test tests/live-balance-reminder.test.mjs tests/live-balance-reminder-worker.test.mjs tests/live-tracking-email.test.mjs tests/studio-otp-production.test.mjs tests/live-payment-email.test.mjs
