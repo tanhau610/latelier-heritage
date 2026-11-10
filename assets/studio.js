@@ -555,6 +555,7 @@
     }catch(error){
       const errors={
         "Production Studio email login is not configured.":"Email quản trị Production chưa được cấu hình đầy đủ.",
+        "Production Studio sender is not configured.":"Email gửi mã quản trị chưa được cấu hình đúng. Kiểm tra RESEND_FROM trong Cloudflare Production.",
         "Studio security is not configured.":"Thiếu cấu hình bảo mật Studio trên Cloudflare Preview.",
         "Email login is not configured. Use your private access key.":"Thiếu cấu hình Resend hoặc email quản trị trong Cloudflare Preview.",
         "Cannot send the login code. Use your private access key or check Resend configuration.":"Resend chưa chấp nhận yêu cầu gửi mã. Kiểm tra cấu hình Resend trên Cloudflare Preview.",
