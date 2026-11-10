@@ -1,5 +1,6 @@
 import {sendSandboxCustomerEmail} from "../_lib/sandbox-customer-email.js";
 import {sendLiveBalanceRequest} from "../_lib/live-balance-request.js";
+import {sendLiveTrackingEmail} from "../_lib/live-tracking-email.js";
 import {verifyStudioSession} from "../_lib/studio-otp-auth.js";
 import {onRequestPost as onStudioOtpRequest} from "./studio-auth.js";
 // Private studio dashboard API. The admin key must be a 32+ character Cloudflare secret.
@@ -19,6 +20,11 @@ const sandboxPaymentKey = id => `enquiries/${id}/paypal-sandbox-payments.json`;
 const livePaymentKey = id => `enquiries/${id}/paypal-live-payments.json`;
 const verifiedLive = (order,payment,ledger) => order?.checkoutMode==="live-inline" && payment?.sandbox===false && ledger?.quotedAt===payment?.quotedAt ? ledger : null;
 const fullyCaptured = ledger => Boolean(ledger?.full || (ledger?.deposit && ledger?.balance));
+const verifiedLiveCapture = (entry,amount) => entry?.verification==="paypal-live-capture" && entry?.sandbox===false && Number.isInteger(amount) && amount>0 && entry.amountCents===amount && /^[A-Za-z0-9-]{8,100}$/.test(entry.reference||"");
+const livePaidInFull = (ledger,payment) => Boolean(payment?.sandbox===false && ledger?.quotedAt===payment?.quotedAt && (
+  verifiedLiveCapture(ledger?.full,payment.totalCents) ||
+  (verifiedLiveCapture(ledger?.deposit,payment.depositCents) && verifiedLiveCapture(ledger?.balance,payment.balanceCents))
+));
 const moneyCents = aud => Math.round(aud * 100);
 const validAmount = value => Number.isInteger(value) && value >= 50 && value <= 100000;
 async function readJson(bucket,key){const obj=await bucket.get(key);if(!obj)return null;try{return await obj.json();}catch{return null;}}
@@ -100,7 +106,7 @@ export async function onRequestGet(context){
             const status=statuses.has(data.status)?data.status:"New";
             // A verified final payment ends the waiting-for-balance phase, but does not mean the artwork was shipped.
             const sandboxFullyPaid=sandbox?.quotedAt===payment?.quotedAt&&Boolean(sandbox?.full||(sandbox?.deposit&&sandbox?.balance));
-            const fullyPaid=data.checkoutMode==="sandbox-inline"?sandboxFullyPaid:data.checkoutMode==="live-inline"?fullyCaptured(live):Boolean(payment?.deposit&&payment?.balance);
+            const fullyPaid=data.checkoutMode==="sandbox-inline"?sandboxFullyPaid:data.checkoutMode==="live-inline"?livePaidInFull(live,payment):Boolean(payment?.deposit&&payment?.balance);
             const paidAwaitingDispatch=status==="Ready for balance"&&fullyPaid;
             if(inPeriod)statusCounts[paidAwaitingDispatch?"Paid awaiting dispatch":status]++;
             const totalCents=Number.isInteger(payment?.totalCents)?payment.totalCents:Math.round(Number(data.estimatedPriceAUD||0)*100);
@@ -179,14 +185,16 @@ export async function onRequestPost(context){
   let payload;try{payload=await request.json();}catch{return respond({ok:false,message:"Invalid request."},400);}
   const {id,status}=payload||{};
   if(action==="tracking-save"||action==="tracking-notify"){
-    // New tracking workflows remain Preview-only, including R2 writes and email.
-    if(!previewOnly(env))return respond({ok:false,message:"Tracking management is only available on Preview."},403);
+    // Live tracking is allowed only for verified, fully paid Live checkout orders.
+    const isProductionLive=!previewOnly(env)&&env.CF_PAGES_BRANCH==="main"&&env.PAYPAL_MODE==="live"&&env.PAYPAL_LIVE_READY==="yes";
+    if(!previewOnly(env)&&!isProductionLive)return respond({ok:false,message:"Tracking management unavailable in this environment."},403);
     if(!validId(id))return respond({ok:false,message:"Invalid order."},400);
     try{
       const bucket=env.PORTRAIT_UPLOADS;
       const order=await getDetails(bucket,id);
       if(!order)return respond({ok:false,message:"Order not found."},404);
       if(order.status==="Cancelled")return respond({ok:false,message:"Cannot update tracking for a cancelled order."},409);
+      if(isProductionLive&&order.checkoutMode!=="live-inline")return respond({ok:false,message:"Only verified Live checkout orders are supported here."},403);
       if(action==="tracking-save"){
         const raw=payload.tracking;
         if(!raw||typeof raw!=="object"||Array.isArray(raw))return respond({ok:false,message:"Invalid tracking details."},400);
@@ -217,15 +225,17 @@ export async function onRequestPost(context){
       const payment=await readJson(bucket,paymentKey(id));
       const sandbox=await readJson(bucket,sandboxPaymentKey(id));
       const live=verifiedLive(order,payment,await readJson(bucket,livePaymentKey(id)));
-       const paid=order.checkoutMode==="live-inline"?fullyCaptured(live)
+       const paid=order.checkoutMode==="live-inline"?livePaidInFull(live,payment)
          :order.checkoutMode==="sandbox-inline"?Boolean(sandbox?.quotedAt===payment?.quotedAt&&fullyCaptured(sandbox))
          :Boolean(payment?.deposit&&payment?.balance);
       if(!paid)return respond({ok:false,message:"Verify full payment before notifying shipment."},409);
       const fingerprint=(await sha256([tracking.details.carrier,tracking.details.number,tracking.details.url].join("|"))).slice(0,32);
-      const notification=await sendSandboxCustomerEmail({
-        env,bucket,order,payment:payment||{totalCents:Math.round(Number(order.estimatedPriceAUD||0)*100)},
-        event:"shipping-tracking",eventKey:"tracking-"+fingerprint,tracking:tracking.details,paidInFull:true
-      });
+      const notification=isProductionLive
+        ? await sendLiveTrackingEmail({env,bucket,order,payment,ledger:live,tracking:tracking.details,fingerprint})
+        : await sendSandboxCustomerEmail({
+            env,bucket,order,payment:payment||{totalCents:Math.round(Number(order.estimatedPriceAUD||0)*100)},
+            event:"shipping-tracking",eventKey:"tracking-"+fingerprint,tracking:tracking.details,paidInFull:true
+          });
       return respond({ok:true,emailTest:notification.state});
     }catch(e){console.error("Studio tracking failed",id,e);return respond({ok:false,message:"Could not save or send tracking information."},500);}
   }
@@ -302,8 +312,8 @@ export async function onRequestPost(context){
     const sandbox=await readJson(env.PORTRAIT_UPLOADS,sandboxPaymentKey(id));
     const checkoutPaid=data.checkoutMode==="sandbox-inline"&&sandbox?.quotedAt===payment?.quotedAt;
     const live=verifiedLive(data,payment,await readJson(env.PORTRAIT_UPLOADS,livePaymentKey(id)));
-    const depositVerified=data.checkoutMode==="live-inline"?Boolean(live?.deposit||live?.full):checkoutPaid?Boolean(sandbox.deposit||sandbox.full):Boolean(payment?.deposit);
-    const fullyVerified=data.checkoutMode==="live-inline"?fullyCaptured(live):checkoutPaid?fullyCaptured(sandbox):Boolean(payment?.deposit&&payment?.balance);
+    const depositVerified=data.checkoutMode==="live-inline"?Boolean(verifiedLiveCapture(live?.deposit,payment?.depositCents)||verifiedLiveCapture(live?.full,payment?.totalCents)):checkoutPaid?Boolean(sandbox.deposit||sandbox.full):Boolean(payment?.deposit);
+    const fullyVerified=data.checkoutMode==="live-inline"?livePaidInFull(live,payment):checkoutPaid?fullyCaptured(sandbox):Boolean(payment?.deposit&&payment?.balance);
     if(status!==data.status&&["Painting","Ready for balance"].includes(status)&&!depositVerified)return respond({ok:false,message:"Verify the deposit or full payment before starting production."},409);
     if(status!==data.status&&["Shipped","Completed"].includes(status)&&!fullyVerified)return respond({ok:false,message:"Verify full payment before shipping or completing the order."},409);
     const previousStatus=data.status;

@@ -1,8 +1,8 @@
 import {otpJson,tokenHex,hash,mac,constantEqual,read,write,revokeStudioSession} from '../_lib/studio-otp-auth.js';
-// Only preview deployments can request email codes; the legacy long key still works.
+// Private Studio OTP is available on Preview and Production, with fixed admin destination.
 const fail=(message,status=400)=>otpJson({ok:false,message},status);
 export async function onRequestPost({request,env}){
-  if(!env.CF_PAGES_BRANCH||env.CF_PAGES_BRANCH==='main')return fail('Email login is only enabled on the preview branch.',403);
+  if(!env.CF_PAGES_BRANCH)return fail('Studio environment is not configured.',503);
   if(!env.PORTRAIT_UPLOADS||!env.STUDIO_ADMIN_KEY||env.STUDIO_ADMIN_KEY.length<32)return fail('Studio security is not configured.',503);
   const origin=request.headers.get('Origin');
   if(origin&&origin!==new URL(request.url).origin)return fail('Origin not allowed.',403);
@@ -17,6 +17,9 @@ export async function onRequestPost({request,env}){
   }
   if(!['request','verify'].includes(action))return fail('Unknown action.',404);
   const bucket=env.PORTRAIT_UPLOADS,now=Date.now();
+  const production=env.CF_PAGES_BRANCH==='main';
+  const sender=production?'ATELIER HAU <orders@atelierhau.com>':(env.RESEND_FROM||'ATELIER HAU <orders@atelierhau.com>');
+  if(production&&(!/^ATELIER HAU <[a-z0-9._%+-]+@atelierhau\\.com>$/i.test(sender)||env.PAYPAL_MODE!=='live'||env.PAYPAL_LIVE_READY!=='yes'))return fail('Production Studio email login is not configured.',503);
   const adminEmail=String(env.NOTIFICATION_EMAIL||'').trim().toLowerCase();
   if(action==='request'){
     if(!env.RESEND_API_KEY||!adminEmail||!(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adminEmail)))return fail('Email login is not configured. Use your private access key.',503);
@@ -40,7 +43,7 @@ export async function onRequestPost({request,env}){
     try{
       const response=await fetch('https://api.resend.com/emails',{
         method:'POST',headers:{'Authorization':'Bearer '+env.RESEND_API_KEY,'Content-Type':'application/json'},
-        body:JSON.stringify({from:env.RESEND_FROM||"L'Atelier Heritage <onboarding@resend.dev>",to:[adminEmail],subject:'[SANDBOX] Mã đăng nhập quản trị L’Atelier Heritage',
+        body:JSON.stringify({from:sender,to:[adminEmail],subject:production?'[ATELIER HAU] Mã đăng nhập quản trị':'[SANDBOX] Mã đăng nhập quản trị ATELIER HAU',
           text:'Mã đăng nhập trang quản trị của bạn: '+code+'\n\nMã có hiệu lực trong 5 phút và chỉ sử dụng một lần. Nếu bạn không yêu cầu đăng nhập, hãy bỏ qua email này.\n\nL’Atelier Heritage · Sandbox preview'})
       });
       if(!response.ok)throw Error('Resend delivery rejected');
