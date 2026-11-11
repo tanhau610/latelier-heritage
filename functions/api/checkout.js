@@ -107,7 +107,7 @@ async function start(request,env){
     await put(env.PORTRAIT_UPLOADS,path(id,"payment.json"),{id,quotedAt,totalCents,depositCents,balanceCents,checkoutPlan:plan,sandbox:!live});
     await put(env.PORTRAIT_UPLOADS,path(id,"checkout-access.json"),{id,tokenHash:await digest(token),expiresAt:new Date(Date.now()+90*86400000).toISOString(),createdAt:quotedAt});
     // Register an unpaid checkout for the scheduled Worker; no email is sent at order creation.
-    if(!live)await put(env.PORTRAIT_UPLOADS,"pending-checkouts/"+id+".json",{id,createdAt:quotedAt,notifyAfter:new Date(Date.now()+10*60*1000).toISOString(),sandbox:true});
+    await put(env.PORTRAIT_UPLOADS,"pending-checkouts/"+id+".json",{id,createdAt:quotedAt,notifyAfter:new Date(Date.now()+10*60*1000).toISOString(),sandbox:!live,checkoutMode:live?"live-inline":"sandbox-inline"});
   }catch(e){console.error("Sandbox order storage failed",id,e);return fail("Could not save your order securely. Please contact the studio.",503);}
   return json({ok:true,id,token,sandbox:!live});
 }
