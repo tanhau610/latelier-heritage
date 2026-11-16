@@ -23,7 +23,7 @@ export async function sendLiveBalanceRequest({env,bucket,order,payment,ledger,ch
   const record={id:order.id,event:"live-balance-request",eventKey,state:"pending",createdAt:new Date().toISOString()};
   const claimed=await bucket.put(key,JSON.stringify(record),{onlyIf:{etagDoesNotMatch:"*"},httpMetadata:{contentType:"application/json"}});
   if(!claimed)return {state:"already-recorded"};
-  const response=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+env.RESEND_API_KEY,"Content-Type":"application/json","Idempotency-Key":"atelier-"+order.id+"-"+eventKey},body:JSON.stringify({from:sender,to:[order.email],subject,html,text:[heading,"Hello "+(order.name||"there"),description,...details,"Pay remaining balance: "+checkoutLink].join("\n\n")})});
+  const response=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+env.RESEND_API_KEY,"Content-Type":"application/json","Idempotency-Key":"atelier-"+order.id+"-"+eventKey},body:JSON.stringify({from:sender,reply_to:'hello@atelierhau.com',to:[order.email],subject,html,text:[heading,"Hello "+(order.name||"there"),description,...details,"Pay remaining balance: "+checkoutLink].join("\n\n")})});
   const result=await response.json().catch(()=>({}));
   if(!response.ok){record.state="failed";record.httpStatus=response.status;await bucket.put(key,JSON.stringify(record),{httpMetadata:{contentType:"application/json"}});throw Error("Resend rejected Live balance request");}
   record.state="sent";record.resendId=result.id||null;record.sentAt=new Date().toISOString();
