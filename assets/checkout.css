@@ -190,3 +190,30 @@
  .checkout-stage-footer{padding-bottom:max(14px,env(safe-area-inset-bottom))}
  .checkout-stage-actions{min-width:0}
 }
+
+/* Full-length checkout forms: no nested scrolling. Customers can see every
+   field and reach the next step with the normal browser page scroll. */
+.checkout-main>.checkout-stage,
+.checkout-main>.checkout-pay-panel{
+  height:auto;
+  min-height:0;
+  max-height:none;
+  overflow:visible;
+}
+.checkout-stage-content,
+.checkout-pay-content{
+  flex:0 0 auto;
+  min-height:0;
+  height:auto;
+  max-height:none;
+  overflow:visible;
+  scrollbar-gutter:auto;
+}
+.checkout-stage-footer{
+  position:static;
+  flex:0 0 auto;
+}
+@media(max-width:540px){
+  .checkout-main>.checkout-stage,
+  .checkout-main>.checkout-pay-panel{height:auto;max-height:none}
+}
