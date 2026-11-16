@@ -7,6 +7,9 @@ on:
       - 'functions/**'
       - 'workers/**'
       - 'tests/**'
+      - '*.html'
+      - 'robots.txt'
+      - 'sitemap.xml'
       - 'assets/studio.js'
       - 'functions/_lib/live-payment-email.js'
       - '.github/workflows/validate-live-emails.yml'
@@ -32,5 +35,7 @@ jobs:
           node --check functions/_lib/studio-otp-auth.js
           node --check functions/_lib/live-tracking-email.js
           node --check workers/live-balance-reminders.js
+      - name: Public website smoke tests
+        run: node --test tests/public-site-smoke.test.mjs
       - name: Regression tests
         run: node --test tests/live-balance-reminder.test.mjs tests/live-balance-reminder-worker.test.mjs tests/live-tracking-email.test.mjs tests/studio-otp-production.test.mjs tests/live-payment-email.test.mjs
