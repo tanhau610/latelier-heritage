@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {processOrder} from "../workers/live-balance-reminders.js";
+import reminderWorker, {processOrder} from "../workers/live-balance-reminders.js";
 
 const id="LH-20261101-ABCDEF12";
 const p="enquiries/"+id+"/";
@@ -71,4 +71,24 @@ test("Resend failure leaves failed event and never retries automatically",async(
    assert.equal(sent,1);
    assert.equal(JSON.parse(f.records.get(p+"email-events/live-balance-reminder-3d-"+depositRef+".json")).state,"failed");
  }finally{globalThis.fetch=original}
+});
+
+
+test("scheduled trigger stays fail-closed when reminders are disabled",async()=>{
+ let writes=0, calls=0;
+ const env={LIVE_BALANCE_REMINDERS:"disabled",PAYPAL_MODE:"live",PAYPAL_LIVE_READY:"yes",PORTRAIT_UPLOADS:{list:async()=>{calls++;throw Error("should not scan")},put:async()=>{writes++}},RESEND_API_KEY:"dummy"};
+ const tasks=[];
+ await reminderWorker.scheduled({},env,{waitUntil:p=>tasks.push(p)});
+ await Promise.all(tasks);
+ assert.equal(calls,0);
+ assert.equal(writes,0);
+});
+
+test("scheduled trigger does not scan if Live PayPal guard is invalid",async()=>{
+ let scans=0;
+ const env={LIVE_BALANCE_REMINDERS:"enabled",PAYPAL_MODE:"sandbox",PAYPAL_LIVE_READY:"yes",PORTRAIT_UPLOADS:{list:async()=>{scans++}},RESEND_API_KEY:"dummy"};
+ const tasks=[];
+ await reminderWorker.scheduled({},env,{waitUntil:p=>tasks.push(p)});
+ await Promise.all(tasks);
+ assert.equal(scans,0);
 });
