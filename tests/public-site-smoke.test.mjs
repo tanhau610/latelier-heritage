@@ -10,7 +10,7 @@ for(const page of pages){
   const canonical="https://atelierhau.com/"+(page==="index.html"?"":page);
   assert.match(html,/<html lang="en">/i);
   assert.match(html,/<title>[^<]+<\/title>/i);
-  assert.match(html,/<meta name="description" content="[^"]+"/i);
+  assert.match(html,/<meta\\b(?=[^>]*\\bname="description")(?=[^>]*\\bcontent="[^"]+")[^>]*>/i);
   assert.match(html,/<h1\b/i);
   assert.equal((html.match(/rel="canonical"/g)||[]).length,1);
   assert.ok(html.includes('rel="canonical" href="'+canonical+'"'));
