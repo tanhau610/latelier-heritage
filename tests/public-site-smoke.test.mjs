@@ -17,7 +17,12 @@ for(const page of pages){
   assert.ok(sitemap.includes("<loc>"+canonical+"</loc>"));
  });
 }
-test("Private shipping form is noindex and absent from public sitemap",()=>{\n const html=readFileSync("shipping.html","utf8");\n assert.match(html,/<meta name="robots" content="noindex,nofollow,noarchive">/i);\n assert.ok(!sitemap.includes("https://atelierhau.com/shipping.html"));\n});\ntest("SEO sitemap and crawler boundaries",()=>{
+test("Private shipping form is noindex and absent from public sitemap",()=>{
+ const html=readFileSync("shipping.html","utf8");
+ assert.match(html,/<meta name="robots" content="noindex,nofollow,noarchive">/i);
+ assert.ok(!sitemap.includes("https://atelierhau.com/shipping.html"));
+});
+test("SEO sitemap and crawler boundaries",()=>{
  assert.match(sitemap,/xmlns="http:\/\/www.sitemaps.org\/schemas\/sitemap\/0.9"/);
  assert.match(robots,/Sitemap: https:\/\/atelierhau.com\/sitemap.xml/);
  for(const route of ["/studio","/checkout","/payment","/api/"])assert.ok(robots.includes("Disallow: "+route));
