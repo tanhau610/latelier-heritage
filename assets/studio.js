@@ -379,7 +379,7 @@
         const eventNames={"payment-deposit":"Xác nhận đặt cọc","payment-balance":"Xác nhận thanh toán phần còn lại","payment-full":"Xác nhận thanh toán toàn bộ","status-Confirmed":"Đơn hàng đã xác nhận","status-Painting":"Đang vẽ","status-Ready for balance":"Yêu cầu thanh toán còn lại","status-Shipped":"Đã gửi hàng","status-Completed":"Hoàn thành","status-Cancelled":"Đã hủy","shipping-tracking":"Cập nhật mã vận đơn"};
         const statuses={sent:"Resend đã tiếp nhận",failed:"Gửi thất bại",skipped:"Chưa gửi (thiếu cấu hình)"};
         for(const e of result.events){
-          const line=make("p","studio-footnote",(eventNames[e.event]||e.event)+" · "+(statuses[e.state]||e.state)+" · "+formatDate(e.sentAt||e.createdAt));
+          const line=make("p","studio-footnote",(e.event==="live-status"?(eventNames["status-"+e.status]||("Cập nhật trạng thái: "+(e.status||"không rõ"))):(eventNames[e.event]||e.event||"Thông báo"))+" · "+(statuses[e.state]||e.state)+" · "+formatDate(e.sentAt||e.createdAt));
           emailHistory.append(line);
         }
       }catch(e){if(state.selected===id&&currentVersion===selectionVersion)emailHistory.textContent="Không tải được lịch sử email: "+e.message;}
