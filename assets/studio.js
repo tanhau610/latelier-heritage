@@ -274,7 +274,7 @@
       notifyButton.disabled=true;notifyFeedback.textContent=order.checkoutMode==="live-inline"?"Đang gửi email cho khách…":"Đang gửi email thử nghiệm…";
       try{
         const result=await api("tracking-notify",{method:"POST",body:{id:order.id}});
-        const notices=order.checkoutMode==="live-inline"?{sent:"✓ Resend đã tiếp nhận email mã vận đơn gửi cho khách.", "already-recorded":"Thông báo mã vận đơn này đã được ghi nhận trước đó."}:{sent:"✓ Resend đã tiếp nhận email cập nhật tracking (chỉ hộp thư thử nghiệm).","already-sent":"Email cho mã vận đơn này đã được gửi trước đó.",failed:"Không gửi được email thử nghiệm. Mã vận đơn vẫn đã lưu.",skipped:"Chưa cấu hình gửi email thử nghiệm."};
+        const notices=order.checkoutMode==="live-inline"?{sent:"✓ Resend đã tiếp nhận email mã vận đơn gửi cho khách.", "already-recorded":"Sự kiện gửi tracking đã được ghi nhận; hãy kiểm tra lịch sử email để xác nhận Resend đã tiếp nhận."}:{sent:"✓ Resend đã tiếp nhận email cập nhật tracking (chỉ hộp thư thử nghiệm).","already-sent":"Email cho mã vận đơn này đã được gửi trước đó.",failed:"Không gửi được email thử nghiệm. Mã vận đơn vẫn đã lưu.",skipped:"Chưa cấu hình gửi email thử nghiệm."};
         notifyFeedback.textContent=notices[result.emailTest]||"Đã xử lý yêu cầu.";
         notifyFeedback.className="studio-save-feedback "+(["sent","already-sent","already-recorded"].includes(result.emailTest)?"is-success":"is-error");
         void refreshEmailHistory();
@@ -336,7 +336,7 @@
         updatedNote.textContent="Cập nhật gần nhất: "+formatDate(result.updatedAt);
         button.textContent="✓ Đã lưu";
         const liveEmail=order.checkoutMode==="live-inline";
-        const emailLabels=liveEmail?{sent:"Resend đã tiếp nhận email thông báo gửi cho khách.",failed:"CẢNH BÁO: Email khách hàng gửi thất bại. Cần kiểm tra lịch sử email và liên hệ khách thủ công.",skipped:"Chưa gửi email khách hàng; kiểm tra cấu hình hoặc điều kiện thanh toán.",unchanged:"Không gửi email vì trạng thái không thay đổi.","already-recorded":"Thông báo đã được ghi nhận trước đó."}:{sent:"Email mẫu đã gửi đến hộp thư thử nghiệm.",failed:"Không gửi được email mẫu; tiến độ vẫn đã lưu.",skipped:"Chưa cấu hình gửi email mẫu.",unchanged:"Không gửi email vì trạng thái không thay đổi.","already-sent":"Email mẫu đã gửi trước đó."};
+        const emailLabels=liveEmail?{sent:"Resend đã tiếp nhận email thông báo gửi cho khách.",failed:"CẢNH BÁO: Email khách hàng gửi thất bại. Cần kiểm tra lịch sử email và liên hệ khách thủ công.",skipped:"Chưa gửi email khách hàng; kiểm tra cấu hình hoặc điều kiện thanh toán.",unchanged:"Không gửi email vì trạng thái không thay đổi.","already-recorded":"Sự kiện email đã được ghi nhận; kiểm tra lịch sử để xác nhận đã gửi, không tự động gửi lại."}:{sent:"Email mẫu đã gửi đến hộp thư thử nghiệm.",failed:"Không gửi được email mẫu; tiến độ vẫn đã lưu.",skipped:"Chưa cấu hình gửi email mẫu.",unchanged:"Không gửi email vì trạng thái không thay đổi.","already-sent":"Email mẫu đã gửi trước đó."};
         saveFeedback.textContent="Đã lưu tiến độ · Trạng thái: "+statusLabel(order)+". "+(emailLabels[result.emailTest]||"");
         void refreshEmailHistory();
         saveFeedback.className="studio-save-feedback "+(result.emailTest==="failed"?"is-error":"is-success");
@@ -377,7 +377,7 @@
         emailHistory.replaceChildren();
         if(!result.events?.length){emailHistory.append(make("p","studio-footnote","Chưa có email tự động nào được tạo cho đơn hàng này."));return;}
         const eventNames={"payment-deposit":"Xác nhận đặt cọc","payment-balance":"Xác nhận thanh toán phần còn lại","payment-full":"Xác nhận thanh toán toàn bộ","status-Confirmed":"Đơn hàng đã xác nhận","status-Painting":"Đang vẽ","status-Ready for balance":"Yêu cầu thanh toán còn lại","status-Shipped":"Đã gửi hàng","status-Completed":"Hoàn thành","status-Cancelled":"Đã hủy","shipping-tracking":"Cập nhật mã vận đơn"};
-        const statuses={sent:"Resend đã tiếp nhận",failed:"Gửi thất bại",skipped:"Chưa gửi (thiếu cấu hình)"};
+        const statuses={sent:"Resend đã tiếp nhận (chưa xác nhận khách đã mở)",failed:"Gửi thất bại — cần kiểm tra thủ công",pending:"Đang chờ / chưa rõ kết quả — cần kiểm tra",skipped:"Chưa gửi (thiếu cấu hình)"};
         for(const e of result.events){
           const line=make("p","studio-footnote",(e.event==="live-status"?(eventNames["status-"+e.status]||("Cập nhật trạng thái: "+(e.status||"không rõ"))):(eventNames[e.event]||e.event||"Thông báo"))+" · "+(statuses[e.state]||e.state)+" · "+formatDate(e.sentAt||e.createdAt));
           emailHistory.append(line);
