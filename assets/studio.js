@@ -335,10 +335,11 @@
         const badge=head.querySelector(".studio-status");badge.className="studio-status status-"+order.status.toLowerCase();badge.textContent=statusLabel(order);
         updatedNote.textContent="Cập nhật gần nhất: "+formatDate(result.updatedAt);
         button.textContent="✓ Đã lưu";
-        const emailLabels={sent:"Email mẫu đã gửi đến hộp thư thử nghiệm.",failed:"Không gửi được email mẫu; tiến độ vẫn đã lưu.",skipped:"Chưa cấu hình gửi email mẫu.",unchanged:"Không gửi email vì trạng thái không thay đổi.","already-sent":"Email mẫu đã gửi trước đó."};
-         saveFeedback.textContent="Đã lưu thành công · Trạng thái: "+statusLabel(order)+". "+(emailLabels[result.emailTest]||"");
-         void refreshEmailHistory();
-        saveFeedback.className="studio-save-feedback is-success";
+        const liveEmail=order.checkoutMode==="live-inline";
+        const emailLabels=liveEmail?{sent:"Resend đã tiếp nhận email thông báo gửi cho khách.",failed:"CẢNH BÁO: Email khách hàng gửi thất bại. Cần kiểm tra lịch sử email và liên hệ khách thủ công.",skipped:"Chưa gửi email khách hàng; kiểm tra cấu hình hoặc điều kiện thanh toán.",unchanged:"Không gửi email vì trạng thái không thay đổi.","already-recorded":"Thông báo đã được ghi nhận trước đó."}:{sent:"Email mẫu đã gửi đến hộp thư thử nghiệm.",failed:"Không gửi được email mẫu; tiến độ vẫn đã lưu.",skipped:"Chưa cấu hình gửi email mẫu.",unchanged:"Không gửi email vì trạng thái không thay đổi.","already-sent":"Email mẫu đã gửi trước đó."};
+        saveFeedback.textContent="Đã lưu tiến độ · Trạng thái: "+statusLabel(order)+". "+(emailLabels[result.emailTest]||"");
+        void refreshEmailHistory();
+        saveFeedback.className="studio-save-feedback "+(result.emailTest==="failed"?"is-error":"is-success");
       }catch(e){
         showMessage(e.message);
         button.textContent="Thử lưu lại";
@@ -366,7 +367,7 @@
       panel.append(retry,retryFeedback);
     }
     panel.append(sectionHeading("Lịch sử email tự động"));
-    const emailInfo=make("p","studio-footnote","CHẾ ĐỘ THỬ NGHIỆM: Email mẫu chỉ gửi đến hộp thư quản trị đã cấu hình, không gửi đến địa chỉ khách hàng.");
+    const emailInfo=make("p","studio-footnote",order.checkoutMode==="live-inline"?"ĐƠN LIVE: Email thông báo có thể được gửi đến địa chỉ khách hàng sau khi xác minh thanh toán. Kiểm tra trạng thái gửi bên dưới.":"CHẾ ĐỘ THỬ NGHIỆM: Email mẫu chỉ gửi đến hộp thư quản trị đã cấu hình, không gửi đến địa chỉ khách hàng.");
     const emailHistory=make("div","studio-email-history","Đang tải lịch sử email…");
     panel.append(emailInfo,emailHistory);
     async function refreshEmailHistory(){
