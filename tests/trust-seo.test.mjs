@@ -22,4 +22,6 @@ test("Studio origin and customer contact are disclosed on visible pages",()=>{
  assert.match(about,/Ho Chi Minh City, Vietnam/);
  assert.match(contact,/Ho Chi Minh City, Vietnam/);
  assert.match(contact,/mailto:hello@atelierhau\.com/);
+ assert.match(home,/Hand-painted in Vietnam/);
+ assert.match(home,/mailto:hello@atelierhau\.com/);
 });
