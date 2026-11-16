@@ -217,3 +217,25 @@
   .checkout-main>.checkout-stage,
   .checkout-main>.checkout-pay-panel{height:auto;max-height:none}
 }
+
+/* Keep both checkout columns aligned at the top and equal in height.
+   The longer form sets the row height; the summary fills that height.
+   No nested scrollbars or fixed viewport heights are reintroduced. */
+.checkout-grid{
+  align-items:stretch;
+}
+.checkout-main{
+  align-self:stretch;
+  min-width:0;
+}
+.checkout-summary{
+  position:relative;
+  top:auto;
+  align-self:stretch;
+  height:100%;
+  box-sizing:border-box;
+}
+@media(max-width:850px){
+  .checkout-grid{align-items:start}
+  .checkout-summary{height:auto;align-self:auto}
+}
