@@ -9,9 +9,10 @@ const validId=id=>/^LH-\d{8}-[A-F0-9]{8}$/.test(id);
 const prefix=id=>"enquiries/"+id+"/";
 const sha256=async value=>Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(value))),x=>x.toString(16).padStart(2,"0")).join("");
 async function run(env){
-  if(env.LIVE_BALANCE_REMINDERS!=="enabled"||env.PAYPAL_MODE!=="live"||env.PAYPAL_LIVE_READY!=="yes")return;
+  if(env.LIVE_BALANCE_REMINDERS!=="enabled"){console.info("Balance reminder cron: disabled; no email sent");return;}
+  if(env.PAYPAL_MODE!=="live"||env.PAYPAL_LIVE_READY!=="yes"){console.warn("Balance reminder cron: Live PayPal guard failed; no email sent");return;}
   const bucket=env.PORTRAIT_UPLOADS;
-  if(!bucket||!env.RESEND_API_KEY)return;
+  if(!bucket||!env.RESEND_API_KEY){console.error("Balance reminder cron: missing R2 binding or Resend secret");return;}
   const sender=atelierSender(env);
   if(!/^ATELIER HAU <[a-z0-9._%+-]+@atelierhau\.com>$/i.test(sender))throw Error("Verified sender required");
   let cursor, pages=0;
@@ -25,6 +26,7 @@ async function run(env){
     cursor=page.truncated?page.cursor:null;
     pages++;
   }while(cursor&&pages<20);
+  console.info("Balance reminder cron: scan completed", {pages, truncated:!!cursor});
 }
 export async function processOrder(env,id,sender){
   const b=env.PORTRAIT_UPLOADS,p=prefix(id);
