@@ -7,6 +7,8 @@ const money=n=>"A$"+Number(n).toLocaleString("en-AU",{minimumFractionDigits:2,ma
 const params=new URLSearchParams(location.hash.slice(1));
 let id=params.get("id"),token=params.get("token"),sdk=null,turnstileStarted=false,liveMode=false;
 const modeText=(sandboxText,liveText)=>liveMode?liveText:sandboxText;
+const environmentNotice=$("checkout-environment-notice");
+if(environmentNotice&&location.hostname.endsWith(".pages.dev"))environmentNotice.textContent="TEST ENVIRONMENT. Preview checkout uses PayPal Sandbox. Do not use a real PayPal account or card here.";
 const stages=[...document.querySelectorAll("[data-checkout-step]")];
 function goTo(step,{scroll=true}={}){
   stages.forEach(el=>{
