@@ -1,6 +1,7 @@
 import {sendSandboxCustomerEmail} from "../_lib/sandbox-customer-email.js";
 import {sendLiveBalanceRequest} from "../_lib/live-balance-request.js";
 import {sendLiveTrackingEmail} from "../_lib/live-tracking-email.js";
+import {sendLiveStatusEmail} from "../_lib/live-status-email.js";
 import {verifyStudioSession} from "../_lib/studio-otp-auth.js";
 import {onRequestPost as onStudioOtpRequest} from "./studio-auth.js";
 // Private studio dashboard API. The admin key must be a 32+ character Cloudflare secret.
@@ -355,6 +356,15 @@ export async function onRequestPost(context){
         const result=await sendLiveBalanceRequest({env,bucket:env.PORTRAIT_UPLOADS,order:data,payment,ledger:live,checkoutLink:link.toString()});
         emailTest=result.state;
       }catch(e){emailTest="failed";console.error("Live balance request failed",id,String(e));}
+    }
+    // Production status notifications are limited to verified Live orders and meaningful transitions.
+    // Ready for balance has its own secure payment-link email; shipping tracking is sent separately.
+    if(!previewOnly(env)&&status!==previousStatus&&["Confirmed","Painting","Completed","Cancelled"].includes(status)&&data.checkoutMode==="live-inline"){
+      try{
+        const transitionId=data.updatedAt.replace(/[^0-9]/g,"");
+        const notification=await sendLiveStatusEmail({env,bucket:env.PORTRAIT_UPLOADS,order:data,payment,ledger:live,status,transitionId});
+        emailTest=notification.state;
+      }catch(e){emailTest="failed";console.error("Live status email failed",id,status,String(e));}
     }
     return respond({ok:true,id,status,updatedAt:data.updatedAt,emailTest});
   }catch(e){console.error("Studio update failed",e);return respond({ok:false,message:"Could not update order."},500);}
