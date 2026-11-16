@@ -28,6 +28,7 @@ jobs:
         run: |
           node --check functions/api/checkout.js
           node --check functions/api/studio.js
+          node --check functions/_lib/live-status-email.js
           node --check assets/studio.js
           node --check functions/_lib/live-balance-request.js
           node --check functions/_lib/live-payment-email.js
@@ -38,4 +39,4 @@ jobs:
       - name: Public website smoke tests
         run: node --test tests/public-site-smoke.test.mjs
       - name: Regression tests
-        run: node --test tests/live-balance-reminder.test.mjs tests/live-balance-reminder-worker.test.mjs tests/live-tracking-email.test.mjs tests/studio-otp-production.test.mjs tests/live-payment-email.test.mjs
+        run: node --test tests/live-balance-reminder.test.mjs tests/live-balance-reminder-worker.test.mjs tests/live-tracking-email.test.mjs tests/studio-otp-production.test.mjs tests/live-payment-email.test.mjs tests/live-status-email.test.mjs
