@@ -39,3 +39,13 @@ test("Referenced local assets exist",()=>{
   }
  }
 });
+
+test("Studio film degrades gracefully until authentic video is deployed",()=>{
+ const process=readFileSync("process.html","utf8");
+ const script=readFileSync("assets/atelier-film.js","utf8");
+ assert.match(process,/id="atelier-film-fallback"/);
+ assert.match(process,/id="atelier-film-video" hidden controls playsinline/);
+ assert.match(script,/atelier-hau-painting-process\.mp4/);
+ assert.match(script,/method:"HEAD"/);
+ assert.match(script,/response\.ok/);
+});
