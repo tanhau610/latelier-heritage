@@ -4,7 +4,7 @@
  const video=document.getElementById("atelier-film-video");
  const fallback=document.getElementById("atelier-film-fallback");
  if(!video||!fallback)return;
- const src="/ATELIER_HAU_video_nhac_vui_tuoi.mp4";
+ const src="/ATELIER_HAU_video_nhac_vui_tuoi.mp4?v=cheerful-20261116";
  try{
   const response=await fetch(src,{method:"HEAD",cache:"no-store"});
   if(!response.ok||!(response.headers.get("content-type")||"").includes("video/"))return;
