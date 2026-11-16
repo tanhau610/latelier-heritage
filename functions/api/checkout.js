@@ -36,13 +36,13 @@ function checkoutMode(env){const live=env.CF_PAGES_BRANCH==="main"&&env.PAYPAL_M
 function paypalBase(env){return checkoutMode(env)==="live"?"https://api-m.paypal.com":"https://api-m.sandbox.paypal.com";}
 async function paypal(env,endpoint,method="GET",body=null,requestId=null){
   const auth=await fetch(paypalBase(env)+"/v1/oauth2/token",{method:"POST",headers:{"Authorization":"Basic "+btoa(env.PAYPAL_CLIENT_ID+":"+env.PAYPAL_CLIENT_SECRET),"Content-Type":"application/x-www-form-urlencoded"},body:"grant_type=client_credentials"});
-  if(!auth.ok)throw Error("Sandbox authentication failed");
+  if(!auth.ok)throw Error("PayPal authentication failed");
   const oauth=await auth.json();
   const headers={"Authorization":"Bearer "+oauth.access_token,"Content-Type":"application/json","Prefer":"return=representation"};
   if(requestId)headers["PayPal-Request-Id"]=requestId;
   const r=await fetch(paypalBase(env)+endpoint,{method,headers,body:body?JSON.stringify(body):undefined});
   const data=await r.json().catch(()=>({}));
-  if(!r.ok){const e=Error("PayPal Sandbox error ("+r.status+")");e.status=r.status;throw e;}
+  if(!r.ok){const e=Error("PayPal API error ("+r.status+")");e.status=r.status;throw e;}
   return data;
 }
 // Admin-only Vietnamese notifications. Keep customer-facing checkout in English.
@@ -184,7 +184,7 @@ async function action(request,env){
       purchase_units:[{reference_id:reference,custom_id:reference,description:"Custom hand-painted pet portrait - "+stage,amount:{currency_code:"AUD",value:amount}}],
       application_context:{shipping_preference:"NO_SHIPPING",user_action:"PAY_NOW"}
     },"checkout-create-"+reference+"-"+payment.quotedAt.replace(/[^0-9]/g,"").slice(0,14)+"-"+Math.floor(Date.now()/3600000));
-    if(!orderResult.id||orderResult.status!=="CREATED")throw Error("PayPal did not create the Sandbox order.");
+    if(!orderResult.id||orderResult.status!=="CREATED")throw Error("PayPal did not create the checkout order.");
     await put(bucket,path(id,live?"checkout-paypal-live-order.json":"checkout-paypal-order.json"),{id,stage,quotedAt:payment.quotedAt,tokenHash:activeAccess.tokenHash,paypalOrderId:orderResult.id,createdAt:new Date().toISOString()});
     // Give the buyer a full ten-minute window from opening the PayPal payment flow.
     try{
