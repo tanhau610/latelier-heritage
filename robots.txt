@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /studio
+Disallow: /checkout
+Disallow: /payment
+Disallow: /api/
+
+Sitemap: https://atelierhau.com/sitemap.xml
