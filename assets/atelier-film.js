@@ -8,7 +8,8 @@
  try{
   const response=await fetch(src,{method:"HEAD",cache:"no-store"});
   if(!response.ok||!(response.headers.get("content-type")||"").includes("video/"))return;
-  video.src=src;
+  video.src=src+"#t=0.1";
+  video.addEventListener("loadedmetadata",()=>{try{video.currentTime=0.1;}catch{}},{once:true});
   video.hidden=false;
   fallback.hidden=true;
  }catch{
