@@ -21,5 +21,5 @@ test("Home page exposes parseable, truthful store identity",()=>{
 test("Studio origin and customer contact are disclosed on visible pages",()=>{
  assert.match(about,/Ho Chi Minh City, Vietnam/);
  assert.match(contact,/Ho Chi Minh City, Vietnam/);
- assert.match(contact,/mailto:orders@atelierhau\.com/);
+ assert.match(contact,/mailto:hello@atelierhau\.com/);
 });
