@@ -21,7 +21,7 @@ export async function sendLivePaymentEmail({env,bucket,order,payment,stage,captu
   const record={id:order.id,stage,captureId,state:"pending",createdAt:new Date().toISOString()};
   const claimed=await bucket.put(key,JSON.stringify(record),{onlyIf:{etagDoesNotMatch:"*"},httpMetadata:{contentType:"application/json"}});
   if(!claimed)return {state:"already-recorded"};
-  const response=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+env.RESEND_API_KEY,"Content-Type":"application/json","Idempotency-Key":"atelier-live-"+captureId+"-"+stage},body:JSON.stringify({from:sender,to:[order.email],subject,html,text:lines.join("\n")})});
+  const response=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+env.RESEND_API_KEY,"Content-Type":"application/json","Idempotency-Key":"atelier-live-"+captureId+"-"+stage},body:JSON.stringify({from:sender,reply_to:'hello@atelierhau.com',to:[order.email],subject,html,text:lines.join("\n")})});
   const result=await response.json().catch(()=>({}));
   if(!response.ok){record.state="failed";record.httpStatus=response.status;await bucket.put(key,JSON.stringify(record),{httpMetadata:{contentType:"application/json"}});throw Error("Live email provider rejected message");}
   record.state="sent";record.resendId=result.id||null;record.sentAt=new Date().toISOString();
