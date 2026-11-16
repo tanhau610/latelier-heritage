@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync,existsSync} from "node:fs";
-const pages=["index.html","about.html","gallery.html","pricing.html","commission.html","process.html","shipping.html","policies.html","contact.html"];
+const pages=["index.html","about.html","gallery.html","pricing.html","commission.html","process.html","policies.html","contact.html"];
 const sitemap=readFileSync("sitemap.xml","utf8");
 const robots=readFileSync("robots.txt","utf8");
 for(const page of pages){
@@ -17,7 +17,7 @@ for(const page of pages){
   assert.ok(sitemap.includes("<loc>"+canonical+"</loc>"));
  });
 }
-test("SEO sitemap and crawler boundaries",()=>{
+test("Private shipping form is noindex and absent from public sitemap",()=>{\n const html=readFileSync("shipping.html","utf8");\n assert.match(html,/<meta name="robots" content="noindex,nofollow,noarchive">/i);\n assert.ok(!sitemap.includes("https://atelierhau.com/shipping.html"));\n});\ntest("SEO sitemap and crawler boundaries",()=>{
  assert.match(sitemap,/xmlns="http:\/\/www.sitemaps.org\/schemas\/sitemap\/0.9"/);
  assert.match(robots,/Sitemap: https:\/\/atelierhau.com\/sitemap.xml/);
  for(const route of ["/studio","/checkout","/payment","/api/"])assert.ok(robots.includes("Disallow: "+route));
