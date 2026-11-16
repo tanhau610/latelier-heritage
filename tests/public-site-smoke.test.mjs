@@ -46,7 +46,8 @@ test("Studio film degrades gracefully until authentic video is deployed",()=>{
  assert.match(process,/id="atelier-film-fallback"/);
  assert.match(process,/id="atelier-film-video" hidden controls playsinline/);
  assert.match(process,/poster="art\/black-dog-classic-portrait\.webp"/);
- assert.match(script,/atelier-hau-painting-process\.mp4/);
+ assert.match(script,/ATELIER_HAU_video_nhac_vui_tuoi\.mp4/);
+ assert.ok(existsSync("ATELIER_HAU_video_nhac_vui_tuoi.mp4"));
  assert.match(script,/method:"HEAD"/);
  assert.match(script,/response\.ok/);
 });
