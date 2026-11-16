@@ -108,7 +108,7 @@ async function start(request,env){
     await put(env.PORTRAIT_UPLOADS,path(id,"checkout-access.json"),{id,tokenHash:await digest(token),expiresAt:new Date(Date.now()+90*86400000).toISOString(),createdAt:quotedAt});
     // Register an unpaid checkout for the scheduled Worker; no email is sent at order creation.
     if(!live)await put(env.PORTRAIT_UPLOADS,"pending-checkouts/"+id+".json",{id,createdAt:quotedAt,notifyAfter:new Date(Date.now()+10*60*1000).toISOString(),sandbox:true});
-  }catch(e){console.error("Sandbox order storage failed",id,e);return fail("Could not save your order securely. Please contact the studio.",503);}
+  }catch(e){console.error("Checkout order storage failed",id,e);return fail("Could not save your order securely. Please contact the studio.",503);}
   return json({ok:true,id,token,sandbox:!live});
 }
 function due(order,payment,ledger){
@@ -268,7 +268,7 @@ export async function onRequestPost({request,env}){
   if(!env.CF_PAGES_BRANCH)return fail("Checkout environment is not configured.",503);
   if(env.CF_PAGES_BRANCH==="main"&&(env.PAYPAL_MODE!=="live"||env.PAYPAL_LIVE_READY!=="yes"))return fail("Live checkout is not enabled.",503);
   if(env.CF_PAGES_BRANCH!=="main"&&env.PAYPAL_MODE==="live")return fail("Live payments are prohibited on preview.",403);
-  if(!env.PORTRAIT_UPLOADS||!env.PAYPAL_CLIENT_ID||!env.PAYPAL_CLIENT_SECRET||!env.TURNSTILE_SECRET_KEY)return fail("Sandbox checkout is not configured for this preview.",503);
+  if(!env.PORTRAIT_UPLOADS||!env.PAYPAL_CLIENT_ID||!env.PAYPAL_CLIENT_SECRET||!env.TURNSTILE_SECRET_KEY)return fail("Secure checkout is temporarily unavailable. Please contact the studio.",503);
   const origin=request.headers.get("Origin");
   if(origin&&origin!==new URL(request.url).origin)return fail("Origin not allowed.",403);
   try{
@@ -276,5 +276,5 @@ export async function onRequestPost({request,env}){
     if(type.includes("multipart/form-data"))return await start(request,env);
     if(type.includes("application/json"))return await action(request,env);
     return fail("Unsupported request format.",415);
-  }catch(e){console.error("Sandbox checkout failed",e.message);return fail("Sandbox checkout could not be completed. Please try again or contact the studio.",502);}
+  }catch(e){console.error("Checkout request failed",e.message);return fail("Checkout could not be completed. Please try again or contact the studio.",502);}
 }
