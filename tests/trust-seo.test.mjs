@@ -25,3 +25,13 @@ test("Studio origin and customer contact are disclosed on visible pages",()=>{
  assert.match(home,/Hand-painted in Vietnam/);
  assert.match(home,/mailto:hello@atelierhau\.com/);
 });
+
+test("Policies page uses current site navigation and a working studio contact",()=>{
+ const policies=readFileSync("policies.html","utf8");
+ assert.match(policies,/class="site-header"/);
+ assert.match(policies,/mailto:hello@atelierhau\.com/);
+ assert.match(policies,/Ho Chi Minh City, Vietnam/);
+ assert.match(policies,/Commission approval and payment/);
+ assert.match(policies,/Changes, cancellations and returns/);
+ assert.doesNotMatch(policies,/class="header"/);
+});
