@@ -58,7 +58,7 @@ export async function processOrder(env,id,sender){
     const subject="A gentle reminder about your portrait · "+id;
     const body="Hello "+(order.name||"there")+",\n\nYour hand-painted portrait is ready. The remaining balance is A$"+(payment.balanceCents/100).toFixed(2)+". Pay the remaining balance securely here: "+checkoutLink+"\n\nOrder: "+id+"\n\nATELIER HAU";
     const html="<div style='font-family:Arial,sans-serif;max-width:580px;margin:auto'><h1 style='color:#743f48;font-family:Georgia,serif'>ATELIER HAU</h1><p>Hello "+esc(order.name||"there")+",</p><p>Your hand-painted portrait is ready. The remaining balance is <strong>A$"+(payment.balanceCents/100).toFixed(2)+"</strong>.</p><p><a href='"+esc(checkoutLink)+"' style='background:#743f48;color:white;padding:14px 22px;text-decoration:none'>Pay remaining balance</a></p><p>Order: "+esc(id)+"</p></div>";
-    const r=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+env.RESEND_API_KEY,"Content-Type":"application/json","Idempotency-Key":"atelier-"+eventKey},body:JSON.stringify({from:sender,to:[order.email],subject,text:body,html})});
+    const r=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+env.RESEND_API_KEY,"Content-Type":"application/json","Idempotency-Key":"atelier-"+eventKey},body:JSON.stringify({from:sender,reply_to:'hello@atelierhau.com',to:[order.email],subject,text:body,html})});
     if(!r.ok){record.state="failed";record.httpStatus=r.status;await b.put(key,JSON.stringify(record));continue}
     const result=await r.json().catch(()=>({}));
     record.state="sent";record.sentAt=new Date().toISOString();record.resendId=result.id||null;
