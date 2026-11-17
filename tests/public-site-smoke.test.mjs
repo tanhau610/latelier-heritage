@@ -52,3 +52,11 @@ test("Studio film degrades gracefully until authentic video is deployed",()=>{
  assert.match(script,/method:"HEAD"/);
  assert.match(script,/response\.ok/);
 });
+
+test("Every public page offers an accessible policies link in its footer",()=>{
+ for(const page of pages){
+  const html=readFileSync(page,"utf8");
+  const footer=html.split("<footer")[1]||"";
+  assert.ok(footer.includes('href="policies.html"'),page+" is missing policies in footer");
+ }
+});
