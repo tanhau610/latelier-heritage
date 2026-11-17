@@ -35,3 +35,13 @@ test("Policies page uses current site navigation and a working studio contact",(
  assert.match(policies,/Changes, cancellations and returns/);
  assert.doesNotMatch(policies,/class="header"/);
 });
+
+test("Checkout and policies accurately disclose shipping and review timing",()=>{
+ const checkout=readFileSync("checkout.html","utf8");
+ const policies=readFileSync("policies.html","utf8");
+ assert.match(checkout,/Import duties, local taxes and customs fees are not included/);
+ assert.match(checkout,/Payment can be taken before our studio reviews/);
+ assert.match(policies,/Payment may be taken before our studio has reviewed/);
+ assert.match(policies,/not guaranteed at checkout/);
+ assert.match(policies,/without your agreement/);
+});
