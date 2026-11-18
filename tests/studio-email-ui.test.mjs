@@ -21,3 +21,16 @@ test("Studio shows actual Live status event and distinguishes accepted from deli
 test("Sandbox preview disclaimer does not appear for Live orders",()=>{
   assert.match(source,/order\.checkoutMode==="live-inline"\?"ĐƠN LIVE:/);
 });
+
+test("Studio traffic panel reads real metrics from authenticated backend only",()=>{
+ const html=readFileSync("studio.html","utf8");
+ const js=readFileSync("assets/studio.js","utf8");
+ const api=readFileSync("functions/api/studio-traffic.js","utf8");
+ assert.match(html,/id="traffic-visits"/);
+ assert.match(html,/id="traffic-views"/);
+ assert.match(js,/\/api\/studio-traffic\?days=/);
+ assert.match(api,/verifyStudioSession/);
+ assert.match(api,/CF_ANALYTICS_TOKEN/);
+ assert.match(api,/CF_ANALYTICS_ACCOUNT_ID/);
+ assert.doesNotMatch(html,/CF_ANALYTICS_TOKEN/);
+});
