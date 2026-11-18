@@ -1,8 +1,8 @@
 /* ATELIER HAU analytics: no tracking is activated without a valid, owner-supplied GA4 ID.
    No names, email addresses, photos, order IDs or checkout URLs are sent as event parameters. */
 (()=>{
- const config=document.querySelector('meta[name="atelier-ga4-id"]');
- const id=(config?.content||"").trim();
+ // Enter the owner-controlled GA4 Measurement ID once (example format: G-XXXXXXXXXX).
+ const id="".trim();
  if(!/^G-[A-Z0-9]{6,16}$/.test(id))return;
  if(window.__atelierAnalyticsReady)return;
  window.__atelierAnalyticsReady=true;
