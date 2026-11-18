@@ -60,3 +60,13 @@ test("Every public page offers an accessible policies link in its footer",()=>{
   assert.ok(footer.includes('href="policies.html"'),page+" is missing policies in footer");
  }
 });
+
+test("Homepage visibly features both editorial guides without changing the primary menu",()=>{
+ const home=readFileSync("index.html","utf8");
+ const main=home.split("<main>")[1]?.split("</main>")[0]||"";
+ assert.match(main,/class="ah-guides"/);
+ assert.match(main,/href="pet-portrait-photo-guide\.html"/);
+ assert.match(main,/href="oil-vs-digital-pet-portrait\.html"/);
+ const header=home.split("</header>")[0]||"";
+ assert.doesNotMatch(header,/pet-portrait-photo-guide\.html|oil-vs-digital-pet-portrait\.html/);
+});
