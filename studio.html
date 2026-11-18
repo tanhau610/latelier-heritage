@@ -11,7 +11,27 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&amp;family=Noto+Serif:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/studio.css?v=20261118-traffic-design">
-</head>
+<style id="traffic-layout-fix">
+#studio-traffic-card .studio-traffic-chart-heading{display:flex!important;justify-content:space-between;align-items:center;gap:12px;margin:0 0 16px}
+#studio-traffic-card .studio-traffic-chart-heading h3{font:600 17px Georgia,serif!important;margin:0 0 4px;color:#51363b}
+#studio-traffic-card .studio-traffic-chart-heading span{font-size:11px;color:#8c7b75}
+#studio-traffic-card .studio-traffic-refresh{appearance:none;border:1px solid #e5d9d2;border-radius:8px;padding:10px 14px;background:#f8f3ef;color:#69444b;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+#studio-traffic-card .studio-traffic-refresh:hover{background:#f0e6e0}
+#studio-traffic-card .studio-traffic-daily{display:flex!important;flex-direction:column!important;gap:11px!important;height:auto!important;max-height:none!important;overflow:visible!important;background:none!important;border:0!important;padding:0!important;margin:0 0 12px!important}
+#studio-traffic-card .studio-traffic-column{display:grid!important;grid-template-columns:48px minmax(0,1fr) 48px!important;gap:12px!important;align-items:center!important;min-height:22px!important;width:100%!important;flex:none!important}
+#studio-traffic-card .studio-traffic-date{grid-column:1;grid-row:1;font-size:11px!important;color:#786b67;white-space:nowrap}
+#studio-traffic-card .studio-traffic-bar-area{grid-column:2;grid-row:1;display:block!important;width:100%!important;height:12px!important;border-radius:7px;background:#f2ebe7;overflow:hidden}
+#studio-traffic-card .studio-traffic-bar{display:block!important;height:100%!important;min-height:0!important;width:var(--traffic-width,0%)!important;border-radius:7px!important;background:#986a73}
+#studio-traffic-card .studio-traffic-count{grid-column:3;grid-row:1;text-align:right;font-size:12px!important;color:#634149}
+#studio-traffic-card .studio-traffic-legend{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:10px;color:#958580;margin:14px 0}
+#studio-traffic-card .studio-traffic-legend i{display:inline-block;width:8px;height:8px;background:#986a73;border-radius:2px;margin-right:5px}
+#studio-traffic-card .studio-traffic-note{font-size:11px!important;line-height:1.5!important;background:#faf7f4;padding:10px 12px;border-radius:8px;margin:12px 0 8px}
+#studio-traffic-card .studio-traffic-explain{font-size:10px;line-height:1.6;color:#978780}
+#studio-traffic-card .studio-traffic-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+#studio-traffic-card .studio-traffic-metric{min-width:0}
+#studio-traffic-card .studio-traffic-metric small{display:block;color:#968781;font-size:10px;line-height:1.4}
+@media(max-width:600px){#studio-traffic-card .studio-traffic-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}#studio-traffic-card .studio-traffic-metric:last-child{grid-column:span 2}#studio-traffic-card .studio-traffic-column{grid-template-columns:42px minmax(0,1fr) 36px!important;gap:8px!important}}
+</style></head>
 <body class="studio-page">
   <header class="studio-header">
     <a href="index.html" class="studio-brand"><img class="studio-logo" src="assets/atelier-hau-header-logo.png" alt="ATELIER HAU — Original Oil Portraits"><span class="descriptor">TRANG QUẢN TRỊ</span></a>
@@ -78,9 +98,9 @@
     <div class="studio-traffic-metric"><span>Lượt xem trang</span><strong id="traffic-views">—</strong><small>Tổng số lần mở trang</small></div>
     <div class="studio-traffic-metric"><span>Trung bình mỗi lượt</span><strong id="traffic-average">—</strong><small>Trang được xem / lượt truy cập</small></div>
   </div>
-  <div class="studio-traffic-chart-heading"><div><h3>Xu hướng truy cập</h3><span id="traffic-days">30 ngày gần đây</span></div><button type="button" class="studio-traffic-refresh" id="traffic-refresh">↻ Làm mới</button></div>
+  <div class="studio-traffic-chart-heading"><div><h3>Lượt truy cập theo ngày</h3><span id="traffic-days">30 ngày gần đây</span></div><button type="button" class="studio-traffic-refresh" id="traffic-refresh">↻ Làm mới</button></div>
   <div id="traffic-daily" class="studio-traffic-daily" aria-label="Biểu đồ lượt truy cập theo ngày"><p class="studio-traffic-empty">Đang chờ dữ liệu thống kê.</p></div>
-  <div class="studio-traffic-legend"><span><i></i> Lượt truy cập mỗi ngày</span><span>Di chuột vào cột để xem chi tiết</span></div>
+  <div class="studio-traffic-legend"><span><i></i> Lượt truy cập mỗi ngày</span><span>Số bên phải là lượt truy cập</span></div>
   <p id="traffic-message" class="studio-traffic-note" role="status">Đang chờ kết nối dữ liệu Cloudflare Web Analytics.</p>
   <p class="studio-traffic-explain">Lượt truy cập không đồng nghĩa với số người duy nhất. Thống kê này chưa bao gồm số lần đặt tranh hay doanh thu.</p>
 </section>
@@ -112,6 +132,6 @@
       </div>
     </section>
   </main>
-  <script defer src="assets/studio.js?v=20261118-traffic-design"></script>
+  <script defer src="assets/studio.js?v=20261118-traffic-bars"></script>
 </body>
 </html>
