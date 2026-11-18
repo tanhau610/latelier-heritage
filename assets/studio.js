@@ -100,11 +100,12 @@
     const emailLink=make("a","studio-email","Gửi email cho khách");emailLink.href="mailto:"+encodeURIComponent(order.email||"");panel.append(emailLink);
     panel.append(sectionHeading("Yêu cầu và lời nhắn của khách"));
     panel.append(make("p","studio-story",order.story||"Không có yêu cầu đặc biệt."));
-    panel.append(sectionHeading(order.checkoutMode==="sandbox-inline"?"Thanh toán thử Sandbox · "+(order.checkoutPlan==="full"?"100%":"50 / 50"):"Thanh toán hai đợt · 50 / 50"));
+    const inlineLive=order.checkoutMode==="live-inline";
+    panel.append(sectionHeading(order.checkoutMode==="sandbox-inline"?"Thanh toán thử Sandbox · "+(order.checkoutPlan==="full"?"100%":"50 / 50"):inlineLive?"Thanh toán PayPal Live · "+(order.checkoutPlan==="full"?"100%":"50 / 50"):"Thanh toán thủ công · 50 / 50"));
     const paymentBox=make("div","studio-payment");
     const payment=order.payment;
     const paymentNote=make("p","studio-footnote","Chỉ ghi nhận thủ công. Dashboard KHÔNG tự thu tiền hoặc xác minh giao dịch PayPal. Hãy kiểm tra tiền đã nhận trong tài khoản PayPal trước khi xác nhận.");
-    if(order.checkoutMode!=="sandbox-inline")paymentBox.append(paymentNote);
+    if(!["sandbox-inline","live-inline"].includes(order.checkoutMode))paymentBox.append(paymentNote);
     const amountText=cents=>"A$"+(cents/100).toLocaleString("vi-VN",{minimumFractionDigits:2,maximumFractionDigits:2});
     if(order.checkoutMode==="sandbox-inline"){
       const sandbox=order.sandboxPayment;
@@ -113,6 +114,16 @@
       paymentBox.append(make("p","studio-payment-due",sandbox?.full?"✓ Đã xác nhận thanh toán thử 100%":sandbox?.balance?"✓ Đã xác nhận đủ hai đợt thanh toán thử":sandbox?.deposit?"✓ Đã xác nhận cọc thử 50% · chờ phần còn lại": "Chờ thanh toán thử Sandbox"));
       if(sandbox?.deposit&&!sandbox?.balance&&order.status!=="Ready for balance")paymentBox.append(make("p","studio-story","Khi tranh hoàn thiện, chuyển trạng thái sang “Chờ thanh toán còn lại”. Khách sẽ thanh toán 50% còn lại qua liên kết đặt hàng riêng."));
       if(order.checkoutPlan==="full")paymentBox.append(make("p","studio-footnote","Khách đã chọn thanh toán toàn bộ khi đặt hàng."));
+    }else if(inlineLive){
+      const ledger=order.livePayment||order.livePayments||{};
+      paymentBox.append(make("p","studio-footnote","Thanh toán qua PayPal Live được xác minh tự động trên máy chủ. Không ghi nhận thanh toán thủ công tại đây."));
+      if(payment){
+        paymentBox.append(make("p","studio-payment-due","Tổng giá trị đơn: "+amountText(payment.totalCents)));
+        const verifiedFull=Boolean(ledger.full||(ledger.deposit&&ledger.balance));
+        const verifiedDeposit=Boolean(ledger.deposit);
+        paymentBox.append(make("p","studio-payment-due",verifiedFull?"✓ Đã thanh toán đủ qua PayPal Live":verifiedDeposit?"✓ Đã thanh toán cọc 50% · chờ phần còn lại":"Chờ xác nhận thanh toán PayPal Live"));
+        if(order.checkoutPlan==="full")paymentBox.append(make("p","studio-footnote","Khách chọn thanh toán toàn bộ 100%."));
+      }
     }else{
     if(!payment){
       paymentBox.append(make("p","studio-story","Chưa chốt báo giá. Hãy xác nhận giá cuối cùng với khách trước khi yêu cầu đặt cọc."));
