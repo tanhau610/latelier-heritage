@@ -17,7 +17,7 @@
   function lock(){
     document.body.classList.remove("studio-unlocked");
     if(sessionExpiryTimer!==null){clearTimeout(sessionExpiryTimer);sessionExpiryTimer=null;}
-    selectionVersion++;analyticsVersion++;revokeImages();
+    selectionVersion++;analyticsVersion++;trafficVersion++;revokeImages();
     state.key="";state.sessionExpiresAt=0;state.orders=[];state.cursor=null;state.selected=null;
     lastAnalyticsData=[];
     // Remove private customer details and rendered charts, not just hide the dashboard.
@@ -389,6 +389,42 @@
 
   const fmtAUD=cents=>"A$"+(Number(cents||0)/100).toLocaleString("vi-VN",{minimumFractionDigits:0,maximumFractionDigits:2});
   let analyticsVersion=0;
+
+  let trafficVersion=0;
+  async function loadTraffic(){
+    const version=++trafficVersion,days=Number($("analytics-range").value)||30;
+    const status=$("traffic-connection"),message=$("traffic-message"),button=$("traffic-refresh");
+    if(!status||!message)return;
+    status.textContent="Đang tải";message.textContent="Đang lấy dữ liệu Cloudflare…";
+    button.disabled=true;
+    try{
+      const response=await fetch("/api/studio-traffic?days="+days,{headers:{"Authorization":"Bearer "+state.key},cache:"no-store"});
+      const data=await response.json();
+      if(version!==trafficVersion||!state.key)return;
+      if(!response.ok||!data.ok)throw Error(data.message||"Không tải được thống kê.");
+      if(!data.configured){
+        status.textContent="Chưa kết nối";message.textContent=data.message;
+        $("traffic-visits").textContent="—";$("traffic-views").textContent="—";$("traffic-days").textContent=days+" ngày";
+        $("traffic-daily").replaceChildren();return;
+      }
+      status.textContent="Đã kết nối";message.textContent=data.note||"Dữ liệu Cloudflare Web Analytics.";
+      $("traffic-visits").textContent=Number(data.totals.visits).toLocaleString("vi-VN");
+      $("traffic-views").textContent=Number(data.totals.pageViews).toLocaleString("vi-VN");
+      $("traffic-days").textContent=days+" ngày";
+      const target=$("traffic-daily");target.replaceChildren();
+      for(const day of (data.daily||[]).slice(-14)){
+        const row=make("div","studio-traffic-day");
+        row.append(make("span","",day.date),make("strong","",Number(day.visits).toLocaleString("vi-VN")+" lượt · "+Number(day.pageViews).toLocaleString("vi-VN")+" xem"));
+        target.append(row);
+      }
+    }catch(error){
+      if(version!==trafficVersion||!state.key)return;
+      status.textContent="Lỗi kết nối";message.textContent=error.message||"Không tải được thống kê.";
+      $("traffic-visits").textContent="—";$("traffic-views").textContent="—";$("traffic-daily").replaceChildren();
+    }finally{if(version===trafficVersion)button.disabled=false;}
+  }
+  $("traffic-refresh").addEventListener("click",()=>void loadTraffic());
+  $("analytics-range").addEventListener("change",()=>{if(state.key)void loadTraffic();});
   function showView(view){
     const overview=view!=="orders";
     $("studio-overview-view").hidden=!overview;
@@ -400,6 +436,7 @@
       el.classList.toggle("active",active);
       if(active)el.setAttribute("aria-current","page");else el.removeAttribute("aria-current");
     });
+    if(view==="traffic"){void loadTraffic();} 
     if(view==="traffic")requestAnimationFrame(()=>$("studio-traffic-card").scrollIntoView({behavior:"smooth",block:"center"}));
     else window.scrollTo({top:0,behavior:"smooth"});
   }
@@ -540,7 +577,7 @@
     const result=await api("list");
     state.orders=result.orders||[];state.cursor=result.nextCursor||null;
     login.hidden=true;dashboard.hidden=false;document.body.classList.add("studio-unlocked");loginMessage.textContent="";
-    renderList();void loadAnalytics();if(state.orders.length)select(state.orders[0].id);
+    renderList();void loadAnalytics();void loadTraffic();if(state.orders.length)select(state.orders[0].id);
     showMessage(state.orders.length?"Đăng nhập thành công.":"Đăng nhập thành công. Chưa có đơn hàng.");
   }
   $("show-email-login").addEventListener("click",()=>loginMode("email"));
