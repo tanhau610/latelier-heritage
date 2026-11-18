@@ -14,7 +14,7 @@ test("Home page exposes parseable, truthful store identity",()=>{
  assert.equal(data.url,"https://atelierhau.com/");
  assert.equal(data.address.addressCountry,"VN");
  assert.equal(data.address.addressLocality,"Ho Chi Minh City");
- assert.equal(data.contactPoint.email,"orders@atelierhau.com");
+ assert.equal(data.contactPoint.email,"hello@atelierhau.com");
  assert.equal(data.hasMerchantReturnPolicy.merchantReturnLink,"https://atelierhau.com/policies.html");
  assert.ok(!("aggregateRating" in data),"Do not fabricate ratings");
 });
@@ -44,4 +44,14 @@ test("Checkout and policies accurately disclose shipping and review timing",()=>
  assert.match(policies,/Payment may be taken before our studio has reviewed/);
  assert.match(policies,/not guaranteed at checkout/);
  assert.match(policies,/without your agreement/);
+});
+
+test("Search and sharing metadata stays consistent on key conversion pages",()=>{
+ const commission=readFileSync("commission.html","utf8");
+ assert.match(home,/<meta property="og:title"/);
+ assert.match(home,/<meta property="og:image"/);
+ assert.match(home,/delivery to Australia/);
+ assert.match(commission,/<meta property="og:title"/);
+ assert.match(commission,/prices in AUD/i);
+ assert.doesNotMatch(home,/aggregateRating/);
 });
