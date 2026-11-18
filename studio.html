@@ -71,7 +71,19 @@
               </div>
               <div class="studio-bottom-grid">
                 <section class="studio-insight-card studio-recent-card"><div class="studio-card-heading"><div><span class="studio-card-eyebrow">HOẠT ĐỘNG GẦN ĐÂY</span><h2>Đơn hàng mới nhất</h2></div><button type="button" class="studio-card-link" data-studio-view="orders">Tất cả đơn hàng ↗</button></div><div id="studio-recent-orders" class="studio-recent-orders"><p class="studio-chart-empty">Đang tải đơn hàng…</p></div></section>
-                <section id="studio-traffic-card" class="studio-insight-card studio-traffic-card"><div class="studio-card-heading"><div><span class="studio-card-eyebrow">HIỆU SUẤT WEBSITE</span><h2>Lượt truy cập website</h2></div><span class="studio-connection-status" id="traffic-connection">Chưa kết nối</span></div><div class="studio-traffic-metrics"><div><span>Lượt truy cập (ước tính)</span><strong id="traffic-visits">—</strong></div><div><span>Lượt xem trang</span><strong id="traffic-views">—</strong></div><div><span>Khoảng thời gian</span><strong id="traffic-days">30 ngày</strong></div></div><p id="traffic-message" role="status">Đang chờ kết nối dữ liệu Cloudflare Web Analytics. Không hiển thị số liệu giả.</p><div id="traffic-daily" class="studio-traffic-daily"></div><button type="button" class="studio-card-link" id="traffic-refresh">Làm mới lượt truy cập ↻</button></section>
+                <section id="studio-traffic-card" class="studio-insight-card studio-traffic-card" aria-label="Thống kê truy cập website">
+  <div class="studio-card-heading studio-traffic-heading"><div><span class="studio-card-eyebrow">CLOUDFLARE WEB ANALYTICS</span><h2>Khách truy cập website</h2><p class="studio-traffic-subtitle">Theo dõi lượng người ghé thăm và các trang được xem.</p></div><span class="studio-connection-status" id="traffic-connection">Chưa kết nối</span></div>
+  <div class="studio-traffic-metrics">
+    <div class="studio-traffic-metric"><span>Lượt truy cập</span><strong id="traffic-visits">—</strong><small>Số phiên truy cập ước tính</small></div>
+    <div class="studio-traffic-metric"><span>Lượt xem trang</span><strong id="traffic-views">—</strong><small>Tổng số lần mở trang</small></div>
+    <div class="studio-traffic-metric"><span>Trung bình mỗi lượt</span><strong id="traffic-average">—</strong><small>Trang được xem / lượt truy cập</small></div>
+  </div>
+  <div class="studio-traffic-chart-heading"><div><h3>Xu hướng truy cập</h3><span id="traffic-days">30 ngày gần đây</span></div><button type="button" class="studio-traffic-refresh" id="traffic-refresh">↻ Làm mới</button></div>
+  <div id="traffic-daily" class="studio-traffic-daily" aria-label="Biểu đồ lượt truy cập theo ngày"><p class="studio-traffic-empty">Đang chờ dữ liệu thống kê.</p></div>
+  <div class="studio-traffic-legend"><span><i></i> Lượt truy cập mỗi ngày</span><span>Di chuột vào cột để xem chi tiết</span></div>
+  <p id="traffic-message" class="studio-traffic-note" role="status">Đang chờ kết nối dữ liệu Cloudflare Web Analytics.</p>
+  <p class="studio-traffic-explain">Lượt truy cập không đồng nghĩa với số người duy nhất. Thống kê này chưa bao gồm số lần đặt tranh hay doanh thu.</p>
+</section>
               </div>
               <div class="studio-sandbox-banner"><span>◎</span><p><strong>Doanh thu thực được tách khỏi thanh toán thử nghiệm.</strong> Thanh toán PayPal Sandbox không được tính vào doanh thu. <span id="studio-sandbox-caption">Giao dịch thử nghiệm được thống kê riêng.</span></p></div>
             </section>
@@ -100,6 +112,6 @@
       </div>
     </section>
   </main>
-  <script defer src="assets/studio.js?v=20261118-traffic-refresh"></script>
+  <script defer src="assets/studio.js?v=20261118-traffic-design"></script>
 </body>
 </html>
