@@ -396,9 +396,11 @@
     const status=$("traffic-connection"),message=$("traffic-message"),button=$("traffic-refresh");
     if(!status||!message)return;
     status.textContent="Đang tải";message.textContent="Đang lấy dữ liệu Cloudflare…";
-    button.disabled=true;
+    button.disabled=false;
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),12000);
     try{
-      const response=await fetch("/api/studio-traffic?days="+days,{headers:{"Authorization":"Bearer "+state.key},cache:"no-store"});
+      const response=await fetch("/api/studio-traffic?days="+days,{headers:{"Authorization":"Bearer "+state.key},cache:"no-store",signal:controller.signal});
       const data=await response.json();
       if(version!==trafficVersion||!state.key)return;
       if(!response.ok||!data.ok)throw Error(data.message||"Không tải được thống kê.");
@@ -419,9 +421,9 @@
       }
     }catch(error){
       if(version!==trafficVersion||!state.key)return;
-      status.textContent="Lỗi kết nối";message.textContent=error.message||"Không tải được thống kê.";
+      status.textContent="Lỗi kết nối";message.textContent=error.name==="AbortError"?"Cloudflare phản hồi quá lâu. Hãy thử làm mới.":(error.message||"Không tải được thống kê.");
       $("traffic-visits").textContent="—";$("traffic-views").textContent="—";$("traffic-daily").replaceChildren();
-    }finally{if(version===trafficVersion)button.disabled=false;}
+    }finally{clearTimeout(timeout);if(version===trafficVersion)button.disabled=false;}
   }
   $("traffic-refresh").addEventListener("click",()=>void loadTraffic());
   $("analytics-range").addEventListener("change",()=>{if(state.key)void loadTraffic();});
