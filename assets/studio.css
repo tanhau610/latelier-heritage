@@ -367,3 +367,33 @@
 @media(max-width:600px){.studio-page .studio-brand .studio-logo{width:min(205px,55vw)}}
 
 .studio-traffic-daily{display:grid;gap:6px;margin:12px 0;max-height:230px;overflow:auto}.studio-traffic-day{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid rgba(100,70,70,.12);font-size:12px}.studio-traffic-day strong{font-weight:600;text-align:right}.studio-traffic-card #traffic-refresh{margin-top:8px;cursor:pointer}
+
+/* ATELIER HAU | clear, compact visitor analytics */
+.studio-traffic-card{background:#fff;min-width:0}
+.studio-traffic-heading{align-items:flex-start;gap:12px}
+.studio-traffic-heading h2{margin:5px 0 6px}
+.studio-traffic-card .studio-traffic-subtitle{font-size:12px;color:#867773;line-height:1.6;margin:0}
+.studio-traffic-card .studio-connection-status{background:#edf5ed;color:#416e4d;font-weight:600}
+.studio-traffic-metrics{gap:12px;margin:23px 0 26px}
+.studio-traffic-metrics .studio-traffic-metric{padding:17px 15px;background:#fcfaf8;border:1px solid #ede5df;border-radius:12px;min-width:0}
+.studio-traffic-metrics .studio-traffic-metric span{font-size:12px;min-height:0;color:#715d5b;font-weight:600}
+.studio-traffic-metrics .studio-traffic-metric strong{font-size:clamp(25px,2.3vw,35px);line-height:1.3;margin:7px 0 4px;color:#653e46}
+.studio-traffic-metrics .studio-traffic-metric small{font-size:10px;line-height:1.5;color:#9b8c86;display:block}
+.studio-traffic-chart-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 14px}
+.studio-traffic-chart-heading h3{font:600 15px Georgia,serif;color:#4c3437;margin:0 0 5px}
+.studio-traffic-chart-heading span{font-size:11px;color:#95837b}
+.studio-traffic-refresh{border:1px solid #e5d9d2;border-radius:8px;padding:9px 12px;background:#fff;color:#6b454c;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap}
+.studio-traffic-refresh:hover{background:#f8f1ed}
+.studio-traffic-daily{display:flex;align-items:stretch;gap:5px;height:160px;max-height:none;overflow:visible;margin:0;padding:9px 4px 0;border-bottom:1px solid #e8ddd8;background:repeating-linear-gradient(to top,transparent 0,transparent calc(25% - 1px),#f2ece8 calc(25% - 1px),#f2ece8 25%)}
+.studio-traffic-column{display:flex;flex:1 1 0;min-width:0;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px}
+.studio-traffic-count{font-size:10px;font-weight:600;color:#76545b;line-height:1}
+.studio-traffic-bar-area{height:112px;width:100%;display:flex;align-items:flex-end;justify-content:center}
+.studio-traffic-bar{background:#986a73;border-radius:5px 5px 0 0;width:min(100%,23px);min-height:2px;transition:background .15s}
+.studio-traffic-bar:hover{background:#6d414b}
+.studio-traffic-date{font-size:9px;color:#978783;white-space:nowrap;line-height:1.5}
+.studio-traffic-legend{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:16px 0 10px;font-size:10px;color:#91817c}
+.studio-traffic-legend i{display:inline-block;width:8px;height:8px;border-radius:2px;background:#986a73;margin-right:5px}
+.studio-traffic-card .studio-traffic-note{font-size:11px;line-height:1.5;color:#6e625e;padding:11px 12px;border-radius:8px;background:#f8f5f1;margin:14px 0 8px}
+.studio-traffic-card .studio-traffic-explain{font-size:10px;line-height:1.6;color:#998982;margin:0}
+.studio-traffic-empty{width:100%;align-self:center;text-align:center;color:#95847e;font-size:12px}
+@media(max-width:600px){.studio-traffic-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.studio-traffic-metrics .studio-traffic-metric:last-child{grid-column:span 2}.studio-traffic-heading{flex-wrap:wrap}.studio-traffic-daily{gap:3px}.studio-traffic-date{font-size:8px}.studio-traffic-count{font-size:9px}}
