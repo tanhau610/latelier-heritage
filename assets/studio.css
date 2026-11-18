@@ -365,3 +365,5 @@
 .studio-page .studio-sidebar-brand>small{display:block;color:#c4ada1;letter-spacing:.18em;font-size:9px;line-height:1.5}
 @media(max-width:860px){.studio-page .studio-sidebar-brand{padding:0 0 12px}.studio-page .studio-sidebar-logo{max-width:165px}}
 @media(max-width:600px){.studio-page .studio-brand .studio-logo{width:min(205px,55vw)}}
+
+.studio-traffic-daily{display:grid;gap:6px;margin:12px 0;max-height:230px;overflow:auto}.studio-traffic-day{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid rgba(100,70,70,.12);font-size:12px}.studio-traffic-day strong{font-weight:600;text-align:right}.studio-traffic-card #traffic-refresh{margin-top:8px;cursor:pointer}
