@@ -406,23 +406,40 @@
       if(!response.ok||!data.ok)throw Error(data.message||"Không tải được thống kê.");
       if(!data.configured){
         status.textContent="Chưa kết nối";message.textContent=data.message;
-        $("traffic-visits").textContent="—";$("traffic-views").textContent="—";$("traffic-days").textContent=days+" ngày";
-        $("traffic-daily").replaceChildren();return;
+        $("traffic-visits").textContent="—";$("traffic-views").textContent="—";$("traffic-days").textContent=days+" ngày gần đây";
+        $("traffic-daily").replaceChildren();$("traffic-average").textContent="—";return;
       }
       status.textContent="Đã kết nối";message.textContent=data.note||"Dữ liệu Cloudflare Web Analytics.";
       $("traffic-visits").textContent=Number(data.totals.visits).toLocaleString("vi-VN");
       $("traffic-views").textContent=Number(data.totals.pageViews).toLocaleString("vi-VN");
       $("traffic-days").textContent=days+" ngày";
+      const visits=Number(data.totals.visits)||0,views=Number(data.totals.pageViews)||0;
+      $("traffic-average").textContent=visits?(views/visits).toLocaleString("vi-VN",{maximumFractionDigits:1}):"0";
       const target=$("traffic-daily");target.replaceChildren();
-      for(const day of (data.daily||[]).slice(-14)){
-        const row=make("div","studio-traffic-day");
-        row.append(make("span","",day.date),make("strong","",Number(day.visits).toLocaleString("vi-VN")+" lượt · "+Number(day.pageViews).toLocaleString("vi-VN")+" xem"));
-        target.append(row);
+      const daily=(data.daily||[]).slice(-14);
+      if(!daily.length){target.append(make("p","studio-traffic-empty","Chưa có dữ liệu theo ngày trong khoảng thời gian này."));}
+      else{
+        const max=Math.max(1,...daily.map(day=>Number(day.visits)||0));
+        for(const day of daily){
+          const count=Number(day.visits)||0,viewCount=Number(day.pageViews)||0;
+          const date=new Date(day.date+"T12:00:00");
+          const label=Number.isNaN(date.getTime())?day.date:new Intl.DateTimeFormat("vi-VN",{day:"2-digit",month:"2-digit"}).format(date);
+          const column=make("div","studio-traffic-column");
+          const barArea=make("div","studio-traffic-bar-area");
+          const bar=make("div","studio-traffic-bar");
+          bar.style.height=Math.max(count?7:2,Math.round(count/max*100))+"%";
+          bar.setAttribute("role","img");
+          bar.setAttribute("aria-label",label+": "+count+" lượt truy cập, "+viewCount+" lượt xem trang");
+          bar.title=day.date+": "+count+" lượt truy cập · "+viewCount+" lượt xem trang";
+          barArea.append(bar);
+          column.append(make("strong","studio-traffic-count",count.toLocaleString("vi-VN")),barArea,make("span","studio-traffic-date",label));
+          target.append(column);
+        }
       }
     }catch(error){
       if(version!==trafficVersion||!state.key)return;
       status.textContent="Lỗi kết nối";message.textContent=error.name==="AbortError"?"Cloudflare phản hồi quá lâu. Hãy thử làm mới.":(error.message||"Không tải được thống kê.");
-      $("traffic-visits").textContent="—";$("traffic-views").textContent="—";$("traffic-daily").replaceChildren();
+      $("traffic-visits").textContent="—";$("traffic-views").textContent="—";$("traffic-average").textContent="—";$("traffic-daily").replaceChildren();
     }finally{clearTimeout(timeout);if(version===trafficVersion)button.disabled=false;}
   }
   $("traffic-refresh").addEventListener("click",()=>void loadTraffic());
