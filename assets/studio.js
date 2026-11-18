@@ -8,7 +8,7 @@
   let selectionVersion=0;
   const labels = {New:"Yêu cầu mới",Confirmed:"Đã xác nhận",Painting:"Đang vẽ","Ready for balance":"Chờ thanh toán còn lại",Shipped:"Đã gửi hàng",Completed:"Hoàn thành",Cancelled:"Đã hủy"};
   // Payment confirmation and production progress are separate. Do not mark an order shipped automatically.
-  const paidInFull = o => o.checkoutMode==="sandbox-inline" ? Boolean(o.sandboxPayment?.full||(o.sandboxPayment?.deposit&&o.sandboxPayment?.balance)) : Boolean(o.payment?.deposit&&o.payment?.balance);
+  const paidInFull = o => o.checkoutMode==="sandbox-inline" ? Boolean(o.sandboxPayment?.full||(o.sandboxPayment?.deposit&&o.sandboxPayment?.balance)) : o.checkoutMode==="live-inline" ? Boolean(o.livePayment?.full||(o.livePayment?.deposit&&o.livePayment?.balance)) : Boolean(o.payment?.deposit&&o.payment?.balance);
   const statusLabel = o => o.status==="Ready for balance"&&paidInFull(o)?"Đã thanh toán đủ · chờ gửi":labels[o.status]||o.status;
   const make = (tag,className,text) => {const n=document.createElement(tag);if(className)n.className=className;if(text!==undefined)n.textContent=String(text);return n;};
   const formatDate = iso => {const d=new Date(iso);return Number.isNaN(d.getTime())?"Không rõ ngày":d.toLocaleString("vi-VN",{dateStyle:"medium",timeStyle:"short",timeZone:"Asia/Ho_Chi_Minh"});};
@@ -115,7 +115,7 @@
       if(sandbox?.deposit&&!sandbox?.balance&&order.status!=="Ready for balance")paymentBox.append(make("p","studio-story","Khi tranh hoàn thiện, chuyển trạng thái sang “Chờ thanh toán còn lại”. Khách sẽ thanh toán 50% còn lại qua liên kết đặt hàng riêng."));
       if(order.checkoutPlan==="full")paymentBox.append(make("p","studio-footnote","Khách đã chọn thanh toán toàn bộ khi đặt hàng."));
     }else if(inlineLive){
-      const ledger=order.livePayment||order.livePayments||{};
+      const ledger=order.livePayment||{};
       paymentBox.append(make("p","studio-footnote","Thanh toán qua PayPal Live được xác minh tự động trên máy chủ. Không ghi nhận thanh toán thủ công tại đây."));
       if(payment){
         paymentBox.append(make("p","studio-payment-due","Tổng giá trị đơn: "+amountText(payment.totalCents)));
