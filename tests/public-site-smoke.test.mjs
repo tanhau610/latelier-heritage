@@ -7,7 +7,7 @@ const robots=readFileSync("robots.txt","utf8");
 for(const page of pages){
  test("Public SEO metadata: "+page,()=>{
   const html=readFileSync(page,"utf8");
-  const canonical="https://atelierhau.com/"+(page==="index.html"?"":page);
+  const canonical="https://atelierhau.com/"+(page==="index.html"?"":page==="pricing.html"?"pricing":page);
   assert.match(html,/<html lang="en">/i);
   assert.match(html,/<title>[^<]+<\/title>/i);
   assert.match(html,/<meta\b(?=[^>]*\bname="description")(?=[^>]*\bcontent="[^"]+")[^>]*>/i);
