@@ -55,3 +55,22 @@ test("Search and sharing metadata stays consistent on key conversion pages",()=>
  assert.match(commission,/prices in AUD/i);
  assert.doesNotMatch(home,/aggregateRating/);
 });
+
+test("Public pages prepare optional GA4 analytics without tracking private checkout URLs",()=>{
+ const pages=["index.html","about.html","gallery.html","pricing.html","commission.html","process.html","contact.html","policies.html"];
+ for(const page of pages)assert.match(readFileSync(page,"utf8"),/src="assets\/analytics\.js"/,page);
+ const analytics=readFileSync("assets/analytics.js","utf8");
+ assert.match(analytics,/const id=""\.trim\(\)/);
+ assert.match(analytics,/commission_cta_click/);
+ assert.match(analytics,/studio_video_play/);
+ for(const page of ["checkout.html","payment.html","studio.html","shipping.html"]){
+  assert.doesNotMatch(readFileSync(page,"utf8"),/src="assets\/analytics\.js"/,page);
+ }
+});
+test("Process page answers search intent without invented shipping deadlines",()=>{
+ const process=readFileSync("process.html","utf8");
+ assert.match(process,/Can you paint my dog or cat from a photograph/);
+ assert.match(process,/Do you deliver original pet portraits to Australia/);
+ assert.match(process,/href="policies.html"/);
+ assert.match(process,/rather than promise an unverified delivery date/);
+});
