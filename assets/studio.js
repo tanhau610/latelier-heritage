@@ -416,7 +416,7 @@
       const visits=Number(data.totals.visits)||0,views=Number(data.totals.pageViews)||0;
       $("traffic-average").textContent=visits?(views/visits).toLocaleString("vi-VN",{maximumFractionDigits:1}):"0";
       const target=$("traffic-daily");target.replaceChildren();
-      const daily=(data.daily||[]).slice(-14);
+      const daily=(data.daily||[]).slice(-7);
       if(!daily.length){target.append(make("p","studio-traffic-empty","Chưa có dữ liệu theo ngày trong khoảng thời gian này."));}
       else{
         const max=Math.max(1,...daily.map(day=>Number(day.visits)||0));
@@ -427,7 +427,7 @@
           const column=make("div","studio-traffic-column");
           const barArea=make("div","studio-traffic-bar-area");
           const bar=make("div","studio-traffic-bar");
-          bar.style.height=Math.max(count?7:2,Math.round(count/max*100))+"%";
+          bar.style.setProperty("--traffic-width",Math.max(count?3:0,Math.round(count/max*100))+"%");
           bar.setAttribute("role","img");
           bar.setAttribute("aria-label",label+": "+count+" lượt truy cập, "+viewCount+" lượt xem trang");
           bar.title=day.date+": "+count+" lượt truy cập · "+viewCount+" lượt xem trang";
