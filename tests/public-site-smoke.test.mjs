@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync,existsSync} from "node:fs";
-const pages=["index.html","about.html","gallery.html","pricing.html","commission.html","process.html","policies.html","contact.html"];
+const pages=["index.html","about.html","gallery.html","pricing.html","commission.html","process.html","pet-portrait-photo-guide.html","policies.html","contact.html"];
 const sitemap=readFileSync("sitemap.xml","utf8");
 const robots=readFileSync("robots.txt","utf8");
 for(const page of pages){
