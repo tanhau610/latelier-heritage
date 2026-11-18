@@ -34,3 +34,11 @@ test("Studio traffic panel reads real metrics from authenticated backend only",(
  assert.match(api,/CF_ANALYTICS_ACCOUNT_ID/);
  assert.doesNotMatch(html,/CF_ANALYTICS_TOKEN/);
 });
+
+test("Live Studio summary uses verified PayPal ledger and respects 100% payment plan",()=>{
+ assert.match(source,/o\.checkoutMode==="live-inline" \? Boolean\(o\.livePayment\?\.full/);
+ assert.match(source,/inlineLive\?"Thanh toán PayPal Live · "/);
+ assert.match(source,/const ledger=order\.livePayment\|\|\{\}/);
+ assert.match(source,/Thanh toán qua PayPal Live được xác minh tự động/);
+ assert.match(source,/Khách chọn thanh toán toàn bộ 100%/);
+});
