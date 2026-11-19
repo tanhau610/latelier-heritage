@@ -70,3 +70,19 @@ test("Homepage visibly features both editorial guides without changing the prima
  const header=home.split("</header>")[0]||"";
  assert.doesNotMatch(header,/pet-portrait-photo-guide\.html|oil-vs-digital-pet-portrait\.html/);
 });
+
+test("Editorial guides have usable sharing metadata and truthful structured data",()=>{
+ for(const page of ["pet-portrait-photo-guide.html","oil-vs-digital-pet-portrait.html"]){
+  const html=readFileSync(page,"utf8");
+  assert.match(html,/<meta property="og:title" content="[^"]+"/);
+  assert.match(html,/<meta property="og:description" content="[^"]+"/);
+  assert.match(html,/<meta property="og:image" content="https:\/\/atelierhau\.com\/assets\/10-dog-in-garden\.jpg"/);
+  const match=html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+  assert.ok(match,page+" is missing structured data");
+  const article=JSON.parse(match[1]);
+  assert.equal(article["@type"],"Article");
+  assert.equal(article.author.name,"ATELIER HAU");
+  assert.ok(article.mainEntityOfPage.endsWith(page));
+  assert.ok(!("aggregateRating" in article));
+ }
+});
