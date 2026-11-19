@@ -2,7 +2,7 @@
    No names, email addresses, photos, order IDs or checkout URLs are sent as event parameters. */
 (()=>{
  // Enter the owner-controlled GA4 Measurement ID once (example format: G-XXXXXXXXXX).
- const id="".trim();
+ const id="G-K3D6GVK0R0".trim();
  if(!/^G-[A-Z0-9]{6,16}$/.test(id))return;
  if(window.__atelierAnalyticsReady)return;
  window.__atelierAnalyticsReady=true;
