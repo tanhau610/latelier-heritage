@@ -60,7 +60,7 @@ test("Public pages prepare optional GA4 analytics without tracking private check
  const pages=["index.html","about.html","gallery.html","pricing.html","commission.html","process.html","contact.html","policies.html"];
  for(const page of pages)assert.match(readFileSync(page,"utf8"),/src="assets\/analytics\.js"/,page);
  const analytics=readFileSync("assets/analytics.js","utf8");
- assert.match(analytics,/const id=""\.trim\(\)/);
+ assert.match(analytics,/const id="G-K3D6GVK0R0"\.trim\(\)/);
  assert.match(analytics,/commission_cta_click/);
  assert.match(analytics,/studio_video_play/);
  for(const page of ["checkout.html","payment.html","studio.html","shipping.html"]){
