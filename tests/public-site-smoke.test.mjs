@@ -87,12 +87,8 @@ test("Editorial guides have usable sharing metadata and truthful structured data
  }
 });
 
-test("Cloudflare redirects consolidate duplicate public URLs without changing pricing canonical",()=>{
- const redirects=readFileSync("_redirects","utf8");
- for(const [from,to] of [["/contact","/contact.html"],["/about","/about.html"],["/process","/process.html"]]){
-  assert.ok(redirects.includes(from+" "+to+" 301"),from+" must redirect to its declared canonical");
- }
- assert.ok(!/^\/pricing\s/m.test(redirects),"Do not redirect canonical /pricing");
+test("Do not introduce Cloudflare Pages clean URL redirect loops",()=>{
+ assert.ok(!existsSync("_redirects"),"Avoid custom reverse redirects that conflict with Pages clean URL normalization");
 });
 
 test("Memorial portrait guide is linked from commission and photo guide without invented customer testimonials",()=>{
