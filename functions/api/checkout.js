@@ -1,3 +1,4 @@
+import {addressError} from "../_lib/address-validation.js";
 import {atelierSender} from "../_lib/brand-email.js";
 import {sendLivePaymentEmail} from "../_lib/live-payment-email.js";
 import {sendSandboxCustomerEmail} from "../_lib/sandbox-customer-email.js";
@@ -86,6 +87,8 @@ async function start(request,env){
   }
   if(["fullName","phone","address1","city","postalCode"].some(f=>shipping[f].length<2))return fail("Please complete the required delivery fields.");
   shipping.country=country;
+  const deliveryError=addressError(shipping);
+  if(deliveryError)return fail(deliveryError);
   const photos=form.getAll("photos").filter(f=>f instanceof File&&f.size>0);
   if(photos.length<1||photos.length>5)return fail("Upload 1 to 5 reference photographs.");
   if(photos.some(f=>f.size>8*1024*1024)||photos.reduce((sum,f)=>sum+f.size,0)>20*1024*1024)return fail("Maximum 8 MB per photo and 20 MB in total.");
@@ -165,6 +168,8 @@ async function action(request,env){
     if(["fullName","phone","address1","city","postalCode"].some(f=>shipping[f].length<2))return fail("Please complete the required delivery fields.");
     if(!countries.has(data.country))return fail("Please choose a supported delivery country.");
     shipping.country=data.country;
+    const deliveryError=addressError(shipping);
+    if(deliveryError)return fail(deliveryError);
     // Re-check the ledger before writing in case a payment was captured in another tab.
     const latestLedger=await read(bucket,path(id,ledgerFile));
     if(latestLedger?.quotedAt===payment.quotedAt&&(latestLedger.deposit||latestLedger.full))return fail("Payment has already been made. Please contact the studio to change the delivery address.",409);
