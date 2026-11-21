@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync,existsSync} from "node:fs";
-const pages=["index.html","about.html","gallery.html","pricing.html","commission.html","process.html","pet-portrait-photo-guide.html","oil-vs-digital-pet-portrait.html","policies.html","contact.html"];
+const pages=["index.html","about.html","gallery.html","pricing.html","commission.html","process.html","pet-portrait-photo-guide.html","oil-vs-digital-pet-portrait.html","pet-memorial-oil-portraits.html","policies.html","contact.html"];
 const sitemap=readFileSync("sitemap.xml","utf8");
 const robots=readFileSync("robots.txt","utf8");
 for(const page of pages){
@@ -93,4 +93,13 @@ test("Cloudflare redirects consolidate duplicate public URLs without changing pr
   assert.ok(redirects.includes(from+" "+to+" 301"),from+" must redirect to its declared canonical");
  }
  assert.ok(!/^\/pricing\s/m.test(redirects),"Do not redirect canonical /pricing");
+});
+
+test("Memorial portrait guide is linked from commission and photo guide without invented customer testimonials",()=>{
+ const memorial=readFileSync("pet-memorial-oil-portraits.html","utf8");
+ assert.match(memorial,/older photograph/);
+ assert.match(memorial,/not a customer memorial commission/);
+ assert.match(memorial,/href="commission\.html#portrait-builder"/);
+ assert.match(readFileSync("commission.html","utf8"),/href="pet-memorial-oil-portraits\.html"/);
+ assert.match(readFileSync("pet-portrait-photo-guide.html","utf8"),/href="pet-memorial-oil-portraits\.html"/);
 });
