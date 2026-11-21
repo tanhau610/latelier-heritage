@@ -1,6 +1,6 @@
 // Read-only Production availability checks. Never submit forms or create payments.
 const base = "https://atelierhau.com";
-const pages = ["/", "/gallery.html", "/commission.html", "/pricing", "/process.html", "/about.html", "/contact.html", "/policies.html", "/pet-portrait-photo-guide.html", "/oil-vs-digital-pet-portrait.html", "/pet-memorial-oil-portraits.html"];
+const pages = ["/", "/gallery.html", "/commission.html", "/pricing", "/process.html", "/about.html", "/contact.html", "/policies.html", "/pet-portrait-photo-guide.html", "/oil-vs-digital-pet-portrait.html", "/pet-memorial-oil-portraits.html", "/checkout.html"];
 const redirects = ["/contact", "/about", "/process", "/pricing.html"];
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function inspect(path) {
@@ -23,6 +23,7 @@ async function inspect(path) {
   if (!type.includes("text/html")) throw new Error(url + " returned non-HTML content: " + type);
   const body = await response.text();
   if (!/<html\b/i.test(body) || !/<main\b/i.test(body)) throw new Error(url + " is missing expected HTML layout");
+  if (path === "/checkout.html" && (!/name="robots" content="noindex/i.test(body) || !/id="checkout-form"/.test(body))) throw new Error("Checkout is missing its private checkout form or noindex");
   return {url, hops:seen.size-1};
  }
  throw new Error("Too many redirects for " + path);
