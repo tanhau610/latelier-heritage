@@ -86,3 +86,11 @@ test("Editorial guides have usable sharing metadata and truthful structured data
   assert.ok(!("aggregateRating" in article));
  }
 });
+
+test("Cloudflare redirects consolidate duplicate public URLs without changing pricing canonical",()=>{
+ const redirects=readFileSync("_redirects","utf8");
+ for(const [from,to] of [["/contact","/contact.html"],["/about","/about.html"],["/process","/process.html"]]){
+  assert.ok(redirects.includes(from+" "+to+" 301"),from+" must redirect to its declared canonical");
+ }
+ assert.ok(!/^\/pricing\s/m.test(redirects),"Do not redirect canonical /pricing");
+});
