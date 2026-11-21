@@ -26,6 +26,22 @@ function goTo(step,{scroll=true}={}){
   if(step===3&&!turnstileStarted&&!id){turnstileStarted=true;setupTurnstile();}
   if(scroll)document.querySelector(".checkout-progress").scrollIntoView({behavior:"smooth",block:"start"});
 }
+function deliveryAddressError(){
+ const country=form.elements.country.value,postal=form.elements.postalCode.value.trim().toUpperCase(),region=form.elements.region.value.trim();
+ if(country==="Australia"){
+  if(!/^\d{4}$/.test(postal))return "Australian postcodes must contain exactly 4 digits.";
+  if(!/^(NSW|ACT|VIC|QLD|SA|WA|TAS|NT|NEW SOUTH WALES|AUSTRALIAN CAPITAL TERRITORY|VICTORIA|QUEENSLAND|SOUTH AUSTRALIA|WESTERN AUSTRALIA|TASMANIA|NORTHERN TERRITORY)$/i.test(region))return "Enter an Australian state or territory, such as NSW, VIC or QLD.";
+ }else if(country==="United States"){
+  if(!/^\d{5}(?:-\d{4})?$/.test(postal))return "Enter a 5-digit US ZIP code (optionally ZIP+4).";
+  if(region.length<2)return "Enter a US state.";
+ }else if(country==="United Kingdom"){
+  if(!/^(GIR\s?0AA|(?:[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}))$/i.test(postal))return "Enter a UK postcode such as SW1A 1AA.";
+ }else if(country==="Canada"){
+  if(!/^[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z][ -]?\d[ABCEGHJ-NPRSTV-Z]\d$/i.test(postal))return "Enter a Canadian postal code such as K1A 0B1.";
+  if(region.length<2)return "Enter a Canadian province or territory.";
+ }
+ return "";
+}
 function validateStep(step){
   const stage=stages.find(el=>Number(el.dataset.checkoutStep)===step);
   if(!stage)return false;
@@ -36,6 +52,17 @@ function validateStep(step){
     invalid.reportValidity();
     invalid.focus();
     return false;
+  }
+  if(step===2){
+    const error=deliveryAddressError();
+    if(error){
+      const target=form.elements[/postcode|ZIP/i.test(error)?"postalCode":"region"];
+      target.setCustomValidity(error);
+      goTo(2,{scroll:false});target.reportValidity();target.focus();
+      target.addEventListener("input",()=>target.setCustomValidity(""),{once:true});
+      target.addEventListener("change",()=>target.setCustomValidity(""),{once:true});
+      return false;
+    }
   }
   if(step===1){
     const files=[...$("photos").files];
