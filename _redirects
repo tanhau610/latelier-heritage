@@ -1,5 +1,0 @@
-# Canonicalize alternate clean URLs already seen in Search Console.
-# Keep /pricing as the canonical pricing URL.
-/contact /contact.html 301
-/about /about.html 301
-/process /process.html 301
