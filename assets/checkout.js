@@ -70,6 +70,26 @@ form.elements.country.addEventListener("change",()=>{
   form.elements.postalCode.placeholder=postalHints[form.elements.country.value]||"";
   form.elements.region.placeholder=regionHints[form.elements.country.value]||"";
 });
+// Browser-native required-field messages follow the visitor's browser language.
+// Checkout is English-only, so provide consistent English messages instead.
+const englishFieldNames={fullName:"your name",email:"your email address",recipient:"the recipient's name",phone:"a phone number",address1:"a street address",city:"a city or suburb",region:"a state or province",postalCode:"a postcode or ZIP code",country:"a delivery country"};
+form.addEventListener("invalid",event=>{
+  const field=event.target;
+  if(!field?.validity||field.validity.customError)return;
+  let message="";
+  if(field.validity.valueMissing)message="Please enter "+(englishFieldNames[field.name]||"this required information")+".";
+  else if(field.validity.typeMismatch&&field.type==="email")message="Please enter a valid email address.";
+  else if(field.validity.patternMismatch)message="Please check the required format for this field.";
+  if(message)field.setCustomValidity(message);
+},true);
+form.addEventListener("input",event=>{
+  const field=event.target;
+  if(field?.willValidate&&field.validity.customError)field.setCustomValidity("");
+},true);
+form.addEventListener("change",event=>{
+  const field=event.target;
+  if(field?.willValidate&&field.validity.customError)field.setCustomValidity("");
+},true);
 function validateStep(step){
   const stage=stages.find(el=>Number(el.dataset.checkoutStep)===step);
   if(!stage)return false;
