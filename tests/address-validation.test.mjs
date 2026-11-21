@@ -16,3 +16,8 @@ test("UK and Canada postal formats",()=>{
  assert.equal(addressError({...address,country:"Canada",region:"ON",postalCode:"K1A 0B1"}),"");
  assert.match(addressError({...address,country:"Canada",postalCode:"12345"}),/Canadian/);
 });
+
+test("US delivery rejects a Vietnamese city and non-US state",()=>{
+ assert.match(addressError({...address,country:"United States",region:"Quảng Ngãi",city:"Quảng Ngãi",postalCode:"54117"}),/valid US state/);
+ assert.match(addressError({...address,country:"United States",region:"WI",city:"Quảng Ngãi",postalCode:"54117"}),/outside the selected country/);
+});
