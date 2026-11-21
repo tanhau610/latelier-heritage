@@ -21,3 +21,9 @@ test("US delivery rejects a Vietnamese city and non-US state",()=>{
  assert.match(addressError({...address,country:"United States",region:"Quảng Ngãi",city:"Quảng Ngãi",postalCode:"54117"}),/valid US state/);
  assert.match(addressError({...address,country:"United States",region:"WI",city:"Quảng Ngãi",postalCode:"54117"}),/outside the selected country/);
 });
+
+test("Canada postal prefix must match province",()=>{
+ assert.equal(addressError({...address,country:"Canada",city:"Ottawa",region:"ON",postalCode:"K1A 0B1"}),"");
+ assert.match(addressError({...address,country:"Canada",city:"Ottawa",region:"BC",postalCode:"K1A 0B1"}),/does not match/);
+ assert.match(addressError({...address,country:"Canada",region:"Quảng Ngãi",postalCode:"K1A 0B1"}),/valid Canadian province/);
+});
