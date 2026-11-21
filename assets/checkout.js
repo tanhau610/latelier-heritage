@@ -42,9 +42,19 @@ function deliveryAddressError(){
  }
  return "";
 }
+// Clear country-specific errors whenever the destination or relevant fields change.
+const addressFields=["postalCode","region","country"];
+function clearAddressValidity(){
+  for(const field of addressFields)form.elements[field].setCustomValidity("");
+}
+for(const field of addressFields){
+  form.elements[field].addEventListener("input",clearAddressValidity);
+  form.elements[field].addEventListener("change",clearAddressValidity);
+}
 function validateStep(step){
   const stage=stages.find(el=>Number(el.dataset.checkoutStep)===step);
   if(!stage)return false;
+  if(step===2)clearAddressValidity();
   const fields=[...stage.querySelectorAll("input,select,textarea")].filter(el=>!el.disabled&&el.type!=="hidden");
   const invalid=fields.find(el=>!el.checkValidity());
   if(invalid){
@@ -56,11 +66,9 @@ function validateStep(step){
   if(step===2){
     const error=deliveryAddressError();
     if(error){
-      const target=form.elements[/postcode|ZIP/i.test(error)?"postalCode":"region"];
+      const target=form.elements[/postcode|ZIP|postal code|4 digits|5 digits/i.test(error)?"postalCode":"region"];
       target.setCustomValidity(error);
       goTo(2,{scroll:false});target.reportValidity();target.focus();
-      target.addEventListener("input",()=>target.setCustomValidity(""),{once:true});
-      target.addEventListener("change",()=>target.setCustomValidity(""),{once:true});
       return false;
     }
   }
