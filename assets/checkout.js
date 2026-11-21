@@ -59,6 +59,17 @@ for(const field of addressFields){
   form.elements[field].addEventListener("input",clearAddressValidity);
   form.elements[field].addEventListener("change",clearAddressValidity);
 }
+// Postal codes and administrative regions belong to a particular country.
+// Do not silently carry a previous destination's values into a new country.
+form.elements.country.addEventListener("change",()=>{
+  form.elements.postalCode.value="";
+  form.elements.region.value="";
+  clearAddressValidity();
+  const postalHints={"Australia":"e.g. 2000 (4 digits)","United States":"e.g. 94105 (5 digits)","United Kingdom":"e.g. SW1A 1AA","Canada":"e.g. K1A 0B1"};
+  const regionHints={"Australia":"e.g. NSW, VIC or QLD","United States":"e.g. CA, NY or Wisconsin","United Kingdom":"County / region (if applicable)","Canada":"e.g. ON, BC or Ontario"};
+  form.elements.postalCode.placeholder=postalHints[form.elements.country.value]||"";
+  form.elements.region.placeholder=regionHints[form.elements.country.value]||"";
+});
 function validateStep(step){
   const stage=stages.find(el=>Number(el.dataset.checkoutStep)===step);
   if(!stage)return false;
