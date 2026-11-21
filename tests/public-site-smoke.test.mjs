@@ -7,7 +7,7 @@ const robots=readFileSync("robots.txt","utf8");
 for(const page of pages){
  test("Public SEO metadata: "+page,()=>{
   const html=readFileSync(page,"utf8");
-  const canonical="https://atelierhau.com/"+(page==="index.html"?"":page==="pricing.html"?"pricing":page);
+  const canonical="https://atelierhau.com/"+(page==="index.html"?"":page.replace(/\\.html$/,""));
   assert.match(html,/<html lang="en">/i);
   assert.match(html,/<title>[^<]+<\/title>/i);
   assert.match(html,/<meta\b(?=[^>]*\bname="description")(?=[^>]*\bcontent="[^"]+")[^>]*>/i);
@@ -82,7 +82,7 @@ test("Editorial guides have usable sharing metadata and truthful structured data
   const article=JSON.parse(match[1]);
   assert.equal(article["@type"],"Article");
   assert.equal(article.author.name,"ATELIER HAU");
-  assert.ok(article.mainEntityOfPage.endsWith(page));
+  assert.ok(article.mainEntityOfPage.endsWith(page.replace(/\.html$/,"")));
   assert.ok(!("aggregateRating" in article));
  }
 });
