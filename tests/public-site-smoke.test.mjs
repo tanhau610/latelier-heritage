@@ -105,3 +105,13 @@ test("Pricing keeps a single concise buying guide instead of stacked SEO blocks"
  assert.equal((pricing.match(/<section class="seo-buying-guide"/g)||[]).length,1);
  assert.match(pricing,/href="oil-vs-digital-pet-portrait\.html"/);
 });
+
+test("Every public page has exactly one HTML document root",()=>{
+ for(const page of pages){
+  const html=readFileSync(page,"utf8");
+  assert.equal((html.match(/<!doctype html>/gi)||[]).length,1,page+" must have one doctype");
+  assert.equal((html.match(/<html\b/gi)||[]).length,1,page+" must have one html root");
+  assert.equal((html.match(/<head\b/gi)||[]).length,1,page+" must have one head");
+  assert.equal((html.match(/<body\b/gi)||[]).length,1,page+" must have one body");
+ }
+});
