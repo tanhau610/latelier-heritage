@@ -103,3 +103,9 @@ test("Memorial portrait guide is linked from commission and photo guide without 
  assert.match(readFileSync("commission.html","utf8"),/href="pet-memorial-oil-portraits\.html"/);
  assert.match(readFileSync("pet-portrait-photo-guide.html","utf8"),/href="pet-memorial-oil-portraits\.html"/);
 });
+
+test("Pricing keeps a single concise buying guide instead of stacked SEO blocks",()=>{
+ const pricing=readFileSync("pricing.html","utf8");
+ assert.equal((pricing.match(/<section class="seo-buying-guide"/g)||[]).length,1);
+ assert.match(pricing,/href="oil-vs-digital-pet-portrait\.html"/);
+});
