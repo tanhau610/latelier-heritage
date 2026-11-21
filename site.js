@@ -6,12 +6,23 @@ if(slides.length>1){
  let slideIndex=0,slideTimer=null;
  const heroArt=document.querySelector('.hero-art');
  const showSlide=n=>{
-  slideIndex=(n+slides.length)%slides.length;
+  const nextIndex=(n+slides.length)%slides.length;
+  const nextSlide=slides[nextIndex];
+  if(nextSlide.dataset.src){
+   const url=nextSlide.dataset.src;
+   delete nextSlide.dataset.src;
+   nextSlide.src=url;
+   nextSlide.addEventListener('load',()=>showSlide(nextIndex),{once:true});
+   nextSlide.addEventListener('error',()=>{nextSlide.dataset.failed='true'}, {once:true});
+   return;
+  }
+  if(nextSlide.dataset.failed||!nextSlide.complete)return;
+  slideIndex=nextIndex;
   slides.forEach((slide,i)=>{slide.classList.toggle('is-active',i===slideIndex);slide.setAttribute('aria-hidden',String(i!==slideIndex))});
   slideDots.forEach((dot,i)=>{dot.classList.toggle('is-active',i===slideIndex);if(i===slideIndex)dot.setAttribute('aria-current','true');else dot.removeAttribute('aria-current')});
  };
  const stopSlide=()=>{if(slideTimer!==null){clearInterval(slideTimer);slideTimer=null}};
- const startSlide=()=>{stopSlide();if(!motionQuery.matches&&!document.hidden)slideTimer=setInterval(()=>showSlide(slideIndex+1),3000)};
+ const startSlide=()=>{stopSlide();if(!motionQuery.matches&&!document.hidden)slideTimer=setInterval(()=>showSlide(slideIndex+1),8000)};
  const navigateTo=n=>{showSlide(n);startSlide()};
  slideDots.forEach((dot,i)=>dot.addEventListener('click',()=>navigateTo(i)));
  heroArt?.querySelector('.hero-slide-prev')?.addEventListener('click',()=>navigateTo(slideIndex-1));
