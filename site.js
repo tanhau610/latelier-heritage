@@ -3,27 +3,28 @@
 const motionQuery=window.matchMedia('(prefers-reduced-motion: reduce)');
 const slides=[...document.querySelectorAll('.hero-slideshow .hero-slide')],slideDots=[...document.querySelectorAll('.hero-slide-controls button')];
 if(slides.length>1){
- let slideIndex=0,slideTimer=null;
+ let slideIndex=0,slideTimer=null,requestId=0;
  const heroArt=document.querySelector('.hero-art');
- const showSlide=n=>{
+ const mobileQuery=window.matchMedia('(max-width: 900px)');
+ const showSlide=async n=>{
+  const id=++requestId;
   const nextIndex=(n+slides.length)%slides.length;
   const nextSlide=slides[nextIndex];
   if(nextSlide.dataset.src){
-   const url=nextSlide.dataset.src;
+   nextSlide.loading='eager';
+   nextSlide.src=nextSlide.dataset.src;
    delete nextSlide.dataset.src;
-   nextSlide.src=url;
-   nextSlide.addEventListener('load',()=>showSlide(nextIndex),{once:true});
-   nextSlide.addEventListener('error',()=>{nextSlide.dataset.failed='true'}, {once:true});
-   return;
   }
-  if(nextSlide.dataset.failed||!nextSlide.complete)return;
+  try{if(!nextSlide.complete||!nextSlide.naturalWidth)await nextSlide.decode()}catch{return}
+  if(id!==requestId||!nextSlide.naturalWidth)return;
   slideIndex=nextIndex;
   slides.forEach((slide,i)=>{slide.classList.toggle('is-active',i===slideIndex);slide.setAttribute('aria-hidden',String(i!==slideIndex))});
   slideDots.forEach((dot,i)=>{dot.classList.toggle('is-active',i===slideIndex);if(i===slideIndex)dot.setAttribute('aria-current','true');else dot.removeAttribute('aria-current')});
  };
  const stopSlide=()=>{if(slideTimer!==null){clearInterval(slideTimer);slideTimer=null}};
- const startSlide=()=>{stopSlide();if(!motionQuery.matches&&!document.hidden)slideTimer=setInterval(()=>showSlide(slideIndex+1),8000)};
+ const startSlide=()=>{stopSlide();if(!mobileQuery.matches&&!motionQuery.matches&&!document.hidden)slideTimer=setInterval(()=>showSlide(slideIndex+1),8000)};
  const navigateTo=n=>{showSlide(n);startSlide()};
+ mobileQuery.addEventListener?.('change',startSlide);
  slideDots.forEach((dot,i)=>dot.addEventListener('click',()=>navigateTo(i)));
  heroArt?.querySelector('.hero-slide-prev')?.addEventListener('click',()=>navigateTo(slideIndex-1));
  heroArt?.querySelector('.hero-slide-next')?.addEventListener('click',()=>navigateTo(slideIndex+1));
@@ -66,7 +67,7 @@ if(!motionQuery.matches&&'IntersectionObserver'in window&&typeof Element.prototy
   const isTop=el=>el.getBoundingClientRect().top<topThreshold;
   const animateIn=(el,delay)=>{if(el.dataset.editorialAnimated)return;el.dataset.editorialAnimated='true';el.animate([{opacity:0,transform:'translate3d(0,18px,0)'},{opacity:1,transform:'translate3d(0,0,0)'}],{duration:820,delay,easing:'cubic-bezier(.22,.7,.2,1)',fill:'both'})};
   const topItems=selected.filter(isTop);
-  topItems.forEach((el,i)=>animateIn(el,Math.min(i,5)*85));
+  // Above-the-fold content stays visible immediately; animate only below the fold.
   const observer=new IntersectionObserver((entries,obs)=>{entries.forEach(entry=>{if(entry.isIntersecting){obs.unobserve(entry.target);animateIn(entry.target,0)}})},{threshold:.08,rootMargin:'0px 0px -32px 0px'});
   selected.filter(el=>!isTop(el)).forEach(el=>observer.observe(el));
  }
